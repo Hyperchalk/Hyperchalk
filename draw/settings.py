@@ -120,6 +120,18 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Settings for LTI ToolConfig
+# see lti.tool_config.py
+
+LTI_CONFIG = {
+    'title': 'Excalidraw',
+    'description': 'The Excalidraw drawing board app as an LTI module.',
+    'vendor_name': 'EduTec@DIPF',
+    'vendor_url': 'https://www.edutec.science/',
+    'vendor_contact_name': 'Praktikant:in',
+    'vendor_contact_email': 'praktikum_alice@dipf.de',
+}
+
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):
     required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE'}
