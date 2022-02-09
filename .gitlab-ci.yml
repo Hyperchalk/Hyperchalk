@@ -1,0 +1,65 @@
+stages:
+  - test
+  - deploy
+
+# services:
+#   - postgres:12.2-alpine
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/pip-cache"
+  MODULES_UNDER_EXAMINATION: "draw collab ltiapi"
+  DJANGO_SETTINGS_MODULE: "draw.test_settings"
+  # DJANGO_DATABASES: '{
+  #   "default": {
+  #     "ENGINE": "django.db.backends.postgresql",
+  #     "NAME": "draw",
+  #     "HOST": "postgres",
+  #     "PORT": "5432",
+  #     "USER": "superdraw",
+  #     "PASSWORD": "superdraw"
+  #   }
+  # }'
+  # POSTGRES_DB: draw
+  # POSTGRES_USER: superdraw
+  # POSTGRES_PASSWORD: superdraw
+  # POSTGRES_HOST_AUTH_METHOD: trust
+  # DRAW_SECRET is set via gitlab's secret variables feature
+
+default:
+  image: python:3.10
+  cache:
+    paths:
+      - "$CI_PROJECT_DIR/pip-cache"
+    key: "$CI_PROJECT_ID"
+  before_script:
+    - pip install -U pip setuptools wheel
+    - pip install -r requirements.txt
+    - pip install -r tooling.requirements.txt
+
+test:
+  stage: test
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+  script:
+    # use pytest only for gitlab tests. developers can just use "manage.py test"
+    - coverage run -m pytest --junitxml=unittests.xml
+    - coverage report -m
+  artifacts:
+    when: always
+    paths:
+      - unittests.xml
+    reports:
+      junit: unittests.xml
+
+lint:
+  stage: test
+  # try to autodetect modules!
+  script:
+    - >-
+      pylint --jobs=1
+      --load-plugins=pylint_django
+      $MODULES_UNDER_EXAMINATION
+      &&
+      mypy --follow-imports=silent
+      --ignore-missing-imports
+      --show-column-numbers
+      $MODULES_UNDER_EXAMINATION
