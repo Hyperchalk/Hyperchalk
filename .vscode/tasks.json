@@ -6,7 +6,7 @@
     {
       "label": "Django: runserver",
       "type": "shell",
-      "command": "${config:python.pythonPath}",
+      "command": "${command:python.interpreterPath}",
       "args": [
         "manage.py",
         "runserver"
@@ -20,7 +20,7 @@
       "label": "Django: test",
       "group": "test",
       "type": "shell",
-      "command": "${config:python.pythonPath}",
+      "command": "${command:python.interpreterPath}",
       "args": [
         "manage.py",
         "test"
@@ -34,7 +34,7 @@
       "label": "Django: test current module",
       "type": "shell",
       "group": "test",
-      "command": "${config:python.pythonPath}",
+      "command": "${command:python.interpreterPath}",
       "args": [
         "manage.py",
         "test",
@@ -75,7 +75,7 @@
     {
       "label": "Django: migrate",
       "type": "shell",
-      "command": "${config:python.pythonPath}",
+      "command": "${command:python.interpreterPath}",
       "args": [
         "manage.py",
         "migrate"
@@ -88,7 +88,7 @@
     {
       "label": "Django: makemigrations for current module",
       "type": "shell",
-      "command": "${config:python.pythonPath}",
+      "command": "${command:python.interpreterPath}",
       "args": [
         "manage.py",
         "makemigrations",
