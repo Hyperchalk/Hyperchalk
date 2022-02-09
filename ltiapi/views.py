@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
@@ -5,11 +7,13 @@ from django.templatetags.static import static
 from django.urls import reverse
 from lti import ToolConfig
 
+logger = logging.getLogger("ltiapi")
 
 async def lti_config(request: HttpRequest, *args, **kwargs):
     # basic view code from https://pypi.org/project/lti/
     # basic stuff
     referrer = request.META.get('HTTP_REFERER', None)
+    logger.debug("referrer is %s", referrer)
     if referrer and referrer not in settings.ALLOWED_LTI_HOSTS:
         raise PermissionDenied(
             "This Host is not an allowed LTI host. You may ask "
