@@ -1,0 +1,6 @@
+coverage ~= 6.2
+mypy ~= 0.931
+pylint ~= 2.12
+pylint-django ~= 2.5.0
+pytest ~= 6.2.5
+pytest-django ~= 4.5.2
