@@ -1,0 +1,19 @@
+* {
+  box-sizing: border-box;
+}
+
+body,
+html,
+#app {
+  height: 100%;
+  margin: 0;
+  font-family: var(--ui-font);
+}
+
+:root {
+  --ui-font: "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.excalidraw.excalidraw .color-picker-input {
+  height: inherit;
+}

@@ -1,0 +1,24 @@
+{
+  "name": "excalidraw-lti",
+  "version": "0.0.1",
+  "description": "Excalidraw with IMS LTI support",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node esbuild.js",
+    "watch": "node eswatch.js"
+  },
+  "author": "Lukas Menzel, EduTec@DIPF <praktikum_alice@dipf.de>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.11",
+    "esbuild": "^0.14.20"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "^0.10.0",
+    "preact": "^10.6.5",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  }
+}
