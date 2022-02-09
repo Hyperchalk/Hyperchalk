@@ -47,7 +47,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'draw.urls'
@@ -111,6 +111,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATIC_ROOT = BASE_DIR / 'static_copy'
+
 STATICFILES_DIRS = [
     BASE_DIR / 'client' / 'dist',
 ]
@@ -131,6 +133,9 @@ LTI_CONFIG = {
     'vendor_contact_name': 'Praktikant:in',
     'vendor_contact_email': 'praktikum_alice@dipf.de',
 }
+
+# List of LMS domains that are allowed to use this app
+ALLOWED_LTI_CONSUMERS: List[str]
 
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):
