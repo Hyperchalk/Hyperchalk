@@ -1,0 +1,169 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Django: runserver",
+      "type": "shell",
+      "command": "${config:python.pythonPath}",
+      "args": [
+        "manage.py",
+        "runserver"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: test",
+      "group": "test",
+      "type": "shell",
+      "command": "${config:python.pythonPath}",
+      "args": [
+        "manage.py",
+        "test"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: test current module",
+      "type": "shell",
+      "group": "test",
+      "command": "${config:python.pythonPath}",
+      "args": [
+        "manage.py",
+        "test",
+        "\"$(echo ${relativeFile} | cut -d '/' -f1)\""
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Coverage: current module html",
+      "type": "shell",
+      "group": "test",
+      "command": "devscripts/coverage_report.sh",
+      "args": [
+        "\"$(echo ${relativeFile} | cut -d '/' -f1)\""
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Coverage: current module xml",
+      "type": "shell",
+      "group": "test",
+      "command": "devscripts/coverage_report.sh",
+      "args": [
+        "--xml",
+        "\"$(echo ${relativeFile} | cut -d '/' -f1)\""
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: migrate",
+      "type": "shell",
+      "command": "${config:python.pythonPath}",
+      "args": [
+        "manage.py",
+        "migrate"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: makemigrations for current module",
+      "type": "shell",
+      "command": "${config:python.pythonPath}",
+      "args": [
+        "manage.py",
+        "makemigrations",
+        "\"$(echo ${relativeFile} | cut -d '/' -f1)\""
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: make translations",
+      "type": "shell",
+      "command": "${workspaceFolder}/devscripts/handle_translations.sh",
+      "args": [
+        "-m"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: compile translations",
+      "type": "shell",
+      "command": "${workspaceFolder}/devscripts/handle_translations.sh",
+      "args": [
+        "-c"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pylint: lint everything",
+      "type": "shell",
+      "command": "pylint",
+      "args": [
+        "--load-plugins=pylint_django",
+        "draw",
+        "core",
+        "inventory",
+        "addressbook",
+        "event"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "DJANGO_SETTINGS_MODULE": "draw.test_settings"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mypy: lint everything",
+      "type": "shell",
+      "command": "mypy",
+      "args": [
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "--show-column-numbers",
+        "draw",
+        "core",
+        "inventory",
+        "addressbook",
+        "event"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "DJANGO_SETTINGS_MODULE": "draw.test_settings"
+        }
+      },
+      "problemMatcher": []
+    }
+  ]
+}
