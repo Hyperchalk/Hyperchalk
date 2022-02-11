@@ -1,5 +1,8 @@
+aiodns ~= 3.0.0
+aiohttp ~= 3.8.1
 channels ~= 3.0.4
 Django ~= 3.2.12
+django-click ~= 2.3.0
 django-debug-toolbar ~= 3.2.4
 django-ninja ~= 0.17.0
-lti ~= 0.9.5
+PyLTI1p3 ~= 1.10.0

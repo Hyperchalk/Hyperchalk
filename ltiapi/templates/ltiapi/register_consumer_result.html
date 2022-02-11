@@ -1,0 +1,20 @@
+{% extends 'ltiapi/register_base.html' %}
+{% load i18n %}
+
+{% block body %}
+{% if registration_success %}
+<p>{% blocktrans trimmed %}
+  The application registration succeeded.
+{% endblocktrans %}</p>
+<p><button type="button" id="close">{% trans "Close registration" %}</button></p>
+{% else %}
+<p>{% blocktrans trimmed %}
+  There was an error while registering you application: {{error}}
+{% endblocktrans %}</p>
+{% endif %}
+
+<script>
+  document.getElementById("close").onclick = () =>
+    (window.opener || window.parent).postMessage({subject:'org.imsglobal.lti.close'}, '*');
+</script>
+{% endblock body %}

@@ -26,21 +26,27 @@ DEBUG = False
 
 ALLOWED_HOSTS: List[str] = ['localhost', '127.0.0.1']
 
+INTERNAL_IPS = ['127.0.0.1']
+
 
 # Application definition
 
 INSTALLED_APPS = [
     'collab',
     'ltiapi',
+    'pylti1p3.contrib.django.lti1p3_tool_config',
+    'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'channels'
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -136,6 +142,8 @@ LTI_CONFIG = {
 
 # List of LMS domains that are allowed to use this app
 ALLOWED_LTI_CONSUMERS: List[str]
+
+LTI_CONFIG_DIR = BASE_DIR / 'lticonfig'
 
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):

@@ -133,3 +133,4 @@ media/
 
 # custom stuff
 *.gitignore.*
+lticonfig/

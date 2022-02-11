@@ -1,0 +1,13 @@
+{% extends 'ltiapi/register_base.html' %}
+{% load i18n %}
+
+{% block body %}
+<p>{% blocktrans with consumer=link.consumer_name trimmed %}
+  This one off link was issued for a registration by “{{consumer}}”. Once the
+  registration process is started, it cannot be reused. Do you want to continue?
+{% endblocktrans %}</p>
+<form action="{{request.url}}" method="post">
+  {% csrf_token %}
+  <button type="submit">{% trans "Start The Registration" %}</button>
+</form>
+{% endblock body %}
