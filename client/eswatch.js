@@ -5,19 +5,22 @@ const copyDist = require("./build/copy-dist")
 
 copyDist("static", "dist")
 
+const basicconf = {
+  entryPoints: ["src/index.tsx"],
+  bundle: true,
+  outfile: "dist/app.js",
+  sourcemap: true,
+  // plugins: [preactCompatPlugin],
+}
+
 require("esbuild")
   .serve(
     {
       servedir: "dist",
       host: "localhost",
+      port: 8080,
     },
-    {
-      entryPoints: ["src/index.tsx"],
-      bundle: true,
-      outfile: "dist/app.js",
-      sourcemap: true,
-      // plugins: [preactCompatPlugin],
-    }
+    { ...basicconf }
   )
   .then((server) => {
     // Call "stop" on the web server to stop serving
@@ -26,16 +29,15 @@ require("esbuild")
 
 require("esbuild")
   .build({
-    entryPoints: ["src/index.tsx"],
-    bundle: true,
-    outfile: "dist/app.js",
-    sourcemap: true,
+    ...basicconf,
     watch: {
       onRebuild(error, result) {
+        copyDist("static", "dist")
         if (error) console.error("watch build failed:", error)
         else console.log("watch build succeeded:", result)
       },
-    }, // plugins: [preactCompatPlugin],
+    },
+    // plugins: [preactCompatPlugin],
   })
   .then((server) => {
     // Call "stop" on the web server to stop serving
