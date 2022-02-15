@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 app_name = 'lti'
+
 urlpatterns = [
     path(
         'register-consumer/<uuid:pk>', views.RegisterConsumerView.as_view(),

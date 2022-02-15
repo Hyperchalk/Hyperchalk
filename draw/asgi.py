@@ -9,21 +9,24 @@ https://docs.djangoproject.com/en/3.2/howto/deployment/asgi/
 
 import os
 
-from channels.routing import ProtocolTypeRouter #, URLRouter
+from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
-
-http_application = get_asgi_application()
-
-# disable pylint because the application needs to be initialised before these imports
-# pylint: disable=wrong-import-order,ungrouped-imports,wrong-import-position
-# import collab.routing
-# from channels.auth import AuthMiddlewareStack
+from django.urls import path
+from django.conf import settings
+from .urlconf import ws_include
+from .utils import apply_middleware
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'draw.settings')
 
+http_application = get_asgi_application()
+
+# def apply_middleware_from_settings()
+
 application = ProtocolTypeRouter({
     "http": http_application,
-    # "websocket": AuthMiddlewareStack(URLRouter(
-    #     collab.routing.websocket_urlpatterns,
-    # )),
+    "websocket": apply_middleware(
+        *settings.WS_MIDDLEWARE,
+        URLRouter([ path('ws/', ws_include('draw.urls_ws')) ]),
+    ),
+    # "websocket": AllowedHostsOriginValidator(AuthMiddlewareStack(URLRouter())),
 })

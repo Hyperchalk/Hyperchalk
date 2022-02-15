@@ -2,8 +2,11 @@
 Helper functions and classes that don't need any configured state or django stuff loaded.
 """
 
-from typing import Any, Protocol, TypeVar, Generic
 from enum import Enum
+from typing import Any, Callable, Generic, List, Protocol, TypeVar, Union, cast
+
+from django.utils.module_loading import import_string
+
 
 class SeqMode(Enum):
     MERGE = 1
@@ -105,3 +108,18 @@ class Chain(Generic[ChainedObj]):
 class StrLike(Protocol):
     def __str__(self) -> str:
         ...
+
+def apply_middleware(*args: Union[Callable, str]):
+    """
+    Applies all the classes / functions given in args as arguments to the previous one.
+
+    Use functools.partial if you want to pass further arguments.
+    """
+    l_args: List[Union[Callable, str]] = list(args)
+    ret = l_args.pop()
+    while l_args:
+        middelware = l_args.pop()
+        if isinstance(middelware, str):
+            middelware = cast(Callable, import_string(middelware))
+        ret = middelware(ret)
+    return ret

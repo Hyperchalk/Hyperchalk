@@ -15,11 +15,14 @@ Including another URLconf
 """
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.templatetags.static import static
+from django.urls import include, path
+from django.views import generic
 
 urlpatterns = [
     path('lti/', include('ltiapi.urls')),
     path('admin/', admin.site.urls),
+    path('favicon.ico', generic.RedirectView.as_view(url=static('favicon.ico')))
 ]
 
 if settings.DEBUG:

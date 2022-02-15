@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'channels'
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -56,7 +56,13 @@ MIDDLEWARE = [
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+WS_MIDDLEWARE = [
+    'channels.security.websocket.AllowedHostsOriginValidator',
+    'channels.auth.AuthMiddlewareStack'
+]
+
 ROOT_URLCONF = 'draw.urls'
+CHANNELS_URLCONF = 'draw.urls_ws'
 
 TEMPLATES = [
     {
