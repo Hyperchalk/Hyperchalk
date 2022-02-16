@@ -4,6 +4,9 @@ source $BASEDIR/init.sh
 
 cd $BASEDIR/..
 
+echo
+printf "Creating admin user with password adminadmin... "
+
 ./manage.py shell << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -12,3 +15,5 @@ user.is_superuser = True
 user.is_staff = True
 user.save()
 EOF
+
+echo $(colored $LIGHT_GREEN "OK")

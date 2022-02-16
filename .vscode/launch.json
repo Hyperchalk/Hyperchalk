@@ -12,7 +12,7 @@
       "justMyCode": false,
       "python": "${command:python.interpreterPath}",
       "program": "${workspaceFolder}/manage.py",
-      "args": ["runserver", "localhost:8001", "--noreload"],
+      "args": ["runserver", "localhost:8000", "--noreload"],
       // "args": ["runserver", "localhost:8001", "--noreload", "--nothreading"],
       "django": true,
       "envFile": "${workspaceFolder}/.env"
