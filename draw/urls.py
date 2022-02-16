@@ -22,7 +22,8 @@ from django.views import generic
 urlpatterns = [
     path('lti/', include('ltiapi.urls')),
     path('admin/', admin.site.urls),
-    path('favicon.ico', generic.RedirectView.as_view(url=static('favicon.ico')))
+    path('favicon.ico', generic.RedirectView.as_view(url=static('favicon.ico'))),
+    path('', include('collab.urls')),
 ]
 
 if settings.DEBUG:

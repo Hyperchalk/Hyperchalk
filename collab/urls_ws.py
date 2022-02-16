@@ -10,5 +10,5 @@ logger = logging.getLogger('collab')
 app_name = "collab"
 
 urlpatterns = [
-    path('collaborate', consumers.CollaborationConsumer.as_asgi(), name='collaborate')
+    path('collaborate/<room_name>', consumers.CollaborationConsumer.as_asgi(), name='collaborate')
 ]

@@ -5,6 +5,8 @@ Helper functions and classes that don't need any configured state or django stuf
 from enum import Enum
 from typing import Any, Callable, Generic, List, Protocol, TypeVar, Union, cast
 
+from django.urls import reverse
+from django.utils.http import urlencode
 from django.utils.module_loading import import_string
 
 
@@ -123,3 +125,20 @@ def apply_middleware(*args: Union[Callable, str]):
             middelware = cast(Callable, import_string(middelware))
         ret = middelware(ret)
     return ret
+
+def reverse_with_query(viewname, kwargs=None, query_kwargs=None):
+    """
+    Custom reverse to add a query string after the url
+    Example usage::
+
+        url = my_reverse('my_test_url', kwargs={'pk': object.id},
+                         query_kwargs={'next': reverse('home')})
+    """
+    # from https://stackoverflow.com/questions/4995279/
+    # including-a-querystring-in-a-django-core-urlresolvers-reverse-call#4995467
+    url = reverse(viewname, kwargs=kwargs)
+
+    if query_kwargs:
+        return f"{url}?{urlencode(query_kwargs)}"
+
+    return url
