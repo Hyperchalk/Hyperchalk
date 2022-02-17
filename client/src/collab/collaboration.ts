@@ -113,6 +113,8 @@ export class CollabAPI {
 
   broadcastElements(elements: readonly ExcalidrawElement[], appState: AppState) {
     // TODO: broadcast information about item deletion
+    // IDEA: broadcast full sync on mouse up
+    // TODO: avoid resending incoming reconceiled elements
     let toSync =
       this.elementsSyncBroadcastCounter == 0
         ? this.elementsToSync(elements, true)

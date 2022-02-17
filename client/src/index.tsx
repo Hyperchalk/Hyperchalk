@@ -34,11 +34,11 @@ function updateHashParams(name: string, value: string) {
   window.location.hash = hash.toString()
 }
 
-// IDEA: fetch stored elements from room
 // TODO: if a library was added, load it and update the URL hash
 // TODO: sync data over tabs and on window events? (see syncData() excalidraw.index ~353)
 //       -> before unload, on blur, on visibility change, on hash change
-// TODO: activate german translation
+// TODO: make libraries work
+// TODO: make deletion work
 // #endregion init
 
 function IndexPage() {

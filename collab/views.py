@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.http import HttpRequest, JsonResponse
@@ -17,13 +18,17 @@ async def index(request: HttpRequest, **kwargs):
         return redirect(request.build_absolute_uri(room_uri), permanent=False)
 
     room_obj, _ = await get_room_elements(room_name=room)
+    username = 'wolobums'
+    user = await sync_to_async(request.user) # TODO: getting user information does not work here...
+    if user.id:
+        username = user.first_name or user.username
     return render(request, 'collab/index.html', {'excalidraw_config': {
         'SOCKET_URL': request.build_absolute_uri('/ws/collab/collaborate/' + room)\
             .replace('http://', 'ws://', 1),
         'BROADCAST_RESOLUTION': 50,
         'ROOM_NAME': room,
         'INITIAL_DATA': room_obj.elements,
-        'USER_NAME': getattr("request.user", "first_name", request.user.username) or 'wolobums',
+        'USER_NAME': username,
         'LANGUAGE_CODE': settings.LANGUAGE_CODE,
         'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100
         # TODO: USER_COLOR
