@@ -1,9 +1,11 @@
 from functools import cached_property
 import json
 
-from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinLengthValidator
 from django.db import models
+
+from ltiapi.models import CustomUser
 
 from .utils import JSONType, dump_content, load_content
 
@@ -22,7 +24,9 @@ class ExcalidrawLogRecord(models.Model):
     room_name = models.CharField(max_length=24, validators=[MinLengthValidator(24)])
     event_type = models.CharField(max_length=50)
     # if a user is deleted, keep the foreign key to be able to keep the action log
-    user = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING, null=True)
+    user_pseudonym = models.CharField(
+        max_length=40, validators=[MinLengthValidator(40)], null=True,
+        help_text=_("this is geenrated from ltiapi.models.CustomUser.id_for_room"))
     _content = models.BinaryField(blank=True)
 
     @property
@@ -46,6 +50,16 @@ class ExcalidrawLogRecord(models.Model):
         comp = 100 - self.compressed_size / self.uncompressed_size * 100
         return f"{comp:.2f} %"
 
+    @property
+    def user(self):
+        return None
+
+    @user.setter
+    def user(self, user: CustomUser):
+        self.user_pseudonym = user.id_for_room(self.room_name)
+
+# trust me
+EMPTY_JSON_LIST_ZLIB_COMPRESSED = b'x\x9c\x8b\x8e\x05\x00\x01\x15\x00\xb9'
 
 class ExcalidrawRoom(models.Model):
     """
@@ -56,7 +70,7 @@ class ExcalidrawRoom(models.Model):
     room_name = models.CharField(
         primary_key=True, max_length=24,
         validators=[MinLengthValidator(24)])
-    _elements = models.BinaryField(blank=True)
+    _elements = models.BinaryField(blank=True, default=EMPTY_JSON_LIST_ZLIB_COMPRESSED)
 
     @property
     def elements(self):

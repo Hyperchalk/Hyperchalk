@@ -1,9 +1,14 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from django.http import HttpRequest
 
 from draw.utils import Chain
 
 from . import models as m
+from .models import CustomUser
+
+
+admin.site.register(CustomUser, UserAdmin)
 
 
 @admin.register(m.OneOffRegistrationLink)

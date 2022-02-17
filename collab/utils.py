@@ -1,6 +1,9 @@
+from collections import defaultdict
+from hashlib import sha256
 import random
 import string
 import json
+import uuid
 import zlib
 from typing import Optional, Tuple, Union
 
@@ -19,4 +22,13 @@ def dump_content(content: JSONType, force_compression=False) -> Tuple[bytes, boo
     compressed = zlib.compress(val_bytes)
     if force_compression or len(compressed) < len(val_bytes):
         return compressed, True
-    return val_bytes, True
+    return val_bytes, False
+
+def flatten_list(l: list):
+    return [flatten_list(e) if isinstance(e, list) else e for e in l]
+
+def insert_after(e, e2):
+    return [*e, e2] if isinstance(e, list) else [e, e2]
+
+def user_id_for_room(uid: uuid.UUID, room_name: str):
+    return sha256(uid.bytes + b":" + room_name.encode('utf-8')).hexdigest()

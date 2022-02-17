@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'collab',
     'ltiapi',
     'pylti1p3.contrib.django.lti1p3_tool_config',
-    'debug_toolbar',
+    # 'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,7 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -88,6 +88,14 @@ ASGI_APPLICATION = 'draw.asgi.application'
 
 DATABASES: Dict[str, Dict[str, Union[StrLike, Dict[str, StrLike]]]] = {}
 
+# Channel Layers
+# https://channels.readthedocs.io/en/latest/topics/channel_layers.html
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -106,11 +114,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# https://docs.djangoproject.com/en/3.2/topics/auth/customizing/#auth-custom-user
+AUTH_USER_MODEL = 'ltiapi.CustomUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'de-DE'
 
 USE_I18N = True
 

@@ -1,5 +1,7 @@
 import uuid
+from hashlib import sha256
 
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.http import HttpRequest
@@ -7,6 +9,8 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
+
+from collab.utils import user_id_for_room
 
 
 class OneOffRegistrationLink(models.Model):
@@ -28,3 +32,16 @@ class OneOffRegistrationLink(models.Model):
         self.registered_consumer = consumer
         self.consumer_registration_timestamp = now()
         self.save()
+
+
+class CustomUser(AbstractUser):
+    """
+    Custom User model.
+
+    The model is needed to generate the user alias per room.
+    This enables us to alias user for better privacy.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    def id_for_room(self, room_name: str) -> str:
+        return user_id_for_room(self.id, room_name)

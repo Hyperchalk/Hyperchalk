@@ -9,7 +9,7 @@ class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
     fields = [
         "room_name",
         "event_type",
-        "user",
+        "user_pseudonym",
         "content",
         ("_compressed", "compressed_size", "uncompressed_size", "compression_degree"),
         "created_at",
@@ -21,4 +21,5 @@ class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
 
 @admin.register(m.ExcalidrawRoom)
 class ExcalidrawRoomAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields = ['elements']
+    # pass
