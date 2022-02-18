@@ -20,7 +20,6 @@ interface CollaboratorChangeMessage {
 interface ElementsChangedMessage {
   eventtype: "elements_changed" | "full_sync"
   elements: BroadcastedExcalidrawElement[]
-  username: string
 }
 
 interface CollaboratorLeftMessage {
@@ -63,7 +62,7 @@ export class CollabAPI {
       username: config.USER_NAME,
       color: config.USER_COLOR,
     }
-    this.scheduleBroadcastUserEntryOnNextCursorMovement(this.meInfo)
+    this.broadcastCollaboratorChange(this.meInfo)
     this.MAX_UPDATES_BEFORE_RESYNC = config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
 
     // methods for direct usage by excalidraw component
@@ -211,7 +210,6 @@ export class CollabAPI {
         JSON.stringify({
           eventtype: doFullSync ? "full_sync" : "elements_changed",
           elements: toSync,
-          username: this.meInfo.username,
         } as ElementsChangedMessage)
       )
       this.updateBroadcastedVersions(toSync)
@@ -247,19 +245,6 @@ export class CollabAPI {
 
   private collaboratorChangeBuffer: CollaboratorChange[] = []
 
-  /**
-   * Add information about the collaborator to the broadcast
-   * information when a cursor is broadcasted teh next time.
-   *
-   * @param meInfo info about the current client
-   */
-  private scheduleBroadcastUserEntryOnNextCursorMovement(meInfo: Collaborator) {
-    this.collaboratorChangeBuffer.push({
-      time: new Date().toISOString(),
-      ...meInfo,
-    })
-  }
-
   // TODO: broadcast idle state
 
   /**
@@ -275,12 +260,23 @@ export class CollabAPI {
       pointer[key as keyof typeof pointer] |= 0
     }
 
-    this.collaboratorChangeBuffer.push({
+    this.broadcastCollaboratorChange({
       button,
       pointer,
       selectedElementIds: this.excalidrawApi?.getAppState().selectedElementIds,
+    })
+  }
+
+  /**
+   * Broadcast information about the collaborator that controls this instance.
+   *
+   * @param collaborator the collaborator info to send
+   */
+  private broadcastCollaboratorChange(collaborator: CollaboratorChange) {
+    this.collaboratorChangeBuffer.push({
       time: new Date().toISOString(),
       username: this.meInfo.username,
+      ...collaborator,
     })
 
     if (this.ws.readyState == WsState.OPEN) {

@@ -34,7 +34,7 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         try:
             return await super().receive(text_data, bytes_data, **kwargs)
         except Exception as e:
-            logger.error(e)
+            logger.error("\033[0;31m%s\033[0m", e)
             raise e from e
 
     async def connect(self):
@@ -103,7 +103,7 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
 
     async def full_sync(self, room_name, eventtype, elements, **kwargs):
         await gather(
-            self.elements_changed(eventtype, room_name, elements=elements, **kwargs),
+            self.elements_changed(room_name, eventtype, elements=elements, **kwargs),
             self.save_room(room_name, elements, **kwargs))
 
     async def elements_changed(self, room_name, eventtype, **kwargs):
