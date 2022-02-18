@@ -186,6 +186,9 @@ export class CollabAPI {
       (this.elementsSyncBroadcastCounter + 1) % this.MAX_UPDATES_BEFORE_RESYNC
   }
 
+  // TODO: debounced save_room executions. they are only
+  //       sent to the server and will not be broadcasted.
+
   /**
    * Sends the elements to the other clients that changed since the last broadcast. Every
    * {@link CollabAPI#MAX_UPDATES_BEFORE_RESYNC} syncs will send all elements (ful sync).
@@ -196,7 +199,6 @@ export class CollabAPI {
    * @param appState excalidraw's app state
    */
   private _broadcastElements(elements: readonly ExcalidrawElement[], appState: AppState) {
-    // IDEA: broadcast full sync on mouse up
     let doFullSync = this.elementsSyncBroadcastCounter == 0
     let toSync = doFullSync
       ? this.elementsToSync(elements, true)
@@ -246,6 +248,7 @@ export class CollabAPI {
   private collaboratorChangeBuffer: CollaboratorChange[] = []
 
   // TODO: broadcast idle state
+  // TODO: remove all collaborators on connection loss
 
   /**
    * Sends the current cursor to the backend so it can be braodcasted to the other clients.

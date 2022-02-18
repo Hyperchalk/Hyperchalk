@@ -2,7 +2,7 @@
 import React, { useRef } from "react"
 import { render } from "react-dom"
 import Excalidraw from "@excalidraw/excalidraw"
-import { AppState, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import { AppState, ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types/types"
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import throttle from "lodash.throttle"
 import { ConfigProps } from "./types"
@@ -42,11 +42,17 @@ function updateHashParams(name: string, value: string) {
 // TODO: persist locally and remotely
 // #endregion init
 
+function saveLibrary(items: LibraryItems) {
+  localStorage.setItem("_library", JSON.stringify(items))
+}
+
 let collabAPI = new CollabAPI(config)
 
 function IndexPage() {
   let draw = useRef<ExcalidrawImperativeAPI>(null)
   collabAPI.excalidrawApiRef = draw
+
+  // TODO: import library when ref becomes available
 
   return (
     <Excalidraw
@@ -63,6 +69,7 @@ function IndexPage() {
       autoFocus={true}
       handleKeyboardGlobally={true}
       langCode={config.LANGUAGE_CODE}
+      onLibraryChange={saveLibrary}
     />
   )
 }
