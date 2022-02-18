@@ -54,6 +54,10 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         return await super().connect()
 
     async def disconnect(self, code):
+        await self.send_event(
+            eventtype='collaborator_left',
+            collaborator={'userRoomId': self.user_room_id}
+        )
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         return await super().disconnect(code)
 
@@ -62,18 +66,20 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         # logger.debug('received json: %s in %s', content, self.__class__.__name__)
         if msg_type in self.allowed_methods:
             method = getattr(self, msg_type)
-            return await method(**content, **self.kwargs)
+            return await method(**content, **kwargs, **self.kwargs)
         raise ValueError(f'The message type "{msg_type}" is not allowed.')
 
-    async def send_event(self, eventtype, **kwargs):
-        await self.channel_layer.group_send(
-            self.group_name, {
+    async def send_event(self, eventtype, **event_args):
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'notify_client',
+            'notification': {
                 'eventtype': eventtype,
-                **kwargs,
-                'type': 'notify_client',
-                'user_room_id': self.user_room_id})
+                **event_args
+            },
+            'sender': self.user_room_id
+        })
 
-    async def collaborator_change(self, eventtype, changes: List[dict], room_name, **kwargs):
+    async def collaborator_change(self, room_name, eventtype, changes: List[dict], **kwargs):
         # logger.debug("called collaborator_change")
         collaborator_to_send = deepcopy(changes[-1])
         records = []
@@ -95,23 +101,24 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
             bulk_create_rcords(records),
             self.send_event(eventtype, changes=[collaborator_to_send]))
 
-    async def full_sync(self, eventtype, elements, room_name, **kwargs):
+    async def full_sync(self, room_name, eventtype, elements, **kwargs):
         await gather(
-            self.elements_changed(eventtype, elements, room_name, **kwargs),
-            self.save_room(elements, room_name, **kwargs))
+            self.elements_changed(eventtype, room_name, elements=elements, **kwargs),
+            self.save_room(room_name, elements, **kwargs))
 
-    async def elements_changed(self, eventtype, elements, room_name, **kwargs):
+    async def elements_changed(self, room_name, eventtype, **kwargs):
         record = m.ExcalidrawLogRecord(
             room_name=room_name,
             event_type=eventtype,
             user_pseudonym=self.user_room_id
         )
-        record.content = elements
+        record.content = kwargs
         await gather(
             database_sync_to_async(record.save)(),
-            self.send_event(eventtype, elements=elements))
+            self.send_event(eventtype, **kwargs))
 
-    async def save_room(self, elements, room_name, **kwargs):
+    async def save_room(self, room_name, elements, **kwargs):
+        elements = [e for e in elements if not e.get('isDeleted', False)]
         elements, _ = dump_content(elements)
         room, _ = await upsert_room(
             room_name=room_name,
@@ -119,10 +126,9 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         logger.debug("room %s saved", room.room_name)
 
     async def notify_client(self, event: dict):
-        # logger.debug('notified with %s', event)
         # dont't send the event back to the sender
-        if event.pop('user_room_id') != self.user_room_id:
-            await self.send_json(event)
+        if event['sender'] != self.user_room_id:
+            await self.send_json(event['notification'])
 
 
 # TODO: ...

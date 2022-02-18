@@ -26,3 +26,10 @@ export interface ConfigProps {
   USER_NAME: string
   LANGUAGE_CODE: string
 }
+
+export enum WsState {
+  CONNECTING = 0,
+  OPEN = 1,
+  CLOSING = 2,
+  CLOSED = 3,
+}

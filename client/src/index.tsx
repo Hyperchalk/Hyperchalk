@@ -39,55 +39,21 @@ function updateHashParams(name: string, value: string) {
 //       -> before unload, on blur, on visibility change, on hash change
 // TODO: make libraries work
 // TODO: make deletion work
+// TODO: persist locally and remotely
 // #endregion init
+
+let collabAPI = new CollabAPI(config)
 
 function IndexPage() {
   let draw = useRef<ExcalidrawImperativeAPI>(null)
-  window.draw = draw
-
-  let collabAPI = useRef(new CollabAPI(config, draw))
-
-  const throttledBroadcastCursorMovement = throttle(
-    collabAPI.current.broadcastCursorMovement.bind(collabAPI.current),
-    config.BROADCAST_RESOLUTION
-  )
-
-  const throttledBroadcastObjectUpdate = throttle(
-    collabAPI.current.broadcastElements.bind(collabAPI.current),
-    config.BROADCAST_RESOLUTION,
-    {
-      leading: false,
-      trailing: true,
-    }
-  )
-
-  // function storeElements(elements: readonly ExcalidrawElement[]) {
-  //   // TODO: persist locally and remotely
-  // }
-
-  // const throttledStoreElements = throttle(storeElements, config.ROOM_SAVE_FREQUENCY, {
-  //   leading: false,
-  //   trailing: true,
-  // })
-
-  function stateChanged(elements: readonly ExcalidrawElement[], appState: AppState) {
-    // throttledStoreElements(elements)
-    throttledBroadcastObjectUpdate(elements, appState)
-    // diffElements(elements)
-    // TODO: throttle function individually
-  }
+  collabAPI.excalidrawApiRef = draw
 
   return (
     <Excalidraw
       ref={draw}
       initialData={{ elements: config.INITIAL_DATA }}
-      onPointerUpdate={throttledBroadcastCursorMovement}
-      // onChange={throttle(stateChanged, config.BROADCAST_RESOLUTION, {
-      //   leading: false,
-      //   trailing: true,
-      // })}
-      onChange={stateChanged}
-      // onCollabButtonClick={setupWebSocket}
+      onPointerUpdate={collabAPI.broadcastCursorMovement}
+      onChange={collabAPI.broadcastElements}
       UIOptions={{
         canvasActions: {
           loadScene: false,
