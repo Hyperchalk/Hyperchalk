@@ -1,5 +1,14 @@
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { Gesture } from "@excalidraw/excalidraw/types/types"
+import { AppState, Gesture } from "@excalidraw/excalidraw/types/types"
+
+export type BroadcastedExcalidrawElement = ExcalidrawElement & {
+  parent?: string
+}
+
+export type ReconciliationAppState = Pick<
+  AppState,
+  "editingElement" | "resizingElement" | "draggingElement"
+>
 
 export interface Pointer {
   x: number
@@ -20,9 +29,9 @@ export interface UserColor {
 export interface ConfigProps {
   BROADCAST_RESOLUTION: number
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: number
-  INITIAL_DATA: ExcalidrawElement[]
+  INITIAL_DATA: BroadcastedExcalidrawElement[]
   SOCKET_URL: string
-  USER_COLOR: UserColor
+  USER_COLOR?: UserColor
   USER_NAME: string
   LANGUAGE_CODE: string
 }

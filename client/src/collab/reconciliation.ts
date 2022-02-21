@@ -23,18 +23,14 @@
  */
 
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { AppState } from "@excalidraw/excalidraw/types/types"
+import { BroadcastedExcalidrawElement, ReconciliationAppState } from "../types"
 
 export type ReconciledElements = readonly ExcalidrawElement[] & {
   _brand: "reconciledElements"
 }
 
-export type BroadcastedExcalidrawElement = ExcalidrawElement & {
-  parent?: string
-}
-
 function shouldDiscardRemoteElement(
-  localAppState: AppState,
+  localAppState: ReconciliationAppState,
   local: ExcalidrawElement | undefined,
   remote: BroadcastedExcalidrawElement
 ): boolean {
@@ -74,7 +70,7 @@ function getElementsMapWithIndex<T extends ExcalidrawElement>(elements: readonly
 export function reconcileElements(
   localElements: readonly ExcalidrawElement[],
   remoteElements: readonly BroadcastedExcalidrawElement[],
-  localAppState: AppState
+  localAppState: ReconciliationAppState
 ): ReconciledElements {
   const localElementsData = getElementsMapWithIndex<ExcalidrawElement>(localElements)
 

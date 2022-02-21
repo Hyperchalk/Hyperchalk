@@ -5,8 +5,8 @@ import throttle from "lodash.throttle"
 import { RefObject } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
-import { ConfigProps, PointerUpdateProps, WsState } from "../types"
-import { BroadcastedExcalidrawElement, reconcileElements } from "./reconciliation"
+import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps, WsState } from "../types"
+import { reconcileElements } from "./reconciliation"
 
 // #region message types
 // userRoomId always gets patched into the change in the backend
@@ -56,13 +56,13 @@ export class CollabAPI {
     this.ws = new ReconnectingWebSocket(config.SOCKET_URL)
     this.ws.addEventListener("message", (event) => this.routeMessage(JSON.parse(event.data)))
     this.ws.addEventListener("connecting", () => this.scheduleFullSync())
+    this.ws.addEventListener("open", () => this.broadcastCollaboratorChange(this.meInfo))
 
     // collaborator setup
     this.meInfo = {
       username: config.USER_NAME,
       color: config.USER_COLOR,
     }
-    this.broadcastCollaboratorChange(this.meInfo)
     this.MAX_UPDATES_BEFORE_RESYNC = config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
 
     // methods for direct usage by excalidraw component
@@ -186,9 +186,6 @@ export class CollabAPI {
       (this.elementsSyncBroadcastCounter + 1) % this.MAX_UPDATES_BEFORE_RESYNC
   }
 
-  // TODO: debounced save_room executions. they are only
-  //       sent to the server and will not be broadcasted.
-
   /**
    * Sends the elements to the other clients that changed since the last broadcast. Every
    * {@link CollabAPI#MAX_UPDATES_BEFORE_RESYNC} syncs will send all elements (ful sync).
@@ -216,6 +213,11 @@ export class CollabAPI {
       )
       this.updateBroadcastedVersions(toSync)
       this.syncSuccess()
+
+      // FIXME: why is the cursor position not send if elements are being dragged?
+      // if (appState.cursorButton == "down") {
+      //   this._broadcastCursorMovement({  })
+      // }
     } else {
       // full resync after websocket failed once
       this.scheduleFullSync()
@@ -248,10 +250,12 @@ export class CollabAPI {
   private collaboratorChangeBuffer: CollaboratorChange[] = []
 
   // TODO: broadcast idle state
-  // TODO: remove all collaborators on connection loss
+  // IDEA: remove all collaborators on connection loss
 
   /**
-   * Sends the current cursor to the backend so it can be braodcasted to the other clients.
+   * Sends the current cursor to the backend so it can be braodcasted to the other clients. It
+   * is prefixed with an underscore so a throttled version of the method can be exposed to the
+   * outside under the same name.
    *
    * @param param0 the updated cursor of this client
    */
@@ -308,12 +312,8 @@ export class CollabAPI {
 
     this.excalidrawApi?.updateScene({ collaborators: this.collaborators })
 
-    if (!isKnownCollaborator && this.excalidrawApi) {
-      this.scheduleFullSync()
-      this._broadcastElements(
-        this.excalidrawApi.getSceneElements(),
-        this.excalidrawApi.getAppState()
-      )
+    if (!isKnownCollaborator) {
+      this.broadcastEverything()
     }
   }
 
@@ -330,4 +330,18 @@ export class CollabAPI {
     this.excalidrawApi?.updateScene({ collaborators: this.collaborators })
   }
   // #endregion collaborator awareness
+
+  /**
+   * Broadcast all elements and the collaborator info.
+   */
+  private broadcastEverything() {
+    if (this.excalidrawApi) {
+      this.scheduleFullSync()
+      this._broadcastElements(
+        this.excalidrawApi.getSceneElements(),
+        this.excalidrawApi.getAppState()
+      )
+    }
+    this.broadcastCollaboratorChange(this.meInfo)
+  }
 }
