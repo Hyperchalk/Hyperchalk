@@ -28,6 +28,9 @@ ALLOWED_HOSTS: List[str] = ['localhost', '127.0.0.1']
 
 INTERNAL_IPS = ['127.0.0.1']
 
+# Configure https reverse proxy
+# https://docs.djangoproject.com/en/4.0/ref/settings/#secure-proxy-ssl-header
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 

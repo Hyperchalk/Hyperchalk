@@ -52,18 +52,18 @@ export class CollabAPI {
    * @param config configuration for the excalidraw room
    */
   constructor(config: ConfigProps) {
+    // collaborator setup
+    this.MAX_UPDATES_BEFORE_RESYNC = config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
+    this.meInfo = {
+      username: config.USER_NAME,
+      color: config.USER_COLOR,
+    }
+
     // websocket setup
     this.ws = new ReconnectingWebSocket(config.SOCKET_URL)
     this.ws.addEventListener("message", (event) => this.routeMessage(JSON.parse(event.data)))
     this.ws.addEventListener("connecting", () => this.scheduleFullSync())
     this.ws.addEventListener("open", () => this.broadcastCollaboratorChange(this.meInfo))
-
-    // collaborator setup
-    this.meInfo = {
-      username: config.USER_NAME,
-      color: config.USER_COLOR,
-    }
-    this.MAX_UPDATES_BEFORE_RESYNC = config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
 
     // methods for direct usage by excalidraw component
     this.broadcastCursorMovement = throttle(
