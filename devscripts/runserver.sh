@@ -1,11 +1,11 @@
 #!/bin/bash
 BASEDIR=$(cd "$(dirname "$0")"; pwd)
-cd $BASEDIR/..
+source $BASEDIR/init.sh
 
 $BASEDIR/make_static.sh
 
-echo $(colored $CYAN "migrating database... ")
+echo; echo $(colored $CYAN "migrating database... "); echo
 gosu moodle ENV/bin/python manage.py migrate --settings=local_settings
 
-echo $(colored $CYAN "starting development server:")
+echo;echo $(colored $CYAN "starting development server:"); echo
 gosu moodle ENV/bin/python manage.py runserver --settings=local_settings
