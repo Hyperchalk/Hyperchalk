@@ -27,7 +27,8 @@ async def index(request: HttpRequest, **kwargs):
     room_obj, _ = await get_room_elements(room_name=room)
     return render(request, 'collab/index.html', {'excalidraw_config': {
         'SOCKET_URL': request.build_absolute_uri('/ws/collab/collaborate/' + room)\
-            .replace('http://', 'ws://', 1),
+            .replace('http://', 'ws://', 1)\
+            .replace('https://', 'wss://', 1),
         'BROADCAST_RESOLUTION': 100,
         'ROOM_NAME': room,
         'INITIAL_DATA': room_obj.elements,
