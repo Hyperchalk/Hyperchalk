@@ -34,10 +34,6 @@ function updateHashParams(name: string, value: string) {
   window.location.hash = hash.toString()
 }
 
-// TODO: if a library was added, load it and update the URL hash
-// TODO: debounced save_room executions. they are only
-//       sent to the server and will not be broadcasted.
-
 function saveLibrary(items: LibraryItems) {
   localStorage.setItem("_library", JSON.stringify(items))
 }
@@ -81,6 +77,9 @@ function IndexPage() {
   useEventListener("beforeunload", saveStateToLocalStorage, window)
   useEventListener("visibilitychange", saveStateToLocalStorage, document)
 
+  // FIXME: adding items to the libraray via an addLink fails. see issue #5
+  // https://gitlab.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application/-/issues/5
+
   return (
     <Excalidraw
       ref={draw}
@@ -97,7 +96,6 @@ function IndexPage() {
       handleKeyboardGlobally={true}
       langCode={config.LANGUAGE_CODE}
       onLibraryChange={saveLibrary}
-      // libraryReturnUrl={{}}
     />
   )
 }
