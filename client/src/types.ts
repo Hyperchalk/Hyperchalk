@@ -30,10 +30,11 @@ export interface ConfigProps {
   BROADCAST_RESOLUTION: number
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: number
   INITIAL_DATA: BroadcastedExcalidrawElement[]
+  LANGUAGE_CODE: string
+  SAVE_ROOM_INTERVAL: number
   SOCKET_URL: string
   USER_COLOR?: UserColor
   USER_NAME: string
-  LANGUAGE_CODE: string
 }
 
 export enum WsState {

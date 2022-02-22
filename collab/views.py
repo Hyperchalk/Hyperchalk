@@ -34,7 +34,8 @@ async def index(request: HttpRequest, **kwargs):
         'INITIAL_DATA': room_obj.elements,
         'USER_NAME': await get_username(request.user),
         'LANGUAGE_CODE': settings.LANGUAGE_CODE,
-        'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100
+        'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
+        'SAVE_ROOM_INTERVAL': 15000
     }})
 
 async def get_current_elements(request: HttpRequest, room_name: str):

@@ -64,10 +64,7 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         Notify all collaborators if a client left, so they
         can remove it from their collaborator list, too.
         """
-        await self.send_event(
-            eventtype='collaborator_left',
-            collaborator={'userRoomId': self.user_room_id}
-        )
+        await self.send_event('collaborator_left', collaborator={'userRoomId': self.user_room_id})
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         return await super().disconnect(code)
 

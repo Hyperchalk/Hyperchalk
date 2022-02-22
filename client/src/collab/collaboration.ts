@@ -1,7 +1,8 @@
 import { isInvisiblySmallElement } from "@excalidraw/excalidraw"
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { AppState, Collaborator, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
-import throttle from "lodash.throttle"
+import throttle from "lodash/throttle"
+import debounce from "lodash/debounce"
 import { RefObject } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
@@ -43,6 +44,7 @@ export class CollabAPI {
 
   broadcastCursorMovement: (collaborator: PointerUpdateProps) => void
   broadcastElements: (elements: readonly ExcalidrawElement[], appState: AppState) => void
+  saveRoom: () => void
 
   // #endregion methods for excalidraw props
 
@@ -54,6 +56,7 @@ export class CollabAPI {
   constructor(config: ConfigProps) {
     // collaborator setup
     this.MAX_UPDATES_BEFORE_RESYNC = config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
+    this.SAVE_ROOM_INTERVAL = config.SAVE_ROOM_INTERVAL
     this.meInfo = {
       username: config.USER_NAME,
       color: config.USER_COLOR,
@@ -78,6 +81,11 @@ export class CollabAPI {
         trailing: true,
       }
     )
+    this.saveRoom = debounce(this._saveRoom.bind(this), 5000, {
+      leading: false,
+      trailing: true,
+      maxWait: this.SAVE_ROOM_INTERVAL,
+    })
   }
 
   // #region excalidraw access
@@ -198,11 +206,16 @@ export class CollabAPI {
   private _broadcastElements(elements: readonly ExcalidrawElement[], appState: AppState) {
     let doFullSync = this.elementsSyncBroadcastCounter == 0
     let toSync = doFullSync
-      ? this.elementsToSync(elements, true)
-      : this.elementsToSync(elements, false)
+      ? this.elementsToSync(elements, /* syncAll */ true)
+      : this.elementsToSync(elements, /* syncAll */ false)
 
     // do a full sync after reconnect
     if (this.ws.readyState == WsState.OPEN) {
+      // TODO: only if this client is the leader!
+      this.saveRoom()
+
+      // don't send an update if there is nothing to sync.
+      // e.g. the case after another client sent an update
       if (!toSync.length) return
 
       this.ws.send(
@@ -329,7 +342,6 @@ export class CollabAPI {
     this.collaborators.delete(userRoomId!)
     this.excalidrawApi?.updateScene({ collaborators: this.collaborators })
   }
-  // #endregion collaborator awareness
 
   /**
    * Broadcast all elements and the collaborator info.
@@ -344,4 +356,18 @@ export class CollabAPI {
     }
     this.broadcastCollaboratorChange(this.meInfo)
   }
+  // #endregion collaborator awareness
+
+  // #region backend communication
+  SAVE_ROOM_INTERVAL: number
+
+  private _saveRoom() {
+    this.ws.send(
+      JSON.stringify({
+        eventtype: "save_room",
+        elements: this.excalidrawApi?.getSceneElements() ?? [],
+      })
+    )
+  }
+  // #endregion backend communication
 }
