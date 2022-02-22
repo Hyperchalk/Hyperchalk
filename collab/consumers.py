@@ -110,11 +110,12 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
 
     async def full_sync(self, room_name, eventtype, elements, **kwargs):
         """
-        Forwards all full syncs to clients, logs them to the data base and saves the room.
+        Forwards all full syncs to clients, logs them to the data base ~~and saves the room~~.
         """
-        await gather(
-            self.elements_changed(room_name, eventtype, elements=elements, **kwargs),
-            self.save_room(room_name, elements, **kwargs))
+        await self.elements_changed(room_name, eventtype, elements=elements, **kwargs)
+        # await gather(
+        #     self.elements_changed(room_name, eventtype, elements=elements, **kwargs),
+        #     self.save_room(room_name, elements, **kwargs))
 
     async def elements_changed(self, room_name, eventtype, elements, **kwargs):
         """
