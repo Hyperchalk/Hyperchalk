@@ -1,7 +1,7 @@
 // import { useState, useEffect } from "react";
 import React, { useCallback, useRef } from "react"
 import { render } from "react-dom"
-import Excalidraw, { serializeAsJSON } from "@excalidraw/excalidraw"
+import Excalidraw, { serializeAsJSON, loadLibraryFromBlob } from "@excalidraw/excalidraw"
 import { ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types/types"
 import { ConfigProps } from "./types"
 
@@ -18,9 +18,10 @@ const defaultConfig: ConfigProps = {
   BROADCAST_RESOLUTION: 150,
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: 50,
   INITIAL_DATA: [],
+  LANGUAGE_CODE: "en-US",
+  SAVE_ROOM_INTERVAL: 15000,
   SOCKET_URL: "",
   USER_NAME: "",
-  LANGUAGE_CODE: "en-US",
 }
 
 const config: ConfigProps = Object.assign({}, defaultConfig, getJsonScript("excalidraw-config"))
@@ -78,7 +79,6 @@ function IndexPage() {
   useEventListener("hashchange", saveStateToLocalStorage, window)
   useEventListener("beforeunload", saveStateToLocalStorage, window)
   useEventListener("visibilitychange", saveStateToLocalStorage, document)
-  // TODO: debounced or throttled save on change
 
   return (
     <Excalidraw
@@ -96,6 +96,7 @@ function IndexPage() {
       handleKeyboardGlobally={true}
       langCode={config.LANGUAGE_CODE}
       onLibraryChange={saveLibrary}
+      // libraryReturnUrl={{}}
     />
   )
 }
