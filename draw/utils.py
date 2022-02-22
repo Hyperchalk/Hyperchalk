@@ -5,9 +5,12 @@ Helper functions and classes that don't need any configured state or django stuf
 from enum import Enum
 from typing import Any, Callable, Generic, List, Protocol, TypeVar, Union, cast
 
+from asgiref.sync import sync_to_async
+from django.http import HttpRequest, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.module_loading import import_string
+from django.utils.translation import gettext_lazy as _
 
 
 class SeqMode(Enum):
@@ -142,3 +145,25 @@ def reverse_with_query(viewname, kwargs=None, query_kwargs=None):
         return f"{url}?{urlencode(query_kwargs)}"
 
     return url
+
+@sync_to_async
+def user_is_staff(user):
+    return user.is_superuser or user.is_staff
+
+def require_staff_user(async_func):
+    async def inner(request: HttpRequest, *args, **kwargs):
+        if not await user_is_staff(request.user):
+            return HttpResponseForbidden(_("You need to be logged in as staff or as admin."))
+        return await async_func(request, *args, **kwargs)
+    return inner
+
+@sync_to_async
+def user_is_authenticated(user):
+    return user.is_authenticated
+
+def require_login(async_func):
+    async def inner(request: HttpRequest, *args, **kwargs):
+        if not await user_is_authenticated(request.user):
+            return HttpResponseForbidden(_("You need to be logged in."))
+        return await async_func(request, *args, **kwargs)
+    return inner
