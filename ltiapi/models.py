@@ -1,5 +1,4 @@
 import uuid
-from hashlib import sha256
 
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinLengthValidator
@@ -19,11 +18,11 @@ class OneOffRegistrationLink(models.Model):
         _("consumer name"), max_length=64, blank=False, validators=[MinLengthValidator(5)],
         help_text=_("Name of the LTI consumer to register"))
     registered_consumer = models.OneToOneField(
-        LtiTool, on_delete=models.CASCADE, null=True,
+        LtiTool, on_delete=models.CASCADE, null=True, blank=True,
         verbose_name=_("registered consumer"),
         help_text=_("only fills after registration completed"))
     consumer_registration_timestamp = models.DateTimeField(
-        _("consumer registration timestamp"), null=True)
+        _("consumer registration timestamp"), null=True, blank=True)
 
     def get_uri(self, request: HttpRequest):
         return request.build_absolute_uri(reverse('lti:register-consumer', args=[self.pk]))
