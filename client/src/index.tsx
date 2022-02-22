@@ -1,8 +1,8 @@
 // import { useState, useEffect } from "react";
 import React, { useCallback, useRef } from "react"
 import { render } from "react-dom"
-import Excalidraw, { serializeAsJSON, loadLibraryFromBlob } from "@excalidraw/excalidraw"
-import { ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types/types"
+import Excalidraw, { serializeAsJSON } from "@excalidraw/excalidraw"
+import { AppState, ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types/types"
 import { ConfigProps } from "./types"
 
 import "./style.css"
@@ -71,7 +71,8 @@ function IndexPage() {
     // server, the deleted element will be restored on reload, because we do not save
     // deleted elements. is this a problem? how correct do we have to be here?
     const elements = draw.current?.getSceneElements() ?? []
-    const appState = draw.current?.getAppState() ?? {}
+    const appState: Partial<AppState> = draw.current?.getAppState() ?? {}
+    delete appState.collaborators
     localStorage.setItem(params.get("room")!, serializeAsJSON(elements, appState))
   }, [draw])
 

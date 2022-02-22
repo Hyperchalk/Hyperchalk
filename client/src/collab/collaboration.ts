@@ -211,7 +211,13 @@ export class CollabAPI {
 
     // do a full sync after reconnect
     if (this.ws.readyState == WsState.OPEN) {
-      // TODO: only if this client is the leader!
+      // FIXME: here is a known performance bottleneck: if someone makes a change, this will trigger
+      //        the saveRoom method for everyone, leading to multiple comsumers on the server
+      //        diffing all the elements in the scene, zipping them (if they did a read before the
+      //        others saved) and storing them. this should be avoided by only one client sending
+      //        a saveRoom at once. but for this, leader election would be needed. another method
+      //        of implementing this could be the consumers debouncing the save on the server side
+      //        by synchronizing via channel layers.
       this.saveRoom()
 
       // don't send an update if there is nothing to sync.
