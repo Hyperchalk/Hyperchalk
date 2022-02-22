@@ -2,12 +2,19 @@
 {% load i18n %}
 
 {% block body %}
-<p>{% blocktrans with consumer=link.consumer_name trimmed %}
-  This one off link was issued for a registration by “{{consumer}}”. Once the
-  registration process is started, it cannot be reused. Do you want to continue?
-{% endblocktrans %}</p>
-<form action="{{request.url}}" method="post">
-  {% csrf_token %}
-  <button type="submit">{% trans "Start The Registration" %}</button>
-</form>
+{% if link.registered_consumer_id is None %}
+  <p>{% blocktrans with consumer=link.consumer_name trimmed %}
+    This one off link was issued for a registration by “{{consumer}}”. Once the
+    registration process is started, it cannot be reused. Do you want to continue?
+  {% endblocktrans %}</p>
+  <form action="{{request.url}}" method="post">
+    {% csrf_token %}
+    <button type="submit">{% trans "Start The Registration" %}</button>
+  </form>
+{% else %}
+  <p>{% blocktrans trimmed %}
+    The registration link has already been used. Please ask
+    the admin of the LTI app for a new registration link.
+  {% endblocktrans %}</p>
+{% endif %}
 {% endblock body %}

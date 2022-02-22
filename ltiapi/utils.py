@@ -9,7 +9,7 @@ from django.conf import settings
 from django.http import HttpRequest
 from django.templatetags.static import static
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool, LtiToolKey
 
 from . import models as m
@@ -65,7 +65,7 @@ async def make_tool_config_from_openid_config_via_link(
     conf_spec = "https://purl.imsglobal.org/spec/lti-platform-configuration"
     assert conf_spec in openid_config, "The OpenID config is not an LTI platform configuration"
     tool_spec = "https://purl.imsglobal.org/spec/lti-tool-configuration"
-    assert tool_spec in openid_config, "The OpenID registration is not an LTI tool configuration"
+    assert tool_spec in openid_registration, "The OpenID registration is not an LTI tool configuration"
 
     deployment_ids = [openid_registration[tool_spec]['deployment_id']]
 
@@ -80,7 +80,7 @@ async def make_tool_config_from_openid_config_via_link(
         tool_key=await keys_for_issuer(openid_config['issuer']),
         deployment_ids=json.dumps(deployment_ids),
     )
-    consumer_config.save()
+    await sync_to_async(consumer_config.save)()
     return consumer_config
 
 def absolute_reverse(request: HttpRequest, *args, **kwargs):
@@ -90,11 +90,14 @@ def lti_registration_data(request: HttpRequest):
     domain = request.get_host() + ":" + request.get_port()
     # TODO: implement the missing routes
     return {
+        'response_types': [
+            'id_token'
+        ],
         'application_type': 'web',
-        'client_name': _('%s by %s') % (
+        'client_name': str(_('%s by %s') % (
             settings.LTI_CONFIG['title'],
             settings.LTI_CONFIG['vendor_name'],
-        ),
+        )),
         'initiate_login_uri': absolute_reverse(request, 'lti:login'),
         'grant_types': [
             'implicit',
@@ -112,9 +115,9 @@ def lti_registration_data(request: HttpRequest):
         },
         'messages': [{
             'type': 'LtiDeepLinkingRequest',
-            'target_link_uri': absolute_reverse(request, 'lti:index'),
-            'label': _('New drawing board'),
+            'target_link_uri': absolute_reverse(request, 'collab:index'),
+            'label': str(_('New drawing board')),
         }],
         'description': settings.LTI_CONFIG['description'],
-        'logo_uri': static('ltiapi/fav.gif')
+        'logo_uri': request.build_absolute_uri(static('ltiapi/fav.gif'))
     }
