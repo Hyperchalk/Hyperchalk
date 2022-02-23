@@ -87,7 +87,6 @@ def absolute_reverse(request: HttpRequest, *args, **kwargs):
     return request.build_absolute_uri(reverse(*args, **kwargs))
 
 def lti_registration_data(request: HttpRequest):
-    domain = request.get_host() + ":" + request.get_port()
     # TODO: implement the missing routes
     return {
         'response_types': [
@@ -105,19 +104,22 @@ def lti_registration_data(request: HttpRequest):
         ],
         'jwks_uri': absolute_reverse(request, 'lti:jwks'),
         'token_endpoint_auth_method': 'private_key_jwt',
-        'redirect_uris': [absolute_reverse(request, 'lti:launch')],
+        'redirect_uris': [
+            absolute_reverse(request, 'lti:launch'),
+            absolute_reverse(request, 'collab:index'),
+        ],
         # https://www.imsglobal.org/spec/security/v1p0/#h_scope-naming-conventions
         'scope': ['https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'],
         'https://purl.imsglobal.org/spec/lti-tool-configuration': {
-            'domain': domain,
-            'target_link_uri': request.scheme + '://' + domain,
+            'domain': request.get_host(), # get_host includes the port.
+            'target_link_uri': request.build_absolute_uri('/'),
             'claims': ['iss', 'sub', 'name'],
+            'messages': [{
+                'type': 'LtiDeepLinkingRequest',
+                'target_link_uri': absolute_reverse(request, 'collab:index'),
+                'label': str(_('New drawing board')),
+            }],
+            'description': settings.LTI_CONFIG['description'],
         },
-        'messages': [{
-            'type': 'LtiDeepLinkingRequest',
-            'target_link_uri': absolute_reverse(request, 'collab:index'),
-            'label': str(_('New drawing board')),
-        }],
-        'description': settings.LTI_CONFIG['description'],
         'logo_uri': request.build_absolute_uri(static('ltiapi/fav.gif'))
     }

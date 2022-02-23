@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Iterable, List, Union
+from urllib.parse import urlparse
 
 from draw.utils import StrLike
 
@@ -119,6 +120,28 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # https://docs.djangoproject.com/en/3.2/topics/auth/customizing/#auth-custom-user
 AUTH_USER_MODEL = 'ltiapi.CustomUser'
+
+# https://docs.djangoproject.com/en/3.2/ref/settings/#csrf-trusted-origins
+class TrustedOrigins(Iterable[str]):
+    """
+    Iterable of trusted origins for embedding this application in iframes.
+
+    The allowed origins should be the tools configured from the database. But since the settings
+    are loaded before the database, additional settings can't be pulled from the db at this point.
+    The CSRF middleware casts ``CSRF_TRUSTED_ORIGINS`` this to a ``list`` when it runs. So the
+    model will be loaded precisely at this point. The allowed hosts are then the hostnames of the
+    issuer field of the :model:`lti1p3_tool_config.LtiTool` configs (speak the LTI platforms).
+    """
+    def __iter__(self):
+        # TODO: can this be made async?
+        if not hasattr(self, 'tool_model'):
+            from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
+            self.tool_model = LtiTool
+        for (issuer,) in self.tool_model.objects.all().values_list('issuer'):
+            print(f'csrf check issuer: {issuer}/')
+            yield urlparse(issuer).hostname
+
+CSRF_TRUSTED_ORIGINS = iter(TrustedOrigins())
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
