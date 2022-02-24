@@ -43,7 +43,7 @@ class RegisterConsumerView(DetailView):
         view._is_coroutine = asyncio.coroutines._is_coroutine
         return view
 
-    # pylint: disable=invalid-overridden-method
+    # pylint: disable = invalid-overridden-method, attribute-defined-outside-init
     async def get(self, request: HttpRequest, *args, **kwargs):
         return await sync_to_async(super().get)(request, *args, **kwargs) # type: ignore
 
@@ -98,14 +98,13 @@ class RegisterConsumerView(DetailView):
         return self.render_to_response(ctx)
 
 
-async def oidc_jwks(request: HttpRequest, issuer: Optional[str] = None, client_id: Optional[str] = None):
+async def oidc_jwks(
+    request: HttpRequest, issuer: Optional[str] = None,
+    client_id: Optional[str] = None
+):
     tool_conf = DjangoDbToolConf()
     get_jwks = sync_to_async(tool_conf.get_jwks)
     return JsonResponse(await get_jwks(issuer, client_id))
-
-# TODO: implement endpoints for lauch, deeplink configuration and drawing board
-# TODO: implement the routes that are needed for the request data
-
 
 def get_launch_url(request: HttpRequest):
     """
@@ -121,14 +120,14 @@ def oidc_login(request: HttpRequest):
     tool_conf = DjangoDbToolConf()
     launch_data_storage = DjangoCacheDataStorage()
 
-    oidc_login = DjangoOIDCLogin(request, tool_conf, launch_data_storage=launch_data_storage)
+    oidc_login_handle = DjangoOIDCLogin(request, tool_conf, launch_data_storage=launch_data_storage)
     target_link_uri = get_launch_url(request)
-    redirect = oidc_login\
+    oidc_redirect = oidc_login_handle\
         .enable_check_cookies()\
         .redirect(target_link_uri, False)
-    return redirect
+    return oidc_redirect
 
-oidc_login.csrf_exempt = True
+oidc_login.csrf_exempt = True # type: ignore
 # XXX: what caould go wrong if an attacker would trigger the login
 #      for a known issuer? could they somehow change a deeplink?
 # YYY: → is the OIDC login flow csrf-safe? there is no possibility
@@ -147,12 +146,15 @@ def issuer_namespaced_username(issuer, username):
 def lti_launch(request: HttpRequest):
     tool_conf = DjangoDbToolConf()
     launch_data_storage = DjangoCacheDataStorage()
-    message_launch = DjangoMessageLaunch(request, tool_conf, launch_data_storage=launch_data_storage)
+    message_launch = DjangoMessageLaunch(
+        request, tool_conf, launch_data_storage=launch_data_storage)
     message_launch_data = message_launch.get_launch_data()
     # lazy_pformat: only format the data if it will be logged.
     # logger.debug("launch with data:\n%s", lazy_pformat(message_launch_data))
 
-    username = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/ext']['user_username']
+    username = message_launch_data\
+        .get('https://purl.imsglobal.org/spec/lti/claim/ext', {})\
+        .get('user_username') # type: ignore
     issuer = message_launch_data['iss']
     user_full_name = message_launch_data.get('name', '')
     username = issuer_namespaced_username(issuer, username)
@@ -194,7 +196,7 @@ def lti_launch(request: HttpRequest):
 
     if message_launch.is_data_privacy_launch():
         # TODO: implement data privacy screen. (not as urgent. moodle does not support this anyway.)
-        return ...
+        return NotImplementedError()
 
     if message_launch.is_resource_launch():
         # join the room

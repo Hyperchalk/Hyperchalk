@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Union
 from urllib.parse import urlparse
 
+from django.utils.module_loading import import_string
+
 from draw.utils import StrLike
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -132,11 +134,13 @@ class TrustedOrigins(Iterable[str]):
     model will be loaded precisely at this point. The allowed hosts are then the hostnames of the
     issuer field of the :model:`lti1p3_tool_config.LtiTool` configs (speak the LTI platforms).
     """
+    def __init__(self) -> None:
+        self.tool_model = None
+
     def __iter__(self):
-        # TODO: can this be made async?
-        if not hasattr(self, 'tool_model'):
-            from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
-            self.tool_model = LtiTool
+        if not self.tool_model:
+            lti_path = 'pylti1p3.contrib.django.lti1p3_tool_config.models.LtiTool'
+            self.tool_model = import_string(lti_path)
         for (issuer,) in self.tool_model.objects.all().values_list('issuer'):
             print(f'csrf check issuer: {issuer}/')
             yield urlparse(issuer).hostname
