@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Any, Dict
 
 from asgiref.sync import sync_to_async
@@ -15,9 +14,6 @@ from draw.utils import absolute_reverse
 
 from . import models as m
 
-
-def ensure_lti_config_dir_exists():
-    os.makedirs(settings.LTI_CONFIG_DIR, exist_ok=True)
 
 async def generate_key_pair(key_size=4096):
     """
@@ -64,9 +60,12 @@ async def make_tool_config_from_openid_config_via_link(
     one_off_registration: m.OneOffRegistrationLink
 ):
     conf_spec = "https://purl.imsglobal.org/spec/lti-platform-configuration"
-    assert conf_spec in openid_config, "The OpenID config is not an LTI platform configuration"
+    assert conf_spec in openid_config, \
+        "The OpenID config is not an LTI platform configuration"
+
     tool_spec = "https://purl.imsglobal.org/spec/lti-tool-configuration"
-    assert tool_spec in openid_registration, "The OpenID registration is not an LTI tool configuration"
+    assert tool_spec in openid_registration, \
+        "The OpenID registration is not an LTI tool configuration"
 
     deployment_ids = [openid_registration[tool_spec]['deployment_id']]
 
@@ -81,11 +80,10 @@ async def make_tool_config_from_openid_config_via_link(
         tool_key=await keys_for_issuer(openid_config['issuer']),
         deployment_ids=json.dumps(deployment_ids),
     )
-    await sync_to_async(consumer_config.save)()
+    await sync_to_async(consumer_config.save)() # type: ignore
     return consumer_config
 
 def lti_registration_data(request: HttpRequest):
-    # TODO: implement the missing routes
     return {
         'response_types': [
             'id_token'

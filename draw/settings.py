@@ -182,14 +182,9 @@ LTI_CONFIG = {
     'vendor_contact_email': 'praktikum_alice@dipf.de',
 }
 
-# List of LMS domains that are allowed to use this app
-ALLOWED_LTI_CONSUMERS: List[str]
-
-LTI_CONFIG_DIR = BASE_DIR / 'lticonfig'
-
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):
-    required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE'}
+    required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE', 'LINK_BASE'}
     missing = required_vars.difference(final_locals.keys())
     if missing:
         raise ValueError(f'The following mandatory keys are missing from your config: {missing}')

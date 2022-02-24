@@ -18,5 +18,6 @@ except ModuleNotFoundError:
     }
     SECRET_KEY = "super_secret_key_that_has_to_be_changed_in_production!!!"
     TIME_ZONE = "UTC"
+    LINK_BASE = 'localhost:8000'
 
     finalize_settings(locals())
