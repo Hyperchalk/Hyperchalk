@@ -67,7 +67,7 @@ function IndexPage() {
     // server, the deleted element will be restored on reload, because we do not save
     // deleted elements. is this a problem? how correct do we have to be here?
     const elements = draw.current?.getSceneElements() ?? []
-    const appState: Partial<AppState> = draw.current?.getAppState() ?? {}
+    const appState: Partial<AppState> = { ...draw.current?.getAppState() }
     delete appState.collaborators
     localStorage.setItem(params.get("room")!, serializeAsJSON(elements, appState))
   }, [draw])
