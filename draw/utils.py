@@ -8,11 +8,13 @@ import uuid
 import zlib
 from enum import Enum
 from hashlib import sha256
+from pprint import pformat
 from typing import Any, Callable, Generic, List, Optional, Protocol, Tuple, TypeVar, Union, cast
 
 from asgiref.sync import sync_to_async
 from django.http import HttpRequest, HttpResponseForbidden
 from django.urls import reverse
+from django.utils.functional import lazy
 from django.utils.http import urlencode
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
@@ -198,3 +200,5 @@ def make_room_name(length):
 
 def absolute_reverse(request: HttpRequest, *args, **kwargs):
     return request.build_absolute_uri(reverse(*args, **kwargs))
+
+lazy_pformat = lazy(pformat, str)

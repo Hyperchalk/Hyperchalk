@@ -177,7 +177,7 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
                 'eventtype': eventtype,
                 **event_args
             },
-            'sender': self.user_room_id
+            'sender': self.channel_name
         })
 
     async def notify_client(self, event: dict):
@@ -185,5 +185,5 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         Receives broadcast commissions for notifying clients.
         """
         # dont't send the event back to the sender
-        if event['sender'] != self.user_room_id:
+        if event['sender'] != self.channel_name:
             await self.send_json(event['notification'])

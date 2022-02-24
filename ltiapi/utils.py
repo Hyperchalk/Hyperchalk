@@ -11,6 +11,8 @@ from django.templatetags.static import static
 from django.utils.translation import gettext as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool, LtiToolKey
 
+from draw.utils import absolute_reverse
+
 from . import models as m
 
 

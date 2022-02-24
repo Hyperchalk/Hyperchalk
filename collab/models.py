@@ -69,6 +69,8 @@ class ExcalidrawRoom(models.Model):
     room_name = models.CharField(
         primary_key=True, max_length=24,
         validators=[MinLengthValidator(24)])
+    # TODO: log channel name if a user is logged in in multiple tabs / windows
+    # via_channel = models.CharField()
     _elements = models.BinaryField(blank=True, default=EMPTY_JSON_LIST_ZLIB_COMPRESSED)
 
     @property

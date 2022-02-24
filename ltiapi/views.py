@@ -1,22 +1,23 @@
 import asyncio
 import logging
 import re
-from pprint import pformat
 from typing import List, Optional
 from urllib.parse import urlparse
 
 import aiohttp
 from asgiref.sync import sync_to_async
-from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render
+from django.contrib.auth import get_user_model, login
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView
 from pylti1p3.contrib.django import DjangoCacheDataStorage, DjangoMessageLaunch, DjangoOIDCLogin
 from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
+from pylti1p3.deep_link_resource import DeepLinkResource
 
-from django.utils.functional import lazy
+from draw.utils import absolute_reverse, make_room_name, reverse_with_query
 
 from . import models as m
 from .utils import lti_registration_data, make_tool_config_from_openid_config_via_link
@@ -99,7 +100,8 @@ class RegisterConsumerView(DetailView):
 
 async def oidc_jwks(request: HttpRequest, issuer: Optional[str] = None, client_id: Optional[str] = None):
     tool_conf = DjangoDbToolConf()
-    return JsonResponse(tool_conf.get_jwks(issuer, client_id))
+    get_jwks = sync_to_async(tool_conf.get_jwks)
+    return JsonResponse(await get_jwks(issuer, client_id))
 
 # TODO: implement endpoints for lauch, deeplink configuration and drawing board
 # TODO: implement the routes that are needed for the request data
@@ -141,8 +143,6 @@ def issuer_namespaced_username(issuer, username):
     return username + '@' + issuer_host
 # XXX: is there a possibility that multiple issuers reside at the same subdomain?
 
-lazy_pformat = lazy(pformat, str)
-
 @require_POST
 def lti_launch(request: HttpRequest):
     tool_conf = DjangoDbToolConf()
@@ -150,34 +150,55 @@ def lti_launch(request: HttpRequest):
     message_launch = DjangoMessageLaunch(request, tool_conf, launch_data_storage=launch_data_storage)
     message_launch_data = message_launch.get_launch_data()
     # lazy_pformat: only format the data if it will be logged.
-    logger.debug("launch with data:\n%s", lazy_pformat(message_launch_data))
+    # logger.debug("launch with data:\n%s", lazy_pformat(message_launch_data))
 
     username = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/ext']['user_username']
     issuer = message_launch_data['iss']
+    user_full_name = message_launch_data.get('name', '')
     username = issuer_namespaced_username(issuer, username)
 
-    # TODO: get or create the user
+    UserModel = get_user_model()
+    user, user_mod = UserModel.objects.get_or_create(username=username)
+    if not user.first_name:
+        user.first_name = user_full_name
+        user_mod = True
+    if user_mod:
+        user.save()
+    login(request, user)
+
+    room = message_launch_data\
+        .get('https://purl.imsglobal.org/spec/lti/claim/custom', {})\
+        .get('room', None) \
+        or request.GET.get('room', make_room_name(24))
+
+    room_uri = reverse_with_query('collab:index', query_kwargs={'room': room})
+    room_uri = request.build_absolute_uri(room_uri)
 
     if message_launch.is_deep_link_launch():
-        # TODO: implement deep link config
-        return ...
+        # create a deep link
+        course_title = message_launch_data\
+            .get('https://purl.imsglobal.org/spec/lti/claim/context', {})\
+            .get('title', None)
+        title = message_launch_data\
+            .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
+            .get('title', course_title)
+        title = "Draw Together" + (f" – {title}" if title else "")
+
+        resource = DeepLinkResource()
+        resource.set_url(absolute_reverse(request, 'lti:launch'))\
+            .set_custom_params({'room': room})\
+            .set_title(title)
+
+        html = message_launch.get_deep_link().output_response_form([resource])
+        return HttpResponse(html)
 
     if message_launch.is_data_privacy_launch():
-        # TODO: implement data privacy screen
+        # TODO: implement data privacy screen. (not as urgent. moodle does not support this anyway.)
         return ...
 
     if message_launch.is_resource_launch():
-        # TODO: implement resource
-        return ...
-
-    return render(request, 'game.html', {
-        'page_title': PAGE_TITLE,
-        'is_deep_link_launch': message_launch.is_deep_link_launch(),
-        'launch_data': message_launch.get_launch_data(),
-        'launch_id': message_launch.get_launch_id(),
-        'curr_user_name': message_launch_data.get('name', ''),
-        'curr_diff': difficulty
-    })
+        # join the room
+        return redirect(room_uri)
 
 lti_launch.csrf_exempt = True
 # The launch can only be triggered with a valid JWT issued by a registered platform.
