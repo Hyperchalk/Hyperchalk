@@ -1,13 +1,12 @@
-from functools import cached_property
 import json
+from functools import cached_property
 
-from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
+from draw.utils import JSONType, dump_content, load_content
 from ltiapi.models import CustomUser
-
-from .utils import JSONType, dump_content, load_content
 
 
 class ExcalidrawLogRecord(models.Model):

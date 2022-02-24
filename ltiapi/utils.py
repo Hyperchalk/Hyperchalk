@@ -8,7 +8,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from django.http import HttpRequest
 from django.templatetags.static import static
-from django.urls import reverse
 from django.utils.translation import gettext as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool, LtiToolKey
 
@@ -83,9 +82,6 @@ async def make_tool_config_from_openid_config_via_link(
     await sync_to_async(consumer_config.save)()
     return consumer_config
 
-def absolute_reverse(request: HttpRequest, *args, **kwargs):
-    return request.build_absolute_uri(reverse(*args, **kwargs))
-
 def lti_registration_data(request: HttpRequest):
     # TODO: implement the missing routes
     return {
@@ -116,7 +112,7 @@ def lti_registration_data(request: HttpRequest):
             'claims': ['iss', 'sub', 'name'],
             'messages': [{
                 'type': 'LtiDeepLinkingRequest',
-                'target_link_uri': absolute_reverse(request, 'collab:index'),
+                'target_link_uri': absolute_reverse(request, 'lti:launch'),
                 'label': str(_('New drawing board')),
             }],
             'description': settings.LTI_CONFIG['description'],

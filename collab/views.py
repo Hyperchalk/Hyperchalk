@@ -5,10 +5,9 @@ from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
 
-from draw.utils import require_login, require_staff_user, reverse_with_query
+from draw.utils import make_room_name, require_login, require_staff_user, reverse_with_query
 
 from . import models as m
-from .utils import make_room_name
 
 get_room_elements = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
 async_get_object_or_404 = sync_to_async(get_object_or_404)

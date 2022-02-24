@@ -1,9 +1,14 @@
 """
 Helper functions and classes that don't need any configured state or django stuff loaded.
 """
-
+import json
+import random
+import string
+import uuid
+import zlib
 from enum import Enum
-from typing import Any, Callable, Generic, List, Protocol, TypeVar, Union, cast
+from hashlib import sha256
+from typing import Any, Callable, Generic, List, Optional, Protocol, Tuple, TypeVar, Union, cast
 
 from asgiref.sync import sync_to_async
 from django.http import HttpRequest, HttpResponseForbidden
@@ -167,3 +172,29 @@ def require_login(async_func):
             return HttpResponseForbidden(_("You need to be logged in."))
         return await async_func(request, *args, **kwargs)
     return inner
+
+JSONType = Optional[Union[dict, list, str, int, float]]
+
+def load_content(content: bytes, compressed: bool = True) -> JSONType:
+    if compressed:
+        return json.loads(zlib.decompress(content).decode('utf-8'))
+    return json.loads(content.decode('utf-8'))
+
+def dump_content(content: JSONType, force_compression=False) -> Tuple[bytes, bool]:
+    val_bytes = json.dumps(content, ensure_ascii=False).encode('utf-8')
+    compressed = zlib.compress(val_bytes)
+    if force_compression or len(compressed) < len(val_bytes):
+        return compressed, True
+    return val_bytes, False
+
+def flatten_list(l: list):
+    return [flatten_list(e) if isinstance(e, list) else e for e in l]
+
+def user_id_for_room(uid: uuid.UUID, room_name: str):
+    return sha256(uid.bytes + b":" + room_name.encode('utf-8')).hexdigest()
+
+def make_room_name(length):
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def absolute_reverse(request: HttpRequest, *args, **kwargs):
+    return request.build_absolute_uri(reverse(*args, **kwargs))

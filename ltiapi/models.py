@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
-from collab.utils import user_id_for_room
+from draw.utils import user_id_for_room
 
 
 class OneOffRegistrationLink(models.Model):

@@ -10,10 +10,10 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 
+from draw.utils import dump_content, user_id_for_room
 from ltiapi.models import CustomUser
 
 from . import models as m
-from .utils import dump_content, user_id_for_room
 
 logger = logging.getLogger("collab")
 
