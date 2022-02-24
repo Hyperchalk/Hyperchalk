@@ -1,0 +1,447 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.imsglobal.org/jsd/ltiv1p3/schema-deeplinkingrequest.json",
+  "title": "Learning Tools Interoperability Version 1.3 Final Release JSON Schema Binding (schema-deeplinkingrequest)",
+  "description": "Author-Claude Vervoort (Cengage), Colin Smythe (IMS Global) and James Rissler (IMS Global);  Version-Final 1.0;  Release Date-6th May, 2019. The contents for the LTI Deep Linking 2.0 request message JWT [ Schema version 1.0 ].",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/LTIJWTMessageCore.Type"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "https://purl.imsglobal.org/spec/lti/claim/message_type": {
+          "description": "This required attribute indicates the type of the sender's LTI message. Each message type MUST have a unique value.",
+          "type": "string",
+          "enum": [
+            "LtiDeepLinkingRequest"
+          ]
+        },
+        "https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings": {
+          "description": "The claim composes properties that characterize the kind of deep linking request the playtform user is making.",
+          "$ref": "#/definitions/DeepLinkingSettings.Type"
+        }
+      },
+      "required": [
+        "https://purl.imsglobal.org/spec/lti/claim/message_type",
+        "https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "ContextClaim.Type": {
+      "description": "This is the container for the set of claims for the context from within which the resource link occurs.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Model Primitive Datatype = String. Stable identifier that uniquely identifies the context from which the LTI message initiates. This MUST be locally unique to the 'deployment_id.",
+          "type": "string",
+          "maxLength": 255
+        },
+        "label": {
+          "description": "Model Primitive Datatype = String. Short descriptive name for the context.",
+          "type": "string"
+        },
+        "title": {
+          "description": "Model Primitive Datatype = String. Full descriptive name for the context.",
+          "type": "string"
+        },
+        "type": {
+          "description": "An array of URI values for context types. The contained values come from either the associated enumerated vocabulary or a proprietary URI.",
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "oneOf": [
+              {
+                "description": "Model Primitive Datatype = AnyURI.",
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "enum": [
+                  "http://purl.imsglobal.org/vocab/lis/v2/course#CourseTemplate",
+                  "http://purl.imsglobal.org/vocab/lis/v2/course#CourseOffering",
+                  "http://purl.imsglobal.org/vocab/lis/v2/course#CourseSection",
+                  "http://purl.imsglobal.org/vocab/lis/v2/course#CourseGroup"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "CustomClaim.Type": {
+      "description": "The set of custom parameters to be passed to the tool at launch. Each parameter is expressed as a key-value map.",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": true
+    },
+    "DeepLinkingSettings.Type": {
+      "description": " ",
+      "type": "object",
+      "properties": {
+        "deep_link_return_url": {
+          "description": "Model Primitive Datatype = String. This is a fully qualified URL where the Platform redirects the user back to the tool interface. This URL can be use once the Platform is finished.",
+          "type": "string"
+        },
+        "accept_types": {
+          "description": "Model Primitive Datatype = String. The set of types accepted.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "accept_presentation_document_targets": {
+          "description": "Model Primitive Datatype = String. The set of documents supported e.g. 'iframe', 'window', etc.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "accept_media_types": {
+          "description": "Model Primitive Datatype = String. The set of media types (as defined in RFC 7321) the Platform accepts. This only applies to the file types.",
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          }
+        },
+        "accept_multiple": {
+          "description": "Whether the Platform allows multiple content items to be submitted in a single response.",
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "auto_create": {
+          "description": "Whether any content items returned by the Tool would be automatically persisted without any option for the user to cancel the operation.",
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ],
+          "default": "false"
+        },
+        "title": {
+          "description": "Model Primitive Datatype = String. Default text to be used as the title or alt text for the content item returned by the Tool. This value is normally short in length, for example, suitable for use as a heading.",
+          "type": "string"
+        },
+        "text": {
+          "description": "Model Primitive Datatype = String. Default text to be used as the visible text for the content item returned by the Tool. If no text is returned by the Tool, the Platform may use the value of the 'title' parameter instead (if any). This value may be a long description of the content item.",
+          "type": "string"
+        },
+        "data": {
+          "description": "Model Primitive Datatype = String. An opaque value which must be returned by the Tool in its response if it was passed in on the request.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deep_link_return_url",
+        "accept_types",
+        "accept_presentation_document_targets"
+      ],
+      "additionalProperties": false
+    },
+    "LTIJWTMessageCore.Type": {
+      "description": "This is the common set of JWT claims that are either available or must be used for the set of messages used in LTI Advantage.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/LTISecurityFrameworkJWT.Type"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Model Primitive Datatype = String. End-User's full name in displayable form including all name parts, possibly including titles and suffixes, ordered according to the End-User's locale and preferences.",
+              "type": "string"
+            },
+            "given_name": {
+              "description": "Model Primitive Datatype = String. Given name(s) or first name(s) of the End-User. Note that in some cultures, people can have multiple given names; all can be present, with the names being separated by space characters.",
+              "type": "string"
+            },
+            "family_name": {
+              "description": "Model Primitive Datatype = String. Surname(s) or last name(s) of the End-User. Note that in some cultures, people can have multiple family names or no family name; all can be present, with the names being separated by space characters.",
+              "type": "string"
+            },
+            "middle_name": {
+              "description": "Model Primitive Datatype = String. Middle name(s) of the End-User. Note that in some cultures, people can have multiple middle names; all can be present, with the names being separated by space characters. Also note that in some cultures, middle names are not used.",
+              "type": "string"
+            },
+            "picture": {
+              "description": "Model Primitive Datatype = String. URL of the End-User's profile picture. This URL MUST refer to an image file (for example, a PNG, JPEG, or GIF image file), rather than to a Web page containing an image. Note that this URL SHOULD specifically reference a profile photo of the End-User suitable for displaying when describing the End-User, rather than an arbitrary photo taken by the End-User.",
+              "type": "string"
+            },
+            "email": {
+              "description": "Model Primitive Datatype = String. End-User's preferred e-mail address. Its value MUST conform to the RFC 5322 [RFC 5322] addr-spec syntax. The Tool MUST NOT rely upon this value being unique.",
+              "type": "string"
+            },
+            "locale": {
+              "description": "Model Primitive Datatype = String. End-User's locale, represented as a BCP47 [RFC5646] language tag. This is typically an ISO 639-1 Alpha-2 [ISO 639-1] language code in lowercase and an ISO 3166-1 Alpha-2 [ISO 3166-1] country code in uppercase, separated by a dash. For example, en-US or fr-CA. As a compatibility note, some implementations have used an underscore as the separator rather than a dash, for example, en_US; Tools MAY choose to accept this locale syntax as well.",
+              "type": "string"
+            },
+            "https://purl.imsglobal.org/spec/lti/claim/roles": {
+              "description": "This required attribute contains an array of URI values for roles that the user has within the message's associated context. The permitted set of roles are enumerated.",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "enum": [
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#Non",
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#AccountAdmin",
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#Creator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#SysAdmin",
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#SysSupport",
+                  "http://purl.imsglobal.org/vocab/lis/v2/system/person#User",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Guest",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#None",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Other",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Alumni",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Learner",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Member",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Mentor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Observer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#ProspectiveStudent",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Administrator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#ContentDeveloper",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Instructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Learner",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Mentor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Manager",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Member",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership#Officer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#Administrator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#Developer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#ExternalDeveloper",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#ExternalSupport",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#ExternalSystemAdministrator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#SystemAdministrator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Administrator#Support",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/ContentDeveloper#ContentDeveloper",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/ContentDeveloper#ContentExpert",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/ContentDeveloper#ExternalContentExpert",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/ContentDeveloper#Librarian",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#ExternalInstructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#Grade",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#GuestInstructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#Instructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#Lecturer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#PrimaryInstructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#SecondaryInstructor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#TeachingAssistant",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#TeachingAssistantGroup",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#TeachingAssistantOfferuing",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#TeachingAssistantSection",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Instructor#TeachingAssistantTemplate",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Learner#ExternalLearner",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Learner#GuestLearner",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Learner#Learner",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Learner#NonCreditLearner",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Manager#AreaManager",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Manager#CourseCoordinator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Manager#ExternalObserver",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Manager#Manager",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Manager#Observer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Member#Member",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#Advisor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#Auditor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#ExternalAdvisor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#ExternalAuditor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#ExternalLearningFacilitator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#ExternalMentor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#ExternalReviewer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#LearningFacilitator",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#Mentor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#Reviewer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Mentor#Tutor",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Officer#Chair",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Officer#Secretary",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Officer#Treasurer",
+                  "http://purl.imsglobal.org/vocab/lis/v2/institution/membership/Officer#Vice-Chair"
+                ]
+              }
+            },
+            "https://purl.imsglobal.org/spec/lti/claim/role_scope_mentor": {
+              "description": "Model Primitive Datatype = String. Contains an array of the user ID values which the current, launching user can access as a mentor.",
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              }
+            },
+            "https://purl.imsglobal.org/spec/lti/claim/context": {
+              "description": "This optional attribute contains properties for the context from within which the resource link launch occurs.",
+              "$ref": "#/definitions/ContextClaim.Type"
+            },
+            "https://purl.imsglobal.org/spec/lti/claim/tool_platform": {
+              "description": "The set of claims for the properties associated with the platform initiating the launch.",
+              "$ref": "#/definitions/ToolPlatformClaim.Type"
+            },
+            "https://purl.imsglobal.org/spec/lti/claim/launch_presentation": {
+              "description": "The set of claims for the properties that describe aspects of how the sender expects to host the presentation of the message receiver's user experience.",
+              "$ref": "#/definitions/LaunchPresentationClaim.Type"
+            },
+            "https://purl.imsglobal.org/spec/lti/claim/custom": {
+              "description": "The set of custom parameters that are to be used by the tool.",
+              "$ref": "#/definitions/CustomClaim.Type"
+            }
+          },
+          "required": [
+            "https://purl.imsglobal.org/spec/lti/claim/roles",
+            "https://purl.imsglobal.org/spec/lti/claim/tool_platform"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LTISecurityFrameworkJWT.Type": {
+      "description": "This is the set of claims as defined by the IMS Security Framework.",
+      "type": "object",
+      "properties": {
+        "iss": {
+          "description": "Model Primitive Datatype = String. Issuer Identifier for the Issuer of the token. The iss value is a case sensitive URL using the https scheme that contains scheme, host, and optionally, port number and path components and no query or fragment components.",
+          "type": "string"
+        },
+        "sub": {
+          "description": "Model Primitive Datatype = String. A locally unique and never reassigned identifier within the Issuer for the End-User, which is intended to be consumed by the Client, e.g., 24400320 or AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. The sub value is a case sensitive string.",
+          "type": "string",
+          "maxLength": 255
+        },
+        "aud": {
+          "description": "Model Primitive Datatype = String. Audience(s) that this ID Token is intended for. It MUST contain the OAuth 2.0 client_id of the tool provider. It MAY also contain identifiers for other audiences. In the general case, the aud value is an array of case sensitive strings. In the common special case when there is one audience, the aud value MAY be a single case sensitive string.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "exp": {
+          "description": "Model Primitive Datatype = Integer. Expiration time on or after which the ID Token MUST NOT be accepted for processing. The processing of this parameter requires that the current date/time MUST be before the expiration date/time listed in the value. Implementers MAY provide for some small leeway, usually no more than a few minutes, to account for clock skew. Its value is a JSON number representing the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time. See RFC 3339 [RFC3339] for details regarding date/times in general and UTC in particular.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "iat": {
+          "description": "Model Primitive Datatype = Integer. Time at which the JWT was issued. Its value is a JSON number representing the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "azp": {
+          "description": "Model Primitive Datatype = String. Authorized party - the party to which the ID Token was issued. If present, it MUST contain the OAuth 2.0 Client ID of this party.",
+          "type": "string"
+        },
+        "nonce": {
+          "description": "Model Primitive Datatype = String. String value used to associate a Client session with an ID Token, and to mitigate replay attacks.",
+          "type": "string"
+        },
+        "https://purl.imsglobal.org/spec/lti/claim/version": {
+          "description": "This required attribute indicates the version of LTI to which the message conforms.",
+          "type": "string",
+          "enum": [
+            "1.3.0"
+          ]
+        },
+        "https://purl.imsglobal.org/spec/lti/claim/deployment_id": {
+          "description": "Model Primitive Datatype = String. This required attribute contains a string that defines the platform-tool integration governing the message.",
+          "type": "string",
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "iss",
+        "aud",
+        "exp",
+        "iat",
+        "nonce",
+        "https://purl.imsglobal.org/spec/lti/claim/version",
+        "https://purl.imsglobal.org/spec/lti/claim/deployment_id"
+      ],
+      "additionalProperties": false
+    },
+    "LaunchPresentationClaim.Type": {
+      "description": "The claims for the properties that describe aspects of how the sender expects to host the presentation of the message receiver's user experience.",
+      "type": "object",
+      "properties": {
+        "document_target": {
+          "description": "The kind of browser window or frame from which the user launched inside the message sender's system.",
+          "type": "string",
+          "enum": [
+            "frame",
+            "iframe",
+            "window"
+          ]
+        },
+        "height": {
+          "description": "Model Primitive Datatype = Integer. The height of the window or frame where the content from the message receiver will be displayed to the user.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "width": {
+          "description": "Model Primitive Datatype = Integer. The width of the window or frame where the content from the message receiver will be displayed to the user.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "return_url": {
+          "description": "Model Primitive Datatype = String. Fully qualified HTTPS URL within the message sender's user experience to where the message receiver can redirect the user back.",
+          "type": "string"
+        },
+        "locale": {
+          "description": "Model Primitive Datatype = String. Language, country and varuiant as represented using the IETF Best Practices for Tags for Identifying Languages.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ToolPlatformClaim.Type": {
+      "description": "The set of claims for the properties associated with the platform initiating the launch.",
+      "type": "object",
+      "properties": {
+        "guid": {
+          "description": "Model Primitive Datatype = String. A stable locally unique, to the 'iss' identifier, for an instance of the tool platform.",
+          "type": "string"
+        },
+        "contact_email": {
+          "description": "Model Primitive Datatype = String. Administrative contact email for the platform instance.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Model Primitive Datatype = String. A human readable description of the platform instance.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Model Primitive Datatype = String. Name for the platform instance.",
+          "type": "string"
+        },
+        "url": {
+          "description": "Model Primitive Datatype = String. Home HTTPS URL endpoint for the platform instance.",
+          "type": "string"
+        },
+        "product_family_code": {
+          "description": "Model Primitive Datatype = String. Vendor product family code for the type of platform.",
+          "type": "string"
+        },
+        "version": {
+          "description": "Model Primitive Datatype = String. Vendor product version for the platform.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "guid"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
