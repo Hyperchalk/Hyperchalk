@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'collab',
     'ltiapi',
     'pylti1p3.contrib.django.lti1p3_tool_config',
-    # 'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,14 +51,13 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 WS_MIDDLEWARE = [
@@ -96,11 +94,8 @@ DATABASES: Dict[str, Dict[str, Union[StrLike, Dict[str, StrLike]]]] = {}
 
 # Channel Layers
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
+
+CHANNEL_LAYERS: Dict[str, Dict[str, Any]]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
