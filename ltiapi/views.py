@@ -46,8 +46,6 @@ class RegisterConsumerView(DetailView):
     async def get(self, request: HttpRequest, *args, **kwargs):
         return await sync_to_async(super().get)(request, *args, **kwargs) # type: ignore
 
-    get.xframe_options_exempt = True # type: ignore
-
     async def post(self, request: HttpRequest, *args, **kwargs):
         """
         Register the application at the provider via the LTI registration flow.
@@ -97,8 +95,6 @@ class RegisterConsumerView(DetailView):
             consumer.issuer, consumer.client_id)
         ctx = self.get_context_data(registration_success=True)
         return self.render_to_response(ctx)
-
-    post.xframe_options_exempt = True # type: ignore
 
 
 async def oidc_jwks(
