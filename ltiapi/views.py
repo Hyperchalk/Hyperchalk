@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import re
 from typing import List, Optional
-from urllib.parse import urlparse
 
 import aiohttp
 from asgiref.sync import sync_to_async
@@ -20,7 +18,8 @@ from pylti1p3.deep_link_resource import DeepLinkResource
 from draw.utils import absolute_reverse, make_room_name, reverse_with_query
 
 from . import models as m
-from .utils import lti_registration_data, make_tool_config_from_openid_config_via_link
+from .utils import (get_launch_url, issuer_namespaced_username, lti_registration_data,
+                    make_tool_config_from_openid_config_via_link)
 
 logger = logging.getLogger("ltiapi")
 
@@ -41,6 +40,7 @@ class RegisterConsumerView(DetailView):
         view = super().as_view(**initkwargs)
         # pylint: disable=protected-access
         view._is_coroutine = asyncio.coroutines._is_coroutine
+        view.xframe_options_exempt = True
         return view
 
     # pylint: disable = invalid-overridden-method, attribute-defined-outside-init
@@ -106,15 +106,6 @@ async def oidc_jwks(
     get_jwks = sync_to_async(tool_conf.get_jwks)
     return JsonResponse(await get_jwks(issuer, client_id))
 
-def get_launch_url(request: HttpRequest):
-    """
-    Method code from https://github.com/dmitry-viskov/pylti1.3-django-example.git
-    """
-    target_link_uri = request.POST.get('target_link_uri', request.GET.get('target_link_uri', None))
-    if not target_link_uri:
-        raise Exception('Missing "target_link_uri" param')
-    return target_link_uri
-
 
 def oidc_login(request: HttpRequest):
     tool_conf = DjangoDbToolConf()
@@ -128,6 +119,7 @@ def oidc_login(request: HttpRequest):
     return oidc_redirect
 
 oidc_login.csrf_exempt = True # type: ignore
+oidc_login.xframe_options_exempt = True # type: ignore
 # XXX: what caould go wrong if an attacker would trigger the login
 #      for a known issuer? could they somehow change a deeplink?
 # YYY: → is the OIDC login flow csrf-safe? there is no possibility
@@ -135,12 +127,6 @@ oidc_login.csrf_exempt = True # type: ignore
 # TODO: it would be nice to have the referrer check logic from the
 #       csrf middleware here so at least this could be checked.
 
-user_transform = re.compile(r'[^\w@.+-]')
-def issuer_namespaced_username(issuer, username):
-    issuer_host = user_transform.sub('_', urlparse(issuer).hostname)
-    username = user_transform.sub('_', username)
-    return username + '@' + issuer_host
-# XXX: is there a possibility that multiple issuers reside at the same subdomain?
 
 @require_POST
 def lti_launch(request: HttpRequest):
@@ -203,4 +189,5 @@ def lti_launch(request: HttpRequest):
         return redirect(room_uri)
 
 lti_launch.csrf_exempt = True
+lti_launch.xframe_options_exempt = True
 # The launch can only be triggered with a valid JWT issued by a registered platform.

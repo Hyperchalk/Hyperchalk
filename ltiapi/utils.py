@@ -1,5 +1,7 @@
 import json
+import re
 from typing import Any, Dict
+from urllib.parse import urlparse
 
 from asgiref.sync import sync_to_async
 from cryptography.hazmat.primitives import serialization
@@ -119,3 +121,20 @@ def lti_registration_data(request: HttpRequest):
         },
         'logo_uri': request.build_absolute_uri(static('ltiapi/fav.gif'))
     }
+
+def get_launch_url(request: HttpRequest):
+    """
+    Method code from https://github.com/dmitry-viskov/pylti1.3-django-example.git
+    """
+    target_link_uri = request.POST.get('target_link_uri', request.GET.get('target_link_uri', None))
+    if not target_link_uri:
+        raise Exception('Missing "target_link_uri" param')
+    return target_link_uri
+
+
+user_transform = re.compile(r'[^\w@.+-]')
+def issuer_namespaced_username(issuer, username):
+    issuer_host = user_transform.sub('_', urlparse(issuer).hostname)
+    username = user_transform.sub('_', username)
+    return username + '@' + issuer_host
+# XXX: is there a possibility that multiple issuers reside at the same subdomain?
