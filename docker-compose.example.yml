@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  # these are the recommended settings to run your app
+  drawapp:
+    image: gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application:latest
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/srv/data
+      - ./deployment_settings.py:/srv/deployment_settings.py:ro
+      - ./static:/srv/static_copy
+    command: "draw.asgi --bind=0.0.0.0:8000"
+    environment:
+      - "DJANGO_SETTINGS_MODULE=deployment_settings"

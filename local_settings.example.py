@@ -47,6 +47,8 @@ DEBUG = False
 # MySQL / MariaDB are all supported. Have a look at the link above to see
 # how to configure this to integrate with your database.
 #
+# WARNING: do not use sqlite with more than one thread / process!
+#
 # TODO: uncommment this and enter your database settings here.
 
 # DATABASES = {
@@ -118,4 +120,5 @@ LOGGING = deepmerge(DEFAULT_LOGGING, {
 
 TIME_ZONE = 'CET'
 
+# NOTE: IMPORTANT. DO NOT REMOVE.
 finalize_settings(locals())
