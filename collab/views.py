@@ -39,12 +39,16 @@ async def index(request: HttpRequest, **kwargs):
         'SAVE_ROOM_INTERVAL': 15000
     }})
 
+index.xframe_options_exempt = True # type: ignore
+
+
 @require_login
 async def get_current_elements(request: HttpRequest, room_name: str):
     room_obj, _ = await get_room_elements(room_name=room_name)
     return JsonResponse({
         'elements': room_obj.elements
     })
+
 
 @require_staff_user
 async def get_log_record(request: HttpRequest, pk: int):

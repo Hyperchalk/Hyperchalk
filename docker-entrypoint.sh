@@ -13,6 +13,6 @@ else
 	gosu ltiapp:ltiapp bash <<- EOF
 		python manage.py collectstatic --noinput
 		python manage.py migrate
-		gunicorn -k buvo.uvicorn.UvicornWorker $@
+		gunicorn -k draw.uvicorn.UvicornWorker $@
 	EOF
 fi

@@ -14,6 +14,8 @@ from django.utils.log import DEFAULT_LOGGING
 from draw.settings import *
 from draw.utils import deepmerge
 
+DATA_DIR = BASE_DIR / 'data'
+
 # Should NEVER be true in production!
 DEBUG = False
 
@@ -50,7 +52,7 @@ DEBUG = False
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'NAME': DATA_DIR / 'db.sqlite3',
 #     }
 # }
 

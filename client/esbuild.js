@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const preactCompatPlugin = require("./build/esbuild-preact-compat")
+// const preactCompatPlugin = require("./build/esbuild-preact-compat")
 const copyDist = require("./build/copy-dist")
 
 copyDist("static", "dist")
