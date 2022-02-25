@@ -40,12 +40,13 @@ class RegisterConsumerView(DetailView):
         view = super().as_view(**initkwargs)
         # pylint: disable=protected-access
         view._is_coroutine = asyncio.coroutines._is_coroutine
-        view.xframe_options_exempt = True
         return view
 
     # pylint: disable = invalid-overridden-method, attribute-defined-outside-init
     async def get(self, request: HttpRequest, *args, **kwargs):
         return await sync_to_async(super().get)(request, *args, **kwargs) # type: ignore
+
+    get.xframe_options_exempt = True # type: ignore
 
     async def post(self, request: HttpRequest, *args, **kwargs):
         """
@@ -96,6 +97,8 @@ class RegisterConsumerView(DetailView):
             consumer.issuer, consumer.client_id)
         ctx = self.get_context_data(registration_success=True)
         return self.render_to_response(ctx)
+
+    post.xframe_options_exempt = True # type: ignore
 
 
 async def oidc_jwks(
