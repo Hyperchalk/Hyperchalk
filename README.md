@@ -26,3 +26,19 @@ enable websocket support, which is crucial for the app.
 It is assumend that you configure static file serving in your web server, which also serves as a
 reverse proxy for the application. As an example, this repo includes an example configuration for
 nginx in the `nginx-site.example.conf` file.
+
+When the container is started, the database is automatically being migrated and new static files are
+collected.
+
+## Useful commands
+
+You can run any django management command via `docker-compose run --rm drawapp manage COMMAND`. Some
+useful ones for this projects are:
+
+```sh
+# create an admin user for logging in to the admin backened
+$ docker-compose run --rm drawapp manage createsuperuser
+
+# create a registration link
+$ docker-compose run --rm drawapp manage makeconsumerlink
+```
