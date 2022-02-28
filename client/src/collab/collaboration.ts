@@ -3,10 +3,16 @@ import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { AppState, Collaborator, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
 import throttle from "lodash/throttle"
 import debounce from "lodash/debounce"
-import { RefObject } from "react"
+import { RefObject, Dispatch, SetStateAction } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
-import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps, WsState } from "../types"
+import {
+  BroadcastedExcalidrawElement,
+  ConfigProps,
+  ConnectionStates,
+  PointerUpdateProps,
+  WsState,
+} from "../types"
 import { reconcileElements } from "./reconciliation"
 
 // #region message types
@@ -28,7 +34,15 @@ interface CollaboratorLeftMessage {
   collaborator: CollaboratorChange
 }
 
-type RoutableMessage = CollaboratorChangeMessage | ElementsChangedMessage | CollaboratorLeftMessage
+interface LoginRequired {
+  eventtype: "login_required"
+}
+
+type RoutableMessage =
+  | CollaboratorChangeMessage
+  | ElementsChangedMessage
+  | CollaboratorLeftMessage
+  | LoginRequired
 // #endregion message types
 
 function isSyncableElement(element: ExcalidrawElement): boolean {
@@ -39,6 +53,8 @@ export class CollabAPI {
   private ws: ReconnectingWebSocket
 
   private _excalidrawApiRef?: RefObject<ExcalidrawImperativeAPI>
+  private setConnectionState?: Dispatch<SetStateAction<ConnectionStates>>
+  private _connectionState: ConnectionStates = "CONNECTED"
 
   // #region methods for excalidraw props
 
@@ -88,7 +104,7 @@ export class CollabAPI {
     })
   }
 
-  // #region excalidraw access
+  // #region component communication
   /**
    * This needs to be called when the excalidraw component is set up!
    */
@@ -105,7 +121,17 @@ export class CollabAPI {
     }
     return this._excalidrawApiRef.current
   }
-  // #endregion excalidraw access
+
+  set connectionStateSetter(setter: typeof this.setConnectionState) {
+    this.setConnectionState = setter
+  }
+
+  get connectionState() {
+    return this._connectionState
+  }
+  // #endregion component communication
+
+  // #region message hadling
 
   /**
    * Looks up which message type (`eventtype`) was sent by the
@@ -129,8 +155,24 @@ export class CollabAPI {
       case "collaborator_left":
         this.receiveCollaboratorLeft(message.collaborator)
         break
+      case "login_required":
+        this.endCollaboration()
     }
   }
+
+  /**
+   * Ends the collaboration session by closing the websocket.
+   *
+   * Code 3000 means "unauthorized".
+   */
+  private endCollaboration() {
+    console.warn("not logged in aborting session")
+    this.ws.close(3000)
+    this._connectionState = "DISCONNECTED"
+    this.setConnectionState?.(this._connectionState)
+  }
+
+  // #endregion message hadling
 
   // #region element changes
   private broadcastedVersions = new Map<string, number>()

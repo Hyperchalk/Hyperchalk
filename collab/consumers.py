@@ -7,10 +7,11 @@ from typing import Any, Dict, List, Sequence
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 
-from draw.utils import dump_content, user_id_for_room
+from draw.utils import dump_content, user_id_for_room, user_is_authenticated
 from ltiapi.models import CustomUser
 
 from . import models as m
@@ -32,17 +33,6 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
     def group_name(self):
         return self.channel_prefix + self.room_name
 
-    async def receive(self, text_data=None, bytes_data=None, **kwargs):
-        """
-        Catch and log exceptions to the console as this is no default in django channels.
-        """
-        try:
-            return await super().receive(text_data, bytes_data, **kwargs)
-        except Exception as e:
-            estring = "\n".join(traceback.format_exception(e))
-            logger.error("\033[0;31m%s\033[0m", estring)
-            raise e from e
-
     async def connect(self):
         url_route: dict = self.scope.get('url_route')
         # pylint: disable=attribute-defined-outside-init
@@ -51,6 +41,14 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
 
         self.user: CustomUser = self.scope.get('user')
         self.room_name = self.kwargs.get('room_name')
+
+        if not settings.ALLOW_ANONYMOUS_VISITS and not await user_is_authenticated(self.user):
+            await super().connect()
+            await self.send_json({'eventtype': 'login_required'})
+            logger.warning(
+                'Someone tried to enter room %s without logging in, '
+                'but anonymous visits are disallowed.', self.room_name)
+            return await self.disconnect(3000)
 
         self.user_room_id = self.user.id_for_room(self.room_name) \
             if self.user.id is not None \
@@ -67,6 +65,18 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         await self.send_event('collaborator_left', collaborator={'userRoomId': self.user_room_id})
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         return await super().disconnect(code)
+
+    async def receive(self, text_data=None, bytes_data=None, **kwargs):
+        """
+        Catch and log exceptions to the console as this is no default in django channels.
+        """
+        try:
+            return await super().receive(text_data, bytes_data, **kwargs)
+        except Exception as e:
+            estring = "\n".join(traceback.format_exception(e))
+            # the fancy codes surrounding the %s here mean "print in red".
+            logger.error("\033[0;31m%s\033[0m", estring)
+            raise e from e
 
     async def receive_json(self, content, *args, **kwargs):
         """

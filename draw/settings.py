@@ -181,6 +181,12 @@ LTI_CONFIG = {
     'vendor_contact_email': 'praktikum_alice@dipf.de',
 }
 
+# Allow the creation of rooms when the user visits the index page without a room query (?room=...)
+ALLOW_AUTOMATIC_ROOM_CREATION = False
+
+# If set to false, users will need to be logged in.
+ALLOW_ANONYMOUS_VISITS = False
+
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):
     required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE', 'LINK_BASE'}

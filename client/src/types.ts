@@ -10,6 +10,8 @@ export type ReconciliationAppState = Pick<
   "editingElement" | "resizingElement" | "draggingElement"
 >
 
+export type ConnectionStates = "CONNECTED" | "DISCONNECTED"
+
 export interface Pointer {
   x: number
   y: number

@@ -1,9 +1,9 @@
 // import { useState, useEffect } from "react";
-import React, { useCallback, useRef } from "react"
+import React, { useCallback, useRef, useState } from "react"
 import { render } from "react-dom"
 import Excalidraw, { serializeAsJSON } from "@excalidraw/excalidraw"
 import { AppState, ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types/types"
-import { ConfigProps } from "./types"
+import { ConfigProps, ConnectionStates } from "./types"
 
 import "./style.css"
 import { getJsonScript } from "./utils"
@@ -24,7 +24,8 @@ const defaultConfig: ConfigProps = {
   USER_NAME: "",
 }
 
-const config: ConfigProps = Object.assign({}, defaultConfig, getJsonScript("excalidraw-config"))
+const config: ConfigProps = { ...defaultConfig, ...getJsonScript("excalidraw-config") }
+const msg: Record<string, string> = { ...getJsonScript("custom-messages") }
 
 let params = new URLSearchParams(window.location.search.slice(1))
 let hash = new URLSearchParams(window.location.hash.slice(1))
@@ -59,7 +60,9 @@ let collabAPI = new CollabAPI(config)
 
 function IndexPage() {
   let draw = useRef<ExcalidrawImperativeAPI>(null)
+  let [connectionState, setConnectionState] = useState<ConnectionStates>(collabAPI.connectionState)
   collabAPI.excalidrawApiRef = draw
+  collabAPI.connectionStateSetter = setConnectionState
   window.draw = draw
 
   const saveStateToLocalStorage = useCallback(() => {
@@ -80,7 +83,7 @@ function IndexPage() {
   // FIXME: adding items to the libraray via an addLink fails. see issue #5
   // https://gitlab.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application/-/issues/5
 
-  return (
+  return connectionState == "CONNECTED" ? (
     <Excalidraw
       ref={draw}
       initialData={initialData}
@@ -98,6 +101,8 @@ function IndexPage() {
       onLibraryChange={saveLibrary}
       // libraryReturnUrl={{}}
     />
+  ) : (
+    <p style={{ margin: "1rem" }}>{msg.NOT_LOGGED_IN}</p>
   )
 }
 
