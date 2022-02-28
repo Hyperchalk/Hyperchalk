@@ -4,6 +4,7 @@ from functools import cached_property
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
 from draw.utils import JSONType, dump_content, load_content
 from ltiapi.models import CustomUser
@@ -69,8 +70,10 @@ class ExcalidrawRoom(models.Model):
     room_name = models.CharField(
         primary_key=True, max_length=24,
         validators=[MinLengthValidator(24)])
+    room_created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
+    room_consumer = models.ForeignKey(LtiTool, on_delete=models.SET_NULL, null=True)
     # TODO: log channel name if a user is logged in in multiple tabs / windows
-    # via_channel = models.CharField()
+    # via_channel = models.CharField(max_length=...)
     _elements = models.BinaryField(blank=True, default=EMPTY_JSON_LIST_ZLIB_COMPRESSED)
 
     @property

@@ -5,7 +5,7 @@ from typing import List, Optional
 import aiohttp
 from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model, login
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +16,7 @@ from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
 from pylti1p3.deep_link_resource import DeepLinkResource
 
 from draw.utils import absolute_reverse, make_room_name, reverse_with_query
+from collab.models import ExcalidrawRoom
 
 from . import models as m
 from .utils import (get_launch_url, issuer_namespaced_username, lti_registration_data,
@@ -137,15 +138,18 @@ def lti_launch(request: HttpRequest):
     # lazy_pformat: only format the data if it will be logged.
     # logger.debug("launch with data:\n%s", lazy_pformat(message_launch_data))
 
+    # log the user in. if this is the user's first visit, save them to the database before.
     username = message_launch_data\
         .get('https://purl.imsglobal.org/spec/lti/claim/ext', {})\
         .get('user_username') # type: ignore
     issuer = message_launch_data['iss']
+    client_id = message_launch_data['aud']
     user_full_name = message_launch_data.get('name', '')
     username = issuer_namespaced_username(issuer, username)
 
+    lti_tool = tool_conf.get_lti_tool(issuer, client_id)
     UserModel = get_user_model()
-    user, user_mod = UserModel.objects.get_or_create(username=username)
+    user, user_mod = UserModel.objects.get_or_create(username=username, registered_via=lti_tool)
     if not user.first_name:
         user.first_name = user_full_name
         user_mod = True
@@ -153,12 +157,12 @@ def lti_launch(request: HttpRequest):
         user.save()
     login(request, user)
 
-    room = message_launch_data\
+    room_name = message_launch_data\
         .get('https://purl.imsglobal.org/spec/lti/claim/custom', {})\
         .get('room', None) \
         or request.GET.get('room', make_room_name(24))
 
-    room_uri = reverse_with_query('collab:index', query_kwargs={'room': room})
+    room_uri = reverse_with_query('collab:index', query_kwargs={'room': room_name})
     room_uri = request.build_absolute_uri(room_uri)
 
     if message_launch.is_deep_link_launch():
@@ -171,9 +175,15 @@ def lti_launch(request: HttpRequest):
             .get('title', course_title)
         title = "Draw Together" + (f" – {title}" if title else "")
 
+        room, _ = ExcalidrawRoom.objects.get_or_create(
+            room_name=room_name,
+            room_created_by=user,
+            room_consumer=lti_tool)
+        room.save()
+
         resource = DeepLinkResource()
         resource.set_url(absolute_reverse(request, 'lti:launch'))\
-            .set_custom_params({'room': room})\
+            .set_custom_params({'room': room_name})\
             .set_title(title)
 
         html = message_launch.get_deep_link().output_response_form([resource])
@@ -181,11 +191,13 @@ def lti_launch(request: HttpRequest):
 
     if message_launch.is_data_privacy_launch():
         # TODO: implement data privacy screen. (not as urgent. moodle does not support this anyway.)
-        return NotImplementedError()
+        raise NotImplementedError()
 
     if message_launch.is_resource_launch():
         # join the room
         return redirect(room_uri)
+
+    return HttpResponseBadRequest('Unknown message type provided.')
 
 lti_launch.csrf_exempt = True
 lti_launch.xframe_options_exempt = True

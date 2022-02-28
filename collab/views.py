@@ -10,7 +10,7 @@ from draw.utils import (make_room_name, require_login, require_staff_user, rever
 
 from . import models as m
 
-get_room_elements = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
+get_or_create_room = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
 async_get_object_or_404 = sync_to_async(get_object_or_404)
 
 @database_sync_to_async
@@ -31,7 +31,7 @@ async def index(request: HttpRequest, **kwargs):
             return redirect(request.build_absolute_uri(room_uri), permanent=False)
         return HttpResponseBadRequest(txt('No room parameter has been provided in the URL.'))
 
-    room_obj, _ = await get_room_elements(room_name=room)
+    room_obj, _ = await get_or_create_room(room_name=room)
     return render(request, 'collab/index.html', {'excalidraw_config': {
         'SOCKET_URL': request.build_absolute_uri('/ws/collab/collaborate/' + room)\
             .replace('http://', 'ws://', 1)\
@@ -51,7 +51,7 @@ async def index(request: HttpRequest, **kwargs):
 
 @require_login
 async def get_current_elements(request: HttpRequest, room_name: str):
-    room_obj, _ = await get_room_elements(room_name=room_name)
+    room_obj, _ = await get_or_create_room(room_name=room_name)
     return JsonResponse({
         'elements': room_obj.elements
     })

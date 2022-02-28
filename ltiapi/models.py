@@ -41,6 +41,8 @@ class CustomUser(AbstractUser):
     This enables us to alias user for better privacy.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    registered_via = models.ForeignKey(
+        LtiTool, on_delete=models.CASCADE, null=True, verbose_name=_("registered via"))
 
     def id_for_room(self, room_name: str) -> str:
         return user_id_for_room(self.id, room_name)
