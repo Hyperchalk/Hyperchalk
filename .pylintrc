@@ -118,6 +118,7 @@ disable=
   suppressed-message,
   sys-max-int,
   too-many-arguments,
+  too-many-branches,
   too-few-public-methods,
   too-many-ancestors,
   too-many-lines,
