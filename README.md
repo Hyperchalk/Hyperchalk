@@ -20,7 +20,7 @@ backend. Have a look at the example configuration for further explanation.
 
 The container uses [gunicorn](https://gunicorn.org/) to deliver the app. You might want to check
 out the configuration options for that when configuring the container. As the gunicorn worker
-class, [unicorn](https://www.uvicorn.org/) is used to support async views. This is also needed to
+class, [uvicorn](https://www.uvicorn.org/) is used to support async views. This is also needed to
 enable websocket support, which is crucial for the app.
 
 It is assumend that you configure static file serving in your web server, which also serves as a
@@ -30,7 +30,24 @@ nginx in the `nginx-site.example.conf` file.
 When the container is started, the database is automatically being migrated and new static files are
 collected.
 
-## Useful commands
+## Useful Configuration Documentation Links
+
+You are not restricted to just configuring the things in the example files. For further options,
+check out the following sources:
+
+- [Django Deployment Guide] (especially the section where [Gunicorn deployment] is explained.)
+- [Django Settings Guide] and [settings reference]
+- [Channel Layers Configuration](https://channels.readthedocs.io/en/stable/topics/channel_layers.html#configuration)
+- [Gunicorn Configuration](https://docs.gunicorn.org/en/latest/configure.html)
+- [Uvicorn Settings Documentation](https://www.uvicorn.org/settings/)
+- [Uvicorn Deployment Guide](https://www.uvicorn.org/deployment/)
+
+[Django Deployment Guide]: https://docs.djangoproject.com/en/3.2/howto/deployment/
+[Gunicorn deployment]: https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/gunicorn/
+[Django Settings Guide]: https://docs.djangoproject.com/en/3.2/topics/settings/
+[settings reference]: https://docs.djangoproject.com/en/3.2/ref/settings/
+
+## Useful Commands
 
 You can run any django management command via `docker-compose run --rm drawapp manage COMMAND`. Some
 useful ones for this projects are:

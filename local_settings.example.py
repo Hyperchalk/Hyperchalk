@@ -105,6 +105,24 @@ LOGGING = deepmerge(LOGGING, {
     }
 })
 
+# Email
+# https://docs.djangoproject.com/en/3.2/ref/settings/#email-backend
+# https://docs.djangoproject.com/en/3.2/topics/email/
+#
+# Though this application does not send custom mails (yet), you might be interested in configuring
+# mail, so get admin-mailed when critical events get logged.
+#
+# TODO: configure mail
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = ...
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = ...
+# EMAIL_HOST_PASSWORD = ...
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False                     # mutually exclusive to EMAIL_USE_TLS
+# EMAIL_SUBJECT_PREFIX = '[LTI DrawApp]'
+
 # Static files
 # https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/
 #
