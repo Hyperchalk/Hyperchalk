@@ -165,11 +165,12 @@ def lti_launch(request: HttpRequest):
     room_uri = reverse_with_query('collab:index', query_kwargs={'room': room_name})
     room_uri = request.build_absolute_uri(room_uri)
 
+
     if message_launch.is_deep_link_launch():
+        course_context = message_launch_data\
+            .get('https://purl.imsglobal.org/spec/lti/claim/context', {})
         # create a deep link
-        course_title = message_launch_data\
-            .get('https://purl.imsglobal.org/spec/lti/claim/context', {})\
-            .get('title', None)
+        course_title = course_context.get('title', None)
         title = message_launch_data\
             .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
             .get('title', course_title)
@@ -178,7 +179,8 @@ def lti_launch(request: HttpRequest):
         room, _ = ExcalidrawRoom.objects.get_or_create(
             room_name=room_name,
             room_created_by=user,
-            room_consumer=lti_tool)
+            room_consumer=lti_tool,
+            room_course_id=course_context.get('id', None))
         room.save()
 
         resource = DeepLinkResource()

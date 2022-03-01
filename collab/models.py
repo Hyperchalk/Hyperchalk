@@ -72,6 +72,7 @@ class ExcalidrawRoom(models.Model):
         validators=[MinLengthValidator(24)])
     room_created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     room_consumer = models.ForeignKey(LtiTool, on_delete=models.SET_NULL, null=True)
+    room_course_id = models.CharField(max_length=255, null=True, blank=True)
     # TODO: log channel name if a user is logged in in multiple tabs / windows
     # via_channel = models.CharField(max_length=...)
     _elements = models.BinaryField(blank=True, default=EMPTY_JSON_LIST_ZLIB_COMPRESSED)
