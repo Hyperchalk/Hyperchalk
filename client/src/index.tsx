@@ -28,12 +28,13 @@ const config: ConfigProps = { ...defaultConfig, ...getJsonScript("excalidraw-con
 const msg: Record<string, string> = { ...getJsonScript("custom-messages") }
 
 let params = new URLSearchParams(window.location.search.slice(1))
-let hash = new URLSearchParams(window.location.hash.slice(1))
 
-function updateHashParams(name: string, value: string) {
-  hash.set(name, value)
-  window.location.hash = hash.toString()
-}
+// let hash = new URLSearchParams(window.location.hash.slice(1))
+
+// function updateHashParams(name: string, value: string) {
+//   hash.set(name, value)
+//   window.location.hash = hash.toString()
+// }
 
 function saveLibrary(items: LibraryItems) {
   localStorage.setItem("_library", JSON.stringify(items))

@@ -1,10 +1,18 @@
 const fs = require("fs")
 const path = require("path")
 
-module.exports = function copyDist(from, to) {
-  fs.mkdirSync(to, { recursive: true })
-  let files = fs.readdirSync(from)
-  for (file of files) {
-    fs.copyFileSync(path.join(from, file), path.join(to, file))
+function copyFolderRecursiveSync(source, target) {
+  if (fs.lstatSync(source).isDirectory()) {
+    fs.mkdirSync(target, { recursive: true })
+    let files = fs.readdirSync(source)
+    for (let file of files) {
+      let curSource = path.join(source, file)
+      let curTarget = path.join(target, file)
+      copyFolderRecursiveSync(curSource, curTarget)
+    }
+  } else {
+    fs.copyFileSync(source, target)
   }
 }
+
+module.exports = copyFolderRecursiveSync

@@ -12,6 +12,11 @@
 
 <body>
   <div id="app"></div>
+  <script>
+    // this has to be configured before excalidraw is imported.
+    // so we can't put it into the config json sadly.
+    window.EXCALIDRAW_ASSET_PATH = "{% static '/' %}"
+  </script>
   {{excalidraw_config|json_script:'excalidraw-config'}}
   {{custom_messages|json_script:'custom-messages'}}
   <script src="{% static 'app.js' %}"></script>
