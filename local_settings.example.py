@@ -88,7 +88,7 @@ DEBUG = False
 #
 # TODO: if you need some custom logging, you can configre it here.
 
-LOGGING = deepmerge(DEFAULT_LOGGING, {
+LOGGING = deepmerge(LOGGING, {
     'handlers': {
         'draw_logging': {
             'level': 'WARNING',
@@ -98,11 +98,7 @@ LOGGING = deepmerge(DEFAULT_LOGGING, {
         }
     },
     'loggers': {
-        'ltiapi': {
-            'level': 'WARNING',
-            'handlers': ['draw_logging'],
-        },
-        'collab': {
+        'draw': {
             'level': 'WARNING',
             'handlers': ['draw_logging'],
         },
