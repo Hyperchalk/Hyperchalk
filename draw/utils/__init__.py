@@ -2,6 +2,7 @@
 Helper functions and classes that don't need any configured state or django stuff loaded.
 """
 import json
+import logging
 import random
 import string
 import uuid
@@ -14,6 +15,7 @@ from typing import Any, Callable, Generic, List, Optional, Protocol, Tuple, Type
 from asgiref.sync import sync_to_async
 from django.http import HttpRequest, HttpResponseForbidden
 from django.urls import reverse
+from django.utils import log
 from django.utils.functional import lazy
 from django.utils.http import urlencode
 from django.utils.module_loading import import_string
@@ -170,7 +172,7 @@ def user_is_authenticated(user):
 
 @sync_to_async
 def user_is_authorized(user, room):
-    return (
+    return user.is_authenticated and (
         user.is_staff
         or user.is_superuser
         or not room.room_consumer_id
@@ -210,3 +212,21 @@ def absolute_reverse(request: HttpRequest, *args, **kwargs):
     return request.build_absolute_uri(reverse(*args, **kwargs))
 
 lazy_pformat = lazy(pformat, str)
+
+
+class WebSocketFormatter(log.ServerFormatter):
+    def format(self, record: logging.LogRecord):
+        msg = record.msg
+        lvl = record.levelno
+        if lvl >= logging.CRITICAL:
+            msg = self.style.ERROR(msg)
+        elif lvl >= logging.ERROR:
+            msg = self.style.NOTICE(msg)
+        elif lvl >= logging.WARNING:
+            msg = self.style.WARNING(msg)
+
+        if self.uses_server_time() and not hasattr(record, 'server_time'):
+            setattr(record, 'server_time', self.formatTime(record, self.datefmt))
+
+        record.msg = msg
+        return super().format(record)

@@ -14,9 +14,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Union
 from urllib.parse import urlparse
 
+from django.utils.log import DEFAULT_LOGGING
 from django.utils.module_loading import import_string
 
-from draw.utils import StrLike
+from draw.utils import StrLike, deepmerge
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,6 +34,7 @@ INTERNAL_IPS = ['127.0.0.1']
 
 # Configure https reverse proxy
 # https://docs.djangoproject.com/en/4.0/ref/settings/#secure-proxy-ssl-header
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
@@ -86,6 +88,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'draw.wsgi.application'
 ASGI_APPLICATION = 'draw.asgi.application'
+
+# Logging
+# https://docs.djangoproject.com/en/3.2/topics/logging/
+
+LOGGING = deepmerge(DEFAULT_LOGGING, {
+    'formatters': {
+        'draw.websocket': {
+            '()': 'draw.utils.WebSocketFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'draw.websocket': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'draw.websocket',
+        },
+    },
+    'loggers': {
+        'draw.websocket': {
+            'handlers': ['draw.websocket'],
+            'level': 'INFO',
+            'propagate': False,
+        }
+    }
+})
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

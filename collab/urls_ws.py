@@ -4,7 +4,7 @@ from django.urls import path
 
 from . import consumers
 
-logger = logging.getLogger('collab')
+logger = logging.getLogger('draw.collab')
 
 
 app_name = "collab"

@@ -22,7 +22,7 @@ from . import models as m
 from .utils import (get_launch_url, issuer_namespaced_username, lti_registration_data,
                     make_tool_config_from_openid_config_via_link)
 
-logger = logging.getLogger("ltiapi")
+logger = logging.getLogger("draw.ltiapi")
 
 
 class RegisterConsumerView(DetailView):
@@ -199,7 +199,7 @@ def lti_launch(request: HttpRequest):
         # join the room
         return redirect(room_uri)
 
-    return HttpResponseBadRequest('Unknown message type provided.')
+    return HttpResponseBadRequest('Unknown or unsupported message type provided.')
 
 lti_launch.csrf_exempt = True
 lti_launch.xframe_options_exempt = True

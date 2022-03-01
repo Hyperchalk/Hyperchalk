@@ -1,23 +1,22 @@
+import asyncio
 import logging
-import traceback
 import uuid
 from asyncio import gather
 from copy import deepcopy
 from typing import Any, Dict, List, Sequence
 
 from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 
 from draw.utils import dump_content, user_id_for_room, user_is_authenticated, user_is_authorized
+from draw.utils.django_loaded import LoggingAsyncJsonWebsocketConsumer
 from ltiapi.models import CustomUser
 
 from . import models as m
 
-logger = logging.getLogger("collab")
-
+logger = logging.getLogger("draw.collab")
 
 create_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.create)
 bulk_create_records = database_sync_to_async(m.ExcalidrawLogRecord.objects.bulk_create)
@@ -30,7 +29,7 @@ auth_room = database_sync_to_async(
 def user_name(user):
     return user.username
 
-class CollaborationConsumer(AsyncJsonWebsocketConsumer):
+class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
     allowed_eventtypes = {'collaborator_change', 'elements_changed', 'save_room', 'full_sync'}
     channel_prefix = 'draw_room_'
 
@@ -46,14 +45,17 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
 
         self.user: CustomUser = self.scope.get('user')
         self.room_name = self.kwargs.get('room_name')
-        room, _ = await auth_room(self.room_name)
+        room, _ = await auth_room(room_name=self.room_name)
 
-        if not settings.ALLOW_ANONYMOUS_VISITS and (
-            not (authenticated := await user_is_authenticated(self.user))
-            or not await user_is_authorized(self.user, room)
-        ):
-            await super().connect()
-            who = 'Someone' if not authenticated else await user_name(self.user)
+        authenticated, authorized = await asyncio.gather(
+            user_is_authenticated(self.user),
+            user_is_authorized(self.user, room))
+        if not settings.ALLOW_ANONYMOUS_VISITS and not authenticated and not authorized:
+            _, username = await asyncio.gather(
+                super().connect(),
+                user_name(self.user)
+            )
+            who = 'Someone' if not authenticated else username
             reason = (
                 'anonymous visits are disallowed.'
                 if not authenticated
@@ -76,21 +78,11 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
         Notify all collaborators if a client left, so they
         can remove it from their collaborator list, too.
         """
-        await self.send_event('collaborator_left', collaborator={'userRoomId': self.user_room_id})
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if code != 3000:
+            await self.send_event(
+                'collaborator_left', collaborator={'userRoomId': self.user_room_id})
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
         return await super().disconnect(code)
-
-    async def receive(self, text_data=None, bytes_data=None, **kwargs):
-        """
-        Catch and log exceptions to the console as this is no default in django channels.
-        """
-        try:
-            return await super().receive(text_data, bytes_data, **kwargs)
-        except Exception as e:
-            estring = "\n".join(traceback.format_exception(e))
-            # the fancy codes surrounding the %s here mean "print in red".
-            logger.error("\033[0;31m%s\033[0m", estring)
-            raise e from e
 
     async def receive_json(self, content, *args, **kwargs):
         """
