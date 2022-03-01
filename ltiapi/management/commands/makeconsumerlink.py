@@ -1,7 +1,7 @@
 import djclick as click
 
 from ltiapi import models as m
-from draw.utils.with_settings import build_absolute_uri_without_request
+from draw.utils.django_loaded import build_absolute_uri_without_request
 from django.urls import reverse
 
 @click.command()

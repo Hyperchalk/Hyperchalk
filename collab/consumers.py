@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 
-from draw.utils import dump_content, user_id_for_room, user_is_authenticated
+from draw.utils import dump_content, user_id_for_room, user_is_authenticated, user_is_authorized
 from ltiapi.models import CustomUser
 
 from . import models as m
@@ -23,7 +23,12 @@ create_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.create)
 bulk_create_records = database_sync_to_async(m.ExcalidrawLogRecord.objects.bulk_create)
 upsert_room = database_sync_to_async(m.ExcalidrawRoom.objects.update_or_create)
 get_or_create_room = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
+auth_room = database_sync_to_async(
+    m.ExcalidrawRoom.objects.only("room_name", "room_consumer").get_or_create)
 
+@database_sync_to_async
+def user_name(user):
+    return user.username
 
 class CollaborationConsumer(AsyncJsonWebsocketConsumer):
     allowed_eventtypes = {'collaborator_change', 'elements_changed', 'save_room', 'full_sync'}
@@ -41,13 +46,22 @@ class CollaborationConsumer(AsyncJsonWebsocketConsumer):
 
         self.user: CustomUser = self.scope.get('user')
         self.room_name = self.kwargs.get('room_name')
+        room, _ = await auth_room(self.room_name)
 
-        if not settings.ALLOW_ANONYMOUS_VISITS and not await user_is_authenticated(self.user):
+        if not settings.ALLOW_ANONYMOUS_VISITS and (
+            not (authenticated := await user_is_authenticated(self.user))
+            or not await user_is_authorized(self.user, room)
+        ):
             await super().connect()
-            await self.send_json({'eventtype': 'login_required'})
+            who = 'Someone' if not authenticated else await user_name(self.user)
+            reason = (
+                'anonymous visits are disallowed.'
+                if not authenticated
+                else 'this user is not allowed to access the room.')
             logger.warning(
-                'Someone tried to enter room %s without logging in, '
-                'but anonymous visits are disallowed.', self.room_name)
+                '%(who)s tried to enter room %(room)s without logging in, but %(reason)s',
+                {'who': who, 'room': self.room_name, 'reason': reason})
+            await self.send_json({'eventtype': 'login_required'})
             return await self.disconnect(3000)
 
         self.user_room_id = self.user.id_for_room(self.room_name) \

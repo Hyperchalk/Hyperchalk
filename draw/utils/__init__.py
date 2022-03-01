@@ -168,6 +168,14 @@ def require_staff_user(async_func):
 def user_is_authenticated(user):
     return user.is_authenticated
 
+@sync_to_async
+def user_is_authorized(user, room):
+    return (
+        user.is_staff
+        or user.is_superuser
+        or not room.room_consumer_id
+        or user.registered_via_id == room.room_consumer_id)
+
 def require_login(async_func):
     async def inner(request: HttpRequest, *args, **kwargs):
         if not await user_is_authenticated(request.user):

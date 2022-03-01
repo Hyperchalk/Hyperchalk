@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as txt
 
 from draw.utils import (make_room_name, require_login, require_staff_user, reverse_with_query,
-                        user_is_authenticated)
+                        user_is_authenticated, user_is_authorized)
 
 from . import models as m
 
@@ -21,8 +21,6 @@ NOT_LOGGED_IN = txt("You need to be logged in.")
 
 
 async def index(request: HttpRequest, **kwargs):
-    if not settings.ALLOW_ANONYMOUS_VISITS and not await user_is_authenticated(request.user):
-        return HttpResponseForbidden(txt("You need to be logged in."))
     room = request.GET.get('room', None)
     if not room:
         # See issue #8
@@ -32,6 +30,13 @@ async def index(request: HttpRequest, **kwargs):
         return HttpResponseBadRequest(txt('No room parameter has been provided in the URL.'))
 
     room_obj, _ = await get_or_create_room(room_name=room)
+
+    if not settings.ALLOW_ANONYMOUS_VISITS:
+        if not await user_is_authenticated(request.user):
+            return HttpResponseForbidden(txt("You need to be logged in."))
+        if not await user_is_authorized(request.user, room_obj):
+            return HttpResponseForbidden(txt("You are not allowed to access this room."))
+
     return render(request, 'collab/index.html', {'excalidraw_config': {
         'SOCKET_URL': request.build_absolute_uri('/ws/collab/collaborate/' + room)\
             .replace('http://', 'ws://', 1)\
