@@ -4,7 +4,6 @@ services:
   # these are the recommended settings to run your app
   drawapp:
     image: gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application:latest
-    # image: gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application:redischannel
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -14,6 +13,15 @@ services:
     command: "draw.asgi --bind=0.0.0.0:8000"
     environment:
       - "DJANGO_SETTINGS_MODULE=deployment_settings"
+
+  # maria:
+  #   image: mariadb:latest
+  #   environment:
+  #     - MARIADB_DATABASE=draw
+  #     - MARIADB_USER=draw
+  #     - MARIADB_PASSWORD=drawpass666
+  #   volumes:
+  #     - './mariadb:/var/lib/mysql'
 
   # redis:
   #   image: redis:alpine
