@@ -2,7 +2,7 @@ SHELL=/bin/bash
 
 .PHONY: base redischannel upload-latest upload-redischannel upload
 
-upload: upload-base upload-redischannel
+upload: upload-latest upload-redischannel
 
 base:
 	docker build \

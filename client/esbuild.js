@@ -18,6 +18,7 @@ require("esbuild")
     minify: true,
     define: {
       "process.env.NODE_ENV": "production",
+      production: "production",
     },
     // plugins: [preactCompatPlugin],
   })
