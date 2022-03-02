@@ -9,11 +9,11 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Union
 from urllib.parse import urlparse
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.log import DEFAULT_LOGGING
 from django.utils.module_loading import import_string
 
@@ -221,4 +221,5 @@ def finalize_settings(final_locals: Dict[str, Any]):
     required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE', 'LINK_BASE'}
     missing = required_vars.difference(final_locals.keys())
     if missing:
-        raise ValueError(f'The following mandatory keys are missing from your config: {missing}')
+        raise ImproperlyConfigured(
+            f'The following mandatory keys are missing from your config: {missing}')
