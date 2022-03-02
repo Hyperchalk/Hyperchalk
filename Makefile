@@ -1,30 +1,19 @@
 SHELL=/bin/bash
 BUILDFLAGS=
 
-.PHONY: base redischannel upload-latest upload-redischannel upload
+.PHONY: latest upload-latest upload
 
-upload: upload-latest upload-redischannel
+upload: upload-latest
 
-base:
+latest:
 	docker build \
 		-t drawlti\:latest \
 		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
 		--platform linux/x86-64 $(BUILDFLAGS) .
 
-redischannel: base
-	docker build \
-		-f redischannel.Dockerfile \
-		-t drawlti\:redischannel \
-		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:redischannel \
-		--platform linux/x86-64 $(BUILDFLAGS) .
-
-upload-latest: base
+upload-latest: latest
 	docker push \
 		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest
-
-upload-redischannel: redischannel
-	docker push \
-		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:redischannel
 
 messages:
 	python manage.py makemessages --locale=de \
@@ -35,5 +24,8 @@ messages:
 		--ignore="tmp" \
 		--add-location="file"
 
-translate-german:
-	python manage.py compilemessages --locale=de
+env:
+	rm -rf ENV
+	python3 -m venv ENV
+	ENV/bin/python -m pip install -U pip wheel setuptools
+	ENV/bin/python -m pip install -r requirements.txt
