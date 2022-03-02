@@ -9,6 +9,7 @@ copyDist(
   "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev",
   "dist/excalidraw-assets-dev"
 )
+
 require("esbuild")
   .build({
     entryPoints: ["src/index.tsx"],

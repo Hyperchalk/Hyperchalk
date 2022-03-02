@@ -12,7 +12,7 @@ RUN groupadd -r builder \
     && chown builder:builder /srv
 
 COPY --chown=builder:builder \
-    ./client/package.json ./client/package-lock.json ./client/esbuild.js \
+    ./client/package.json ./client/package-lock.json \
     ./
 
 USER builder
@@ -49,7 +49,8 @@ RUN groupadd -r ltiapp \
 # Dependencies have been installed. Only build the 2nd stage if necessary
 COPY --chown=ltiapp:ltiapp . .
 
-COPY --from=client_builder --chown=ltiapp:ltiapp /srv/dist/* /srv/client/dist/
+COPY --from=client_builder --chown=ltiapp:ltiapp \
+    /srv/dist/ /srv/client/dist/
 
 ENV DJANGO_SETTINGS_MODULE=draw.test_settings
 

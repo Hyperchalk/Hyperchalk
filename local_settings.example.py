@@ -7,10 +7,7 @@ The settings are explained in https://docs.djangoproject.com/en/3.2/topics/setti
 
 You should also have a look at https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 """
-
 # pylint: disable=wildcard-import,unused-wildcard-import
-from django.utils.log import DEFAULT_LOGGING
-
 from draw.settings import *
 from draw.utils import deepmerge
 
@@ -80,7 +77,13 @@ DEBUG = False
 # CHANNEL_LAYERS = {
 #     "default": {
 #         "BACKEND": "channels.layers.InMemoryChannelLayer",
-#     }
+#     },
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("redis", 6379)],
+#         },
+#     },
 # }
 
 # Logging

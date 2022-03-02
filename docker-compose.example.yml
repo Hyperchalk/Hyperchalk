@@ -4,6 +4,7 @@ services:
   # these are the recommended settings to run your app
   drawapp:
     image: gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application:latest
+    # image: gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application:redischannel
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -13,3 +14,9 @@ services:
     command: "draw.asgi --bind=0.0.0.0:8000"
     environment:
       - "DJANGO_SETTINGS_MODULE=deployment_settings"
+
+  # redis:
+  #   image: redis:alpine
+  #   volumes:
+  #     - ./redis/data:/data
+  #     - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro

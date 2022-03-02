@@ -1,4 +1,5 @@
 SHELL=/bin/bash
+BUILDFLAGS=
 
 .PHONY: base redischannel upload-latest upload-redischannel upload
 
@@ -8,14 +9,14 @@ base:
 	docker build \
 		-t drawlti\:latest \
 		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
-		--platform linux/x86-64 .
+		--platform linux/x86-64 $(BUILDFLAGS) .
 
 redischannel: base
 	docker build \
 		-f redischannel.Dockerfile \
 		-t drawlti\:redischannel \
 		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:redischannel \
-		--platform linux/x86-64 .
+		--platform linux/x86-64 $(BUILDFLAGS) .
 
 upload-latest: base
 	docker push \
