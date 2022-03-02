@@ -1,0 +1,89 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: Lukas Menzel\n"
+"POT-Creation-Date: 2022-03-02 13:03+0100\n"
+"PO-Revision-Date: 2022-03-02 13:03+0100\n"
+"Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
+"Language-Team: EduTec <praktikum_alice@dipf.de>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ltiapi/models.py
+msgid "consumer name"
+msgstr "Consumer Name"
+
+#: ltiapi/models.py
+msgid "Name of the LTI consumer to register"
+msgstr "Name des zu registrierenden LTI-Consumers"
+
+#: ltiapi/models.py
+msgid "registered consumer"
+msgstr "registrierter Consumer"
+
+#: ltiapi/models.py
+msgid "only fills after registration completed"
+msgstr "wird ausgefüllt, nachdem die Registrierung abgeschlossen ist"
+
+#: ltiapi/models.py
+msgid "consumer registration timestamp"
+msgstr "Consumer-Registrierungs-Zeitstempel"
+
+#: ltiapi/models.py
+msgid "registered via"
+msgstr "Registriert via"
+
+#: ltiapi/templates/ltiapi/register_consumer_result.html
+msgid "The application registration succeeded."
+msgstr "Die Anwendungsregistrierung war erfolgreich."
+
+#: ltiapi/templates/ltiapi/register_consumer_result.html
+msgid "Close registration"
+msgstr "Registrierung schließen"
+
+#: ltiapi/templates/ltiapi/register_consumer_result.html
+#, python-format
+msgid "There was an error while registering you application: %(error)s"
+msgstr "Es gab einen Fehler, während der Registrierung deine Anwendungr: %(error)s"
+
+#: ltiapi/templates/ltiapi/register_consumer_start.html
+#, python-format
+msgid ""
+"This one off link was issued for a registration by “%(consumer)s”. Once the "
+"registration process is started, it cannot be reused. Do you want to "
+"continue?"
+msgstr ""
+"Dieser Einmal-Link wurde für eine Registrierung durch „%(consumer)s“ "
+"ausgestellt. Wenn der Registrierungsprozess gestartet wurde, kann der "
+"Link nicht für eine weitere Registrierung verwendet werden. Möchstest Du "
+"mit der Registrierung fortfahren?"
+
+#: ltiapi/templates/ltiapi/register_consumer_start.html
+msgid "Start The Registration"
+msgstr "Registrierung starten"
+
+#: ltiapi/templates/ltiapi/register_consumer_start.html ltiapi/views.py
+msgid ""
+"The registration link has already been used. Please ask the admin of the LTI "
+"app for a new registration link."
+msgstr ""
+"Dieser Registrierungs-Link wurde bereits verwendet. Bitte frage den "
+"Administrator der Anwendung nach einem neuen Link."
+
+#: ltiapi/utils.py
+#, python-format
+msgid "%s by %s"
+msgstr "%s von %s"
+
+#: ltiapi/utils.py
+msgid "New drawing board"
+msgstr "Neues Whiteboard"

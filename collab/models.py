@@ -26,7 +26,7 @@ class ExcalidrawLogRecord(models.Model):
     # if a user is deleted, keep the foreign key to be able to keep the action log
     user_pseudonym = models.CharField(
         max_length=40, validators=[MinLengthValidator(40)], null=True,
-        help_text=_("this is geenrated from ltiapi.models.CustomUser.id_for_room"))
+        help_text=_("this is generated from ltiapi.models.CustomUser.id_for_room"))
     _content = models.BinaryField(blank=True)
 
     @property
