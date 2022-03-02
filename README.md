@@ -37,11 +37,12 @@ check out the following sources:
 
 - [Django Deployment Guide] (especially the section where [Gunicorn deployment] is explained.)
 - [Django Settings Guide] and [settings reference]
-- [Channel Layers Configuration](https://channels.readthedocs.io/en/stable/topics/channel_layers.html#configuration)
+- [Channel Layers configuration guide]
 - [Gunicorn Configuration](https://docs.gunicorn.org/en/latest/configure.html)
 - [Uvicorn Settings Documentation](https://www.uvicorn.org/settings/)
 - [Uvicorn Deployment Guide](https://www.uvicorn.org/deployment/)
 
+[Channel Layers configuration guide]: https://channels.readthedocs.io/en/stable/topics/channel_layers.html#configuration
 [Django Deployment Guide]: https://docs.djangoproject.com/en/3.2/howto/deployment/
 [Gunicorn deployment]: https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/gunicorn/
 [Django Settings Guide]: https://docs.djangoproject.com/en/3.2/topics/settings/
@@ -59,3 +60,19 @@ $ docker-compose run --rm drawapp manage createsuperuser
 # create a registration link
 $ docker-compose run --rm drawapp manage makeconsumerlink
 ```
+
+## Supported Data Storage Options
+
+Databases (see [Django configuration guide]):
+
+- Postgres
+- MySQL
+- SQLite
+
+Channel layers (see [Channel Layers configuration guide]):
+
+- [Redis (official)](https://channels.readthedocs.io/en/stable/topics/channel_layers.html#redis-channel-layer)
+- [Postgres](https://github.com/danidee10/channels_postgres/)
+- [In Memory](https://channels.readthedocs.io/en/stable/topics/channel_layers.html#in-memory-channel-layer) (don't use in production!)
+
+[Django configuration guide]: https://docs.djangoproject.com/en/4.0/ref/settings/#engine
