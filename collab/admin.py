@@ -24,7 +24,9 @@ class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
     @admin.display(description="View Room in Browser JSON Viewer")
     def view_json(self, obj: m.ExcalidrawLogRecord):
         if obj.pk:
-            json_link = reverse('collab:record', kwargs={'pk': obj.pk})
+            json_link = reverse('collab:record-json', kwargs={
+                'room_name': obj.room_name, 'pk': obj.pk
+            })
             return mark_safe(f"<a href={json_link}>Go to JSON</a>")
         return _('will be generated after saving')
 
@@ -36,6 +38,6 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
     @admin.display(description="View Room in Browser JSON Viewer")
     def room_json(self, obj: m.ExcalidrawRoom):
         if obj.pk:
-            room_link = reverse('collab:room', kwargs={'room_name': obj.room_name})
+            room_link = reverse('collab:room-json', kwargs={'room_name': obj.room_name})
             return mark_safe(f"<a href='{room_link}'>Go to room JSON</a>")
         return _('will be generated after saving')

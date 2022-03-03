@@ -32,9 +32,11 @@ export interface ConfigProps {
   BROADCAST_RESOLUTION: number
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: number
   INITIAL_DATA: BroadcastedExcalidrawElement[]
+  IS_REPLAY_MODE: boolean
   LANGUAGE_CODE: string
   LIBRARY_RETURN_URL?: string
-  SAVE_ROOM_INTERVAL: number
+  ROOM_NAME: string
+  SAVE_ROOM_MAX_WAIT: number
   SOCKET_URL: string
   USER_COLOR?: UserColor
   USER_NAME: string

@@ -6,7 +6,7 @@ import { AppState, ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/exc
 import { ConfigProps, ConnectionStates } from "./types"
 
 import "./style.css"
-import { getJsonScript, getLocalStorageJson, setLocalStorageJson } from "./utils"
+import { getJsonScript, getLocalStorageJson, noop, setLocalStorageJson } from "./utils"
 import { CollabAPI } from "./collab/collaboration"
 import { useEventListener } from "./hooks/useEventListener"
 import { reconcileElements } from "./collab/reconciliation"
@@ -18,23 +18,16 @@ const defaultConfig: ConfigProps = {
   BROADCAST_RESOLUTION: 150,
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: 50,
   INITIAL_DATA: [],
+  IS_REPLAY_MODE: false,
   LANGUAGE_CODE: "en-US",
-  SAVE_ROOM_INTERVAL: 15000,
+  ROOM_NAME: "_default",
+  SAVE_ROOM_MAX_WAIT: 15000,
   SOCKET_URL: "",
   USER_NAME: "",
 }
 
 const config: ConfigProps = { ...defaultConfig, ...getJsonScript("excalidraw-config") }
 const msg: Record<string, string> = { ...getJsonScript("custom-messages") }
-
-let params = new URLSearchParams(window.location.search.slice(1))
-
-// let hash = new URLSearchParams(window.location.hash.slice(1))
-
-// function updateHashParams(name: string, value: string) {
-//   hash.set(name, value)
-//   window.location.hash = hash.toString()
-// }
 
 function saveLibrary(items: LibraryItems) {
   localStorage.setItem("_library", JSON.stringify(items))
@@ -44,7 +37,7 @@ function loadLibrary(): LibraryItems {
   return JSON.parse(localStorage.getItem("_library") ?? "[]")
 }
 
-let localData: ImportedDataState = JSON.parse(localStorage.getItem(params.get("room")!) ?? "{}")
+let localData: ImportedDataState = JSON.parse(localStorage.getItem(config.ROOM_NAME) ?? "{}")
 
 let importedAppState = Object.assign(
   { editingElement: null, resizingElement: null, draggingElement: null },
@@ -52,8 +45,10 @@ let importedAppState = Object.assign(
 )
 
 let initialData = {
-  elements: reconcileElements(localData?.elements ?? [], config.INITIAL_DATA, importedAppState),
-  appState: importedAppState,
+  elements: config.IS_REPLAY_MODE
+    ? []
+    : reconcileElements(localData?.elements ?? [], config.INITIAL_DATA, importedAppState),
+  appState: config.IS_REPLAY_MODE ? {} : importedAppState,
   libraryItems: loadLibrary(),
 }
 
@@ -68,15 +63,17 @@ function IndexPage() {
   collabAPI.connectionStateSetter = setConnectionState
   window.draw = draw
 
-  const saveStateToLocalStorage = useCallback(() => {
-    // if an element is deleted and the user closes the tab before it can sync to the
-    // server, the deleted element will be restored on reload, because we do not save
-    // deleted elements. is this a problem? how correct do we have to be here?
-    const elements = draw.current?.getSceneElements() ?? []
-    const appState: Partial<AppState> = { ...draw.current?.getAppState() }
-    delete appState.collaborators
-    localStorage.setItem(params.get("room")!, serializeAsJSON(elements, appState))
-  }, [draw])
+  const saveStateToLocalStorage = config.IS_REPLAY_MODE
+    ? noop
+    : useCallback(() => {
+        // if an element is deleted and the user closes the tab before it can sync to the
+        // server, the deleted element will be restored on reload, because we do not save
+        // deleted elements. is this a problem? how correct do we have to be here?
+        const elements = draw.current?.getSceneElements() ?? []
+        const appState: Partial<AppState> = { ...draw.current?.getAppState() }
+        delete appState.collaborators
+        localStorage.setItem(config.ROOM_NAME, serializeAsJSON(elements, appState))
+      }, [draw])
 
   const loadEnqueuedLibraries = useCallback(() => {
     let urls: string[] = getLocalStorageJson(_addLibraries, [])
@@ -94,9 +91,6 @@ function IndexPage() {
   useEventListener("beforeunload", saveStateToLocalStorage, window)
   useEventListener("visibilitychange", saveStateToLocalStorage, document)
 
-  // FIXME: adding items to the libraray via an addLink fails. see issue #5
-  // https://gitlab.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application/-/issues/5
-
   return connectionState == "CONNECTED" ? (
     <Excalidraw
       ref={draw}
@@ -109,6 +103,7 @@ function IndexPage() {
           clearCanvas: false,
         },
       }}
+      viewModeEnabled={config.IS_REPLAY_MODE}
       autoFocus={true}
       handleKeyboardGlobally={true}
       langCode={config.LANGUAGE_CODE}

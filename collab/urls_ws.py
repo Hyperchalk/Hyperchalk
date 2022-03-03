@@ -10,5 +10,6 @@ logger = logging.getLogger('draw.collab')
 app_name = "collab"
 
 urlpatterns = [
-    path('collaborate/<room_name>', consumers.CollaborationConsumer.as_asgi(), name='collaborate')
+    path('<room_name>/collaborate', consumers.CollaborationConsumer.as_asgi(), name='collaborate'),
+    path('<room_name>/replay', consumers.ReplayConsumer.as_asgi(), name='replay')
 ]

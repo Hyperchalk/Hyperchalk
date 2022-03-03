@@ -216,6 +216,12 @@ ALLOW_AUTOMATIC_ROOM_CREATION = False
 # If set to false, users will need to be logged in.
 ALLOW_ANONYMOUS_VISITS = False
 
+# how often the clients are going to broadcast updates on change (milliseconds)
+BROADCAST_RESOLUTION = 100
+
+# how many seconds after a change clients will wait before issuing a save command (milliseconds)
+SAVE_ROOM_MAX_WAIT = 15000
+
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):
     required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE', 'LINK_BASE'}

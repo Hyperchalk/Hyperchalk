@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-03 13:44+0100\n"
+"POT-Creation-Date: 2022-03-03 14:15+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -34,5 +34,22 @@ msgstr "Bibliothek hinzugefügt"
 msgid ""
 "The imported library will be added to your library once you open the drawing "
 "board tab. You can close this tab now."
-msgstr "Die importierte Bibliothek wird Deiner Bibliothek hinzugefügt, wenn Du"
-" zum Whiteboard zurückkehrst. Du kannst diesen Tab nun schließen."
+msgstr ""
+"Die importierte Bibliothek wird Deiner Bibliothek hinzugefügt, wenn Du zum "
+"Whiteboard zurückkehrst. Du kannst diesen Tab nun schließen."
+
+#: collab/views.py
+msgid "Anonymous"
+msgstr "Anonymous"
+
+#: collab/views.py
+msgid "You need to be logged in."
+msgstr "Du musst angemeldet sein."
+
+#: collab/views.py
+msgid "Automatic room creation is disabled here."
+msgstr "Die automatische Raum-Erstellung ist deaktiviert."
+
+#: collab/views.py
+msgid "You are not allowed to access this room."
+msgstr "Du hast keinen Zugriff auf diesen Raum."

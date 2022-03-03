@@ -14,6 +14,7 @@ import {
   WsState,
 } from "../types"
 import { reconcileElements } from "./reconciliation"
+import { noop } from "../utils"
 
 // #region message types
 // userRoomId always gets patched into the change in the backend
@@ -72,7 +73,7 @@ export class CollabAPI {
   constructor(config: ConfigProps) {
     // collaborator setup
     this.MAX_UPDATES_BEFORE_RESYNC = config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
-    this.SAVE_ROOM_INTERVAL = config.SAVE_ROOM_INTERVAL
+    this.SAVE_ROOM_MAX_WAIT = config.SAVE_ROOM_MAX_WAIT
     this.meInfo = {
       username: config.USER_NAME,
       color: config.USER_COLOR,
@@ -81,27 +82,35 @@ export class CollabAPI {
     // websocket setup
     this.ws = new ReconnectingWebSocket(config.SOCKET_URL)
     this.ws.addEventListener("message", (event) => this.routeMessage(JSON.parse(event.data)))
-    this.ws.addEventListener("connecting", () => this.scheduleFullSync())
     this.ws.addEventListener("open", () => this.broadcastCollaboratorChange(this.meInfo))
+    this.ws.addEventListener("connecting", (event) => {
+      // code 3000 is sent when a disconnect happens due to an authentication error.
+      if (event.code == 3000) {
+        this.ws.close()
+      } else {
+        this.scheduleFullSync()
+      }
+    })
 
     // methods for direct usage by excalidraw component
-    this.broadcastCursorMovement = throttle(
-      this._broadcastCursorMovement.bind(this),
-      config.BROADCAST_RESOLUTION
-    )
-    this.broadcastElements = throttle(
-      this._broadcastElements.bind(this),
-      config.BROADCAST_RESOLUTION,
-      {
-        leading: false,
-        trailing: true,
-      }
-    )
-    this.saveRoom = debounce(this._saveRoom.bind(this), 5000, {
-      leading: false,
-      trailing: true,
-      maxWait: this.SAVE_ROOM_INTERVAL,
-    })
+    this.broadcastCursorMovement = config.IS_REPLAY_MODE
+      ? noop
+      : throttle(this._broadcastCursorMovement.bind(this), config.BROADCAST_RESOLUTION)
+
+    this.broadcastElements = config.IS_REPLAY_MODE
+      ? noop
+      : throttle(this._broadcastElements.bind(this), config.BROADCAST_RESOLUTION, {
+          leading: false,
+          trailing: true,
+        })
+
+    this.saveRoom = config.IS_REPLAY_MODE
+      ? noop
+      : debounce(this._saveRoom.bind(this), 5000, {
+          leading: false,
+          trailing: true,
+          maxWait: this.SAVE_ROOM_MAX_WAIT,
+        })
   }
 
   // #region component communication
@@ -400,7 +409,7 @@ export class CollabAPI {
   // #endregion collaborator awareness
 
   // #region backend communication
-  SAVE_ROOM_INTERVAL: number
+  SAVE_ROOM_MAX_WAIT: number
 
   private _saveRoom() {
     this.ws.send(

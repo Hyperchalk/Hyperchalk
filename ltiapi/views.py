@@ -15,7 +15,7 @@ from pylti1p3.contrib.django import DjangoCacheDataStorage, DjangoMessageLaunch,
 from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
 from pylti1p3.deep_link_resource import DeepLinkResource
 
-from draw.utils import absolute_reverse, make_room_name, reverse_with_query
+from draw.utils import absolute_reverse, make_room_name
 from collab.models import ExcalidrawRoom
 
 from . import models as m
@@ -162,9 +162,7 @@ def lti_launch(request: HttpRequest):
         .get('room', None) \
         or request.GET.get('room', make_room_name(24))
 
-    room_uri = reverse_with_query('collab:index', query_kwargs={'room': room_name})
-    room_uri = request.build_absolute_uri(room_uri)
-
+    room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
 
     if message_launch.is_deep_link_launch():
         course_context = message_launch_data\

@@ -7,8 +7,10 @@ app_name = "collab"
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('room/<room_name>', views.get_current_elements, name='room'),
-    path('record/<int:pk>', views.get_log_record, name='record'),
+    path('<room_name>', views.room, name='room'),
+    path('<room_name>/replay', views.replay, name='replay-room'),
+    path('<room_name>.json', views.get_current_elements, name='room-json'),
+    path('<room_name>/record/<int:pk>.json', views.get_log_record, name='record-json'),
     path('add-library', TemplateView.as_view(template_name='collab/add_library.html'),
          name='add-library')
 ]

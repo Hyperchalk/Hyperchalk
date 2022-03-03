@@ -104,7 +104,6 @@ def lti_registration_data(request: HttpRequest):
         'token_endpoint_auth_method': 'private_key_jwt',
         'redirect_uris': [
             absolute_reverse(request, 'lti:launch'),
-            absolute_reverse(request, 'collab:index'),
         ],
         # https://www.imsglobal.org/spec/security/v1p0/#h_scope-naming-conventions
         'scope': ['https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'],

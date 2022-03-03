@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 import logging
 import uuid
 from asyncio import gather
@@ -9,8 +10,10 @@ from channels.db import database_sync_to_async
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
+from faker import Faker
 
-from draw.utils import dump_content, user_id_for_room, user_is_authenticated, user_is_authorized
+from draw.utils import (dump_content, user_id_for_room, user_is_authenticated, user_is_authorized,
+                        user_is_staff)
 from draw.utils.django_loaded import LoggingAsyncJsonWebsocketConsumer
 from ltiapi.models import CustomUser
 
@@ -203,3 +206,70 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         # dont't send the event back to the sender
         if event['sender'] != self.channel_name:
             await self.send_json(event['notification'])
+
+
+get_log_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.get)
+
+@database_sync_to_async
+def get_log_record_ids_for_room(room_name):
+    return list(m.ExcalidrawLogRecord.objects
+        .filter(room_name=room_name)
+        .order_by('id')
+        .values_list('id'))
+
+class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
+
+    async def connect(self):
+        url_route: dict = self.scope.get('url_route')
+        # pylint: disable=attribute-defined-outside-init
+        self.args: Sequence[Any] = url_route.get('args')
+        self.kwargs: Dict[str, Any] = url_route.get('kwargs')
+
+        self.user: CustomUser = self.scope.get('user')
+        self.room_name = self.kwargs.get('room_name')
+
+        if not await user_is_staff(self.user):
+            return await self.disconnect(3000)
+
+        await super().connect()
+        logger.info('start replay mode for room %s', self.room_name)
+        self.replay_task = asyncio.create_task(self.start_replay())
+
+    async def disconnect(self, code):
+        if hasattr(self, 'replay_task'):
+            logger.debug('client disconnected before replay of room %s finished', self.room_name)
+            self.replay_task.cancel()
+        return await super().disconnect(code)
+
+    async def start_replay(self):
+        faker = Faker()
+
+        log_record_ids = await get_log_record_ids_for_room(room_name=self.room_name)
+
+        # this will be fun :)
+        encountered_user_pseudonyms = defaultdict(faker.name)
+
+        for (log_id,) in log_record_ids:
+            await asyncio.sleep(settings.BROADCAST_RESOLUTION / 1000)
+            record: m.ExcalidrawLogRecord = await get_log_record(pk=log_id)
+            if record.event_type in ['full_sync', 'elements_changed']:
+                await self.send_json({
+                    'eventtype': record.event_type,
+                    'elements': record.content,
+                })
+            elif record.event_type == 'collaborator_change':
+                await self.send_json({
+                    'eventtype': 'collaborator_change',
+                    'changes': [{
+                        **record.content,
+                        'username': encountered_user_pseudonyms[record.user_pseudonym],
+                        'userRoomId': record.user_pseudonym,
+                    }]
+                })
+
+    async def receive_json(self, content, **kwargs):
+        """
+        Discards all received messages.
+        """
+        msg_type = content['eventtype']
+        logger.debug("ReplayConsumer received a message of type %s. It was discarded.", msg_type)
