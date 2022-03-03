@@ -8,8 +8,8 @@ from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseForbidd
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as txt
 
-from draw.utils import (make_room_name, require_login, require_staff_user, reverse_with_query,
-                        user_is_authenticated, user_is_authorized)
+from draw.utils import (absolute_reverse, make_room_name, require_login, require_staff_user,
+                        reverse_with_query, user_is_authenticated, user_is_authorized)
 
 from . import models as m
 
@@ -59,6 +59,7 @@ async def index(request: HttpRequest, **kwargs):
         'BROADCAST_RESOLUTION': 100,
         'ROOM_NAME': room_name,
         'INITIAL_DATA': room_obj.elements,
+        'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
         'USER_NAME': username,
         'LANGUAGE_CODE': settings.LANGUAGE_CODE,
         'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,

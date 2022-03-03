@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"Report-Msgid-Bugs-To: Lukas Menzel\n"
-"POT-Creation-Date: 2022-03-02 13:03+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-03 13:44+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -53,7 +53,8 @@ msgstr "Registrierung schließen"
 #: ltiapi/templates/ltiapi/register_consumer_result.html
 #, python-format
 msgid "There was an error while registering you application: %(error)s"
-msgstr "Es gab einen Fehler, während der Registrierung deine Anwendungr: %(error)s"
+msgstr ""
+"Es gab einen Fehler, während der Registrierung deine Anwendungr: %(error)s"
 
 #: ltiapi/templates/ltiapi/register_consumer_start.html
 #, python-format
@@ -63,9 +64,9 @@ msgid ""
 "continue?"
 msgstr ""
 "Dieser Einmal-Link wurde für eine Registrierung durch „%(consumer)s“ "
-"ausgestellt. Wenn der Registrierungsprozess gestartet wurde, kann der "
-"Link nicht für eine weitere Registrierung verwendet werden. Möchstest Du "
-"mit der Registrierung fortfahren?"
+"ausgestellt. Wenn der Registrierungsprozess gestartet wurde, kann der Link "
+"nicht für eine weitere Registrierung verwendet werden. Möchstest Du mit der "
+"Registrierung fortfahren?"
 
 #: ltiapi/templates/ltiapi/register_consumer_start.html
 msgid "Start The Registration"

@@ -1,0 +1,32 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% trans "Library Added" %}</title>
+</head>
+<body>
+  <p>{% blocktrans trimmed %}
+    The imported library will be added to your library once you
+    open the drawing board tab. You can close this tab now.
+  {% endblocktrans %}</p>
+  <script>
+    function getLocalStorageJson(key, init = []) {
+      return JSON.parse(localStorage.getItem(key) ?? JSON.stringify(init))
+    }
+
+    function setLocalStorageJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value))
+    }
+
+    (() => {
+      let libsToAdd = getLocalStorageJson('_addLibraries', [])
+      let hash = new URLSearchParams(window.location.hash.slice(1))
+      libsToAdd.push(hash.get('addLibrary'))
+      setLocalStorageJson('_addLibraries', libsToAdd)
+    })()
+  </script>
+</body>
+</html>

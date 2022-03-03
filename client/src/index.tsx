@@ -6,7 +6,7 @@ import { AppState, ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/exc
 import { ConfigProps, ConnectionStates } from "./types"
 
 import "./style.css"
-import { getJsonScript } from "./utils"
+import { getJsonScript, getLocalStorageJson, setLocalStorageJson } from "./utils"
 import { CollabAPI } from "./collab/collaboration"
 import { useEventListener } from "./hooks/useEventListener"
 import { reconcileElements } from "./collab/reconciliation"
@@ -59,6 +59,8 @@ let initialData = {
 
 let collabAPI = new CollabAPI(config)
 
+const _addLibraries = "_addLibraries"
+
 function IndexPage() {
   let draw = useRef<ExcalidrawImperativeAPI>(null)
   let [connectionState, setConnectionState] = useState<ConnectionStates>(collabAPI.connectionState)
@@ -76,7 +78,18 @@ function IndexPage() {
     localStorage.setItem(params.get("room")!, serializeAsJSON(elements, appState))
   }, [draw])
 
+  const loadEnqueuedLibraries = useCallback(() => {
+    let urls: string[] = getLocalStorageJson(_addLibraries, [])
+    if (draw.current) {
+      for (let url of urls) {
+        draw.current.importLibrary(url)
+      }
+      setLocalStorageJson(_addLibraries, [])
+    }
+  }, [draw])
+
   useEventListener("blur", saveStateToLocalStorage, window)
+  useEventListener("focus", loadEnqueuedLibraries, window)
   useEventListener("hashchange", saveStateToLocalStorage, window)
   useEventListener("beforeunload", saveStateToLocalStorage, window)
   useEventListener("visibilitychange", saveStateToLocalStorage, document)
@@ -100,7 +113,7 @@ function IndexPage() {
       handleKeyboardGlobally={true}
       langCode={config.LANGUAGE_CODE}
       onLibraryChange={saveLibrary}
-      // libraryReturnUrl={{}}
+      libraryReturnUrl={config.LIBRARY_RETURN_URL}
     />
   ) : (
     <p style={{ margin: "1rem" }}>{msg.NOT_LOGGED_IN}</p>

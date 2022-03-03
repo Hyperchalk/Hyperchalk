@@ -24,3 +24,11 @@ export function generateRandomString(len?: number) {
 export function getJsonScript(id: string, init = {}) {
   return JSON.parse(document.getElementById(id)?.innerText ?? JSON.stringify(init))
 }
+
+export function getLocalStorageJson(key: string, init = {}) {
+  return JSON.parse(localStorage.getItem(key) ?? JSON.stringify(init))
+}
+
+export function setLocalStorageJson(key: string, value: any) {
+  localStorage.setItem(key, JSON.stringify(value))
+}

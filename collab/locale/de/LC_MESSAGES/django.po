@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"Report-Msgid-Bugs-To: Lukas Menzel\n"
-"POT-Creation-Date: 2022-03-02 13:03+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-03 13:44+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -18,6 +18,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: collab/admin.py
+msgid "will be generated after saving"
+msgstr "wird nach dem Speichern generiert"
+
 #: collab/models.py
 msgid "this is generated from ltiapi.models.CustomUser.id_for_room"
 msgstr "wird von ltiapi.models.CustomUser.id_for_room generiert"
+
+#: collab/templates/collab/add_library.html
+msgid "Library Added"
+msgstr "Bibliothek hinzugefügt"
+
+#: collab/templates/collab/add_library.html
+msgid ""
+"The imported library will be added to your library once you open the drawing "
+"board tab. You can close this tab now."
+msgstr "Die importierte Bibliothek wird Deiner Bibliothek hinzugefügt, wenn Du"
+" zum Whiteboard zurückkehrst. Du kannst diesen Tab nun schließen."
