@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-03 14:15+0100\n"
+"POT-Creation-Date: 2022-03-03 17:17+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -19,8 +19,28 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: collab/admin.py
+msgid "Go to JSON"
+msgstr "Zum JSON gehen"
+
+#: collab/admin.py
 msgid "will be generated after saving"
 msgstr "wird nach dem Speichern generiert"
+
+#: collab/admin.py
+msgid "View Room in Browser JSON Viewer"
+msgstr "Raum im JSON-Betrachter des Browsers ansehen"
+
+#: collab/admin.py
+msgid "Go to room JSON"
+msgstr "Zum Raum-JSON gehen"
+
+#: collab/admin.py
+msgid "Replay Mode"
+msgstr "Replay-Modus"
+
+#: collab/admin.py
+msgid "Replay this room"
+msgstr "Diesen Raum abspielen"
 
 #: collab/models.py
 msgid "this is generated from ltiapi.models.CustomUser.id_for_room"
