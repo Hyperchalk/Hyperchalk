@@ -1,3 +1,4 @@
+# backends for django ORM and django channels
 channels-postgres ~= 0.0.4
 channels-redis ~= 3.3.1
 mysqlclient ~= 2.1.0

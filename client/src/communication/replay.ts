@@ -68,6 +68,12 @@ export default class ReplayCommunicator extends Communicator {
   }
 }
 
+/**
+ * React hook to communicate control button presses to the server
+ *
+ * @param communicator an instance of ReplayCommunicator that will send control requests
+ * @returns custom hook
+ */
 export function useControlState(
   communicator: ReplayCommunicator
 ): [ControlStates, (newState: ControlTypes) => void] {

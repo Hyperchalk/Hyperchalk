@@ -25,6 +25,31 @@ RUN npm run build
 
 # ------------------------------------------------------------------------------------------------ #
 
+FROM python:3.10-slim AS wheel_builder
+
+WORKDIR /opt
+
+RUN apt update \
+    && apt upgrade -y \
+    && apt install -y --no-install-recommends gosu \
+        gcc libc-dev libmariadb-dev libpq-dev \
+    && apt autoremove -y && apt autoclean && apt clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN groupadd -r builder \
+    && useradd --no-log-init -r -m -g builder builder \
+    && chown builder:builder /opt
+
+USER builder
+
+COPY --chown=builder:builder ./wheels.requirements.txt .
+
+RUN mkdir -p wheels
+RUN pip install --no-cache-dir -U pip setuptools wheel
+RUN pip wheel -r wheels.requirements.txt -w ./wheels/
+
+# ------------------------------------------------------------------------------------------------ #
+
 FROM python:3.10-slim AS ltiapp
 
 WORKDIR /srv
@@ -34,16 +59,17 @@ RUN pip install --no-cache-dir -U pip setuptools wheel
 
 RUN apt update \
     && apt upgrade -y \
-    && apt install -y --no-install-recommends gosu \
-        gcc libc-dev libmariadb3 libmariadb-dev libpq5 libpq-dev \
+    && apt install -y --no-install-recommends gosu libmariadb3 libpq5 \
     && apt autoremove -y && apt autoclean && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY --from=wheel_builder /opt/wheels /opt/wheels
+
 COPY ./backends.requirements.txt .
-RUN pip install --no-cache-dir -r backends.requirements.txt
+RUN pip install --no-cache-dir -r backends.requirements.txt --find-links /opt/wheels
 
 # make an unpriviledged user and allow the user to access the data folder
 RUN groupadd -r ltiapp \

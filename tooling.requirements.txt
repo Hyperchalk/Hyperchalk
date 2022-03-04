@@ -1,3 +1,4 @@
+# tooling to test and develop the code
 coverage ~= 6.2
 mypy ~= 0.931
 pylint ~= 2.12
