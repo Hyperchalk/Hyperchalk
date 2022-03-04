@@ -10,8 +10,6 @@ export type ReconciliationAppState = Pick<
   "editingElement" | "resizingElement" | "draggingElement"
 >
 
-export type ConnectionStates = "CONNECTED" | "DISCONNECTED"
-
 export interface Pointer {
   x: number
   y: number
@@ -31,7 +29,6 @@ export interface UserColor {
 export interface ConfigProps {
   BROADCAST_RESOLUTION: number
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: number
-  INITIAL_DATA: BroadcastedExcalidrawElement[]
   IS_REPLAY_MODE: boolean
   LANGUAGE_CODE: string
   LIBRARY_RETURN_URL?: string

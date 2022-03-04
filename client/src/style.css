@@ -17,3 +17,24 @@ html,
 .excalidraw.excalidraw .color-picker-input {
   height: inherit;
 }
+
+.replay-controls.replay-controls {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  background-color: var(--island-bg-color);
+  box-shadow: var(--shadow-island);
+  border-radius: 4px;
+  display: flex;
+  padding: 0.5rem;
+  gap: 0.25rem;
+}
+
+.replay-controls__button {
+  display: block;
+  font-size: 24px;
+  aspect-ratio: 1/1;
+  width: 2.5rem;
+}

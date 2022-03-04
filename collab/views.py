@@ -51,22 +51,24 @@ async def room(request: HttpRequest, room_name: str):
                 username, room_name)
             return HttpResponseForbidden(_("You are not allowed to access this room."))
 
-    return render(request, 'collab/index.html', {'excalidraw_config': {
-        'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
-        'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
-        'INITIAL_DATA': room_obj.elements,
-        'LANGUAGE_CODE': settings.LANGUAGE_CODE,
-        'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
-        'ROOM_NAME': room_name,
-        'SAVE_ROOM_MAX_WAIT': 15000,
-        'SOCKET_URL': request.build_absolute_uri(f'/ws/collab/{room_name}/collaborate')\
-            .replace('http://', 'ws://', 1)\
-            .replace('https://', 'wss://', 1), # not beautiful but it works
-        'USER_NAME': username,
-    },
-    'custom_messages': {
-        'NOT_LOGGED_IN': NOT_LOGGED_IN
-    }})
+    return render(request, 'collab/index.html', {
+        'excalidraw_config': {
+            'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
+            'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
+            'LANGUAGE_CODE': settings.LANGUAGE_CODE,
+            'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
+            'ROOM_NAME': room_name,
+            'SAVE_ROOM_MAX_WAIT': 15000,
+            'SOCKET_URL': request.build_absolute_uri(f'/ws/collab/{room_name}/collaborate')\
+                .replace('http://', 'ws://', 1)\
+                .replace('https://', 'wss://', 1), # not beautiful but it works
+            'USER_NAME': username,
+        },
+        'custom_messages': {
+            'NOT_LOGGED_IN': NOT_LOGGED_IN
+        },
+        'initial_data': room_obj.elements,
+    })
 
 
 @require_login
@@ -85,20 +87,22 @@ async def get_log_record(request: HttpRequest, room_name: str, pk: int):
 
 @require_staff_user
 async def replay(request: HttpRequest, room_name: str, **kwargs):
-    return render(request, 'collab/index.html', {'excalidraw_config': {
-        'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
-        'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
-        'INITIAL_DATA': [],
-        'IS_REPLAY_MODE': True,
-        'LANGUAGE_CODE': settings.LANGUAGE_CODE,
-        'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
-        'ROOM_NAME': room_name,
-        'SAVE_ROOM_MAX_WAIT': settings.SAVE_ROOM_MAX_WAIT,
-        'SOCKET_URL': request.build_absolute_uri(f'/ws/collab/{room_name}/replay')\
-            .replace('http://', 'ws://', 1)\
-            .replace('https://', 'wss://', 1), # not beautiful but it works
-        'USER_NAME': '',
-    },
-    'custom_messages': {
-        'NOT_LOGGED_IN': NOT_LOGGED_IN
-    }})
+    return render(request, 'collab/index.html', {
+        'excalidraw_config': {
+            'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
+            'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
+            'IS_REPLAY_MODE': True,
+            'LANGUAGE_CODE': settings.LANGUAGE_CODE,
+            'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
+            'ROOM_NAME': room_name,
+            'SAVE_ROOM_MAX_WAIT': settings.SAVE_ROOM_MAX_WAIT,
+            'SOCKET_URL': request.build_absolute_uri(f'/ws/collab/{room_name}/replay')\
+                .replace('http://', 'ws://', 1)\
+                .replace('https://', 'wss://', 1), # not beautiful but it works
+            'USER_NAME': '',
+        },
+        'custom_messages': {
+            'NOT_LOGGED_IN': NOT_LOGGED_IN
+        },
+        'initial_data': []
+    })

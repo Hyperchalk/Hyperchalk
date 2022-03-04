@@ -23,7 +23,7 @@
  */
 
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { BroadcastedExcalidrawElement, ReconciliationAppState } from "../types"
+import { BroadcastedExcalidrawElement, ReconciliationAppState } from "./types"
 
 export type ReconciledElements = readonly ExcalidrawElement[] & {
   _brand: "reconciledElements"
