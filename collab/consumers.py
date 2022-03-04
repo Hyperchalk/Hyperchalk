@@ -87,21 +87,6 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
         return await super().disconnect(code)
 
-    async def receive_json(self, content, *args, **kwargs):
-        """
-        When a JSON message is received, this calls the method
-        which matches the ``eventtype`` field of that message.
-
-        The method in ``eventtype`` must be in the set of
-        ``allowed_eventtypes`` specified on the consumer.
-        """
-        msg_type = content['eventtype']
-        # logger.debug('received json: %s in %s', content, self.__class__.__name__)
-        if msg_type in self.allowed_eventtypes:
-            method = getattr(self, msg_type)
-            return await method(**content, **kwargs, **self.kwargs)
-        raise ValueError(f'The eventtype "{msg_type}" is not allowed.')
-
     async def collaborator_change(self, room_name, eventtype, changes: List[dict], **kwargs):
         """
         Forwards all updates to users and their pointers to clients and logs them to the data base.
@@ -212,64 +197,98 @@ get_log_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.get)
 
 @database_sync_to_async
 def get_log_record_ids_for_room(room_name):
-    return list(m.ExcalidrawLogRecord.objects
+    return [val[0] for val in m.ExcalidrawLogRecord.objects
         .filter(room_name=room_name)
         .order_by('id')
-        .values_list('id'))
+        .values_list('id')]
 
 class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
+    # pylint: disable=attribute-defined-outside-init
+    allowed_eventtypes = {'start_replay', 'pause_replay', 'restart_replay'}
 
     async def connect(self):
-        url_route: dict = self.scope.get('url_route')
-        # pylint: disable=attribute-defined-outside-init
-        self.args: Sequence[Any] = url_route.get('args')
-        self.kwargs: Dict[str, Any] = url_route.get('kwargs')
-
         self.user: CustomUser = self.scope.get('user')
-        self.room_name = self.kwargs.get('room_name')
-
         if not await user_is_staff(self.user):
             return await self.disconnect(3000)
 
-        await super().connect()
-        logger.info('start replay mode for room %s', self.room_name)
-        self.replay_task = asyncio.create_task(self.start_replay())
+        url_route: dict = self.scope.get('url_route')
+        self.args: Sequence[Any] = url_route.get('args')
+        self.kwargs: Dict[str, Any] = url_route.get('kwargs')
+        self.room_name = self.kwargs.get('room_name')
 
-    async def disconnect(self, code):
-        if hasattr(self, 'replay_task'):
-            logger.debug('client disconnected before replay of room %s finished', self.room_name)
-            self.replay_task.cancel()
-        return await super().disconnect(code)
-
-    async def start_replay(self):
-        faker = Faker()
-
-        log_record_ids = await get_log_record_ids_for_room(room_name=self.room_name)
 
         # this will be fun :)
-        encountered_user_pseudonyms = defaultdict(faker.name)
+        self.faker = Faker()
+        self.encountered_user_pseudonyms = defaultdict(self.faker.name)
 
-        for (log_id,) in log_record_ids:
-            await asyncio.sleep(settings.BROADCAST_RESOLUTION / 1000)
-            record: m.ExcalidrawLogRecord = await get_log_record(pk=log_id)
-            if record.event_type in ['full_sync', 'elements_changed']:
-                await self.send_json({
-                    'eventtype': record.event_type,
-                    'elements': record.content,
-                })
-            elif record.event_type == 'collaborator_change':
-                await self.send_json({
-                    'eventtype': 'collaborator_change',
-                    'changes': [{
-                        **record.content,
-                        'username': encountered_user_pseudonyms[record.user_pseudonym],
-                        'userRoomId': record.user_pseudonym,
-                    }]
-                })
+        await super().connect()
+        await asyncio.sleep(0.1)
+        await self.restart_replay()
 
-    async def receive_json(self, content, **kwargs):
+    async def receive_json(self, content, *args, **kwargs):
         """
         Discards all received messages.
         """
-        msg_type = content['eventtype']
-        logger.debug("ReplayConsumer received a message of type %s. It was discarded.", msg_type)
+        try:
+            await super().receive_json(content, *args, **kwargs)
+        except ValueError as e:
+            logger.debug(e)
+
+    async def disconnect(self, code):
+        if hasattr(self, 'replay_task'):
+            logger.debug('client disconnected before replay of room %s finished.', self.room_name)
+            self.replay_task.cancel()
+        return await super().disconnect(code)
+
+    async def init_replay(self):
+        self.log_record_ids, _ = await asyncio.gather(
+            get_log_record_ids_for_room(room_name=self.room_name),
+            self.send_json({'eventtype': 'reset_scene'})
+        )
+
+    async def start_replay(self, *args, **kwargs):
+        logger.info('start replay mode for room %s', self.room_name)
+        if not self.log_record_ids:
+            await self.init_replay()
+        self.replay_task = asyncio.create_task(self.wait_then_send())
+        await self.send_json({'eventtype': 'start_replay'})
+
+    async def pause_replay(self, *args, **kwargs):
+        if hasattr(self, 'replay_task'):
+            logger.debug('replay for room %s paused.', self.room_name)
+            self.replay_task.cancel()
+            await self.send_json({'eventtype': 'pause_replay'})
+
+    async def restart_replay(self, *args, **kwargs):
+        if hasattr(self, 'replay_task'):
+            self.replay_task.cancel()
+        await self.init_replay()
+        await self.start_replay()
+
+    async def send_next_event(self):
+        log_id = self.log_record_ids.pop(0)
+        record: m.ExcalidrawLogRecord = await get_log_record(pk=log_id)
+        if record.event_type in ['full_sync', 'elements_changed']:
+            await self.send_json({
+                'eventtype': record.event_type,
+                'elements': record.content,
+            })
+        elif record.event_type == 'collaborator_change':
+            await self.send_json({
+                'eventtype': 'collaborator_change',
+                'changes': [{
+                    **record.content,
+                    'username': self.encountered_user_pseudonyms[record.user_pseudonym],
+                    'userRoomId': record.user_pseudonym,
+                }]
+            })
+
+    async def wait_then_send(self):
+        if self.log_record_ids:
+            # FIXME: this shield will not work. still need to understand semantics of shield!!!
+            #        another way would be to wait for a task and then just don't start another one.
+            await asyncio.shield(self.send_next_event())
+            await asyncio.sleep(settings.BROADCAST_RESOLUTION / 1000)
+            self.replay_task = asyncio.create_task(self.wait_then_send())
+        else:
+            await self.send_json({'eventtype': 'pause_replay'})

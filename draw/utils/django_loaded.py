@@ -1,6 +1,6 @@
 import logging
 import traceback
-from typing import Optional
+from typing import Optional, Set
 from urllib.parse import urlunsplit
 
 from channels.exceptions import StopConsumer
@@ -39,6 +39,7 @@ class LoggingAsyncJsonWebsocketConsumer(AsyncJsonWebsocketConsumer):
 
     You can configure the log by changing the logger config for `draw.websocket`
     """
+    allowed_eventtypes: Set[str] = set()
 
     async def webscoket_receive(self, message):
         """
@@ -64,3 +65,18 @@ class LoggingAsyncJsonWebsocketConsumer(AsyncJsonWebsocketConsumer):
             if not isinstance(e, (StopConsumer,)):
                 websocket_logger.error("\n".join(traceback.format_exception(e)))
             raise e from e
+
+    async def receive_json(self, content, *args, **kwargs):
+        """
+        When a JSON message is received, this calls the method
+        which matches the ``eventtype`` field of that message.
+
+        The method in ``eventtype`` must be in the set of
+        ``allowed_eventtypes`` specified on the consumer.
+        """
+        msg_type = content['eventtype']
+        # logger.debug('received json: %s in %s', content, self.__class__.__name__)
+        if msg_type in self.allowed_eventtypes:
+            method = getattr(self, msg_type)
+            return await method(**content, **kwargs, **getattr(self, 'kwargs', dict()))
+        raise ValueError(f'The eventtype "{msg_type}" is not allowed.')
