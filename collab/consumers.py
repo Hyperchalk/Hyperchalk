@@ -1,8 +1,8 @@
 import asyncio
-from collections import defaultdict
 import logging
 import uuid
 from asyncio import gather
+from collections import defaultdict
 from copy import deepcopy
 from typing import Any, Dict, List, Sequence
 
@@ -50,11 +50,11 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         self.room_name = self.kwargs.get('room_name')
         room, _ = await auth_room(room_name=self.room_name)
 
-        authenticated, authorized = await asyncio.gather(
+        authenticated, authorized = await gather(
             user_is_authenticated(self.user),
             user_is_authorized(self.user, room))
         if not settings.ALLOW_ANONYMOUS_VISITS and not authenticated and not authorized:
-            _, username = await asyncio.gather(
+            _, username = await gather(
                 super().connect(),
                 user_name(self.user)
             )
@@ -216,18 +216,16 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
         self.kwargs: Dict[str, Any] = url_route.get('kwargs')
         self.room_name = self.kwargs.get('room_name')
 
-
         # this will be fun :)
         self.faker = Faker()
         self.encountered_user_pseudonyms = defaultdict(self.faker.name)
 
         await super().connect()
-        await asyncio.sleep(0.1)
-        await self.restart_replay()
+        await self.send_json({'eventtype': 'pause_replay'}) # reset the control button on connect
 
     async def receive_json(self, content, *args, **kwargs):
         """
-        Discards all received messages.
+        Received messages that are unknown are logged but don't throw an exception.
         """
         try:
             await super().receive_json(content, *args, **kwargs)
@@ -237,18 +235,28 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
     async def disconnect(self, code):
         if hasattr(self, 'replay_task'):
             logger.debug('client disconnected before replay of room %s finished.', self.room_name)
-            self.replay_task.cancel()
+            await self.cancel_replay_task()
         return await super().disconnect(code)
 
+    async def cancel_replay_task(self):
+        """
+        Waits until the replay task can be canceled (i.e. while it sleeps) and does that.
+        """
+        async with self.message_was_sent_condition:
+            if hasattr(self, 'replay_task'):
+                self.replay_task.cancel()
+
     async def init_replay(self):
-        self.log_record_ids, _ = await asyncio.gather(
+        self.log_record_ids, _ = await gather(
             get_log_record_ids_for_room(room_name=self.room_name),
             self.send_json({'eventtype': 'reset_scene'})
         )
+        # ensure that the task is not canceled while sending a message but only while sleeping.
+        self.message_was_sent_condition = asyncio.Condition()
 
     async def start_replay(self, *args, **kwargs):
         logger.info('start replay mode for room %s', self.room_name)
-        if not self.log_record_ids:
+        if not getattr(self, 'log_record_ids', []):
             await self.init_replay()
         self.replay_task = asyncio.create_task(self.wait_then_send())
         await self.send_json({'eventtype': 'start_replay'})
@@ -256,12 +264,13 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
     async def pause_replay(self, *args, **kwargs):
         if hasattr(self, 'replay_task'):
             logger.debug('replay for room %s paused.', self.room_name)
-            self.replay_task.cancel()
+            await self.cancel_replay_task()
             await self.send_json({'eventtype': 'pause_replay'})
 
     async def restart_replay(self, *args, **kwargs):
+        logger.debug('restart replay of room %s', self.room_name)
         if hasattr(self, 'replay_task'):
-            self.replay_task.cancel()
+            await self.cancel_replay_task()
         await self.init_replay()
         await self.start_replay()
 
@@ -285,10 +294,10 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
 
     async def wait_then_send(self):
         if self.log_record_ids:
-            # FIXME: this shield will not work. still need to understand semantics of shield!!!
-            #        another way would be to wait for a task and then just don't start another one.
-            await asyncio.shield(self.send_next_event())
+            async with self.message_was_sent_condition:
+                await self.send_next_event()
             await asyncio.sleep(settings.BROADCAST_RESOLUTION / 1000)
             self.replay_task = asyncio.create_task(self.wait_then_send())
         else:
-            await self.send_json({'eventtype': 'pause_replay'})
+            async with self.message_was_sent_condition:
+                await self.send_json({'eventtype': 'pause_replay'})

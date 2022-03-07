@@ -77,10 +77,10 @@ RUN groupadd -r ltiapp \
     && mkdir data && chown -R ltiapp:ltiapp data
 
 # Dependencies have been installed. Only build the 2nd stage if necessary
-COPY --chown=ltiapp:ltiapp . .
-
 COPY --from=client_builder --chown=ltiapp:ltiapp \
     /srv/dist/ /srv/client/dist/
+
+COPY --chown=ltiapp:ltiapp . .
 
 ENV DJANGO_SETTINGS_MODULE=draw.test_settings
 

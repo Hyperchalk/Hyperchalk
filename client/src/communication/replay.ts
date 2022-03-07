@@ -27,7 +27,7 @@ type ControlStateSetter = Dispatch<SetStateAction<ControlStates>>
  */
 export default class ReplayCommunicator extends Communicator {
   private _setControlState?: ControlStateSetter
-  controlState: ControlStates = "play"
+  controlState: ControlStates = "pause"
 
   constructor(config: ConfigProps, ws: ReconnectingWebSocket) {
     super(config, ws)
