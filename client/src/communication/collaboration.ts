@@ -1,7 +1,8 @@
 import { isInvisiblySmallElement } from "@excalidraw/excalidraw"
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { AppState, Collaborator } from "@excalidraw/excalidraw/types/types"
-import { debounce, throttle } from "lodash"
+import debounce from "lodash/debounce"
+import throttle from "lodash/throttle"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps, WsState } from "../types"
