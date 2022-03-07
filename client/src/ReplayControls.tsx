@@ -1,8 +1,10 @@
 import { ReplayCommunicator } from "./communication"
-import { useControlState } from "./communication/replay"
+import { useControlState, useReplayProgress } from "./communication/replay"
+import Gauge from "./Gauge"
 
 export default function ReplayControls({ communicator }: { communicator: ReplayCommunicator }) {
   const [controlState, sendControlState] = useControlState(communicator)
+  const replayProgress = useReplayProgress(communicator)
 
   return (
     <div className="replay-controls">
@@ -27,6 +29,7 @@ export default function ReplayControls({ communicator }: { communicator: ReplayC
       >
         ⏮
       </button>
+      <Gauge value={replayProgress} />
     </div>
   )
 }

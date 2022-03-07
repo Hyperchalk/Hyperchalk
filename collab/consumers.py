@@ -247,10 +247,8 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
                 self.replay_task.cancel()
 
     async def init_replay(self):
-        self.log_record_ids, _ = await gather(
-            get_log_record_ids_for_room(room_name=self.room_name),
-            self.send_json({'eventtype': 'reset_scene'})
-        )
+        self.log_record_ids = await get_log_record_ids_for_room(room_name=self.room_name)
+        await self.send_json({'eventtype': 'reset_scene', 'steps': len(self.log_record_ids)})
         # ensure that the task is not canceled while sending a message but only while sleeping.
         self.message_was_sent_condition = asyncio.Condition()
 

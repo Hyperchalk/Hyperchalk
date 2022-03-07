@@ -38,3 +38,12 @@ html,
   aspect-ratio: 1/1;
   width: 2.5rem;
 }
+
+svg.gauge .value {
+  stroke-width: 10px;
+  transition: stroke 0.1s ease;
+}
+
+svg.gauge .dial {
+  stroke-width: 8px;
+}

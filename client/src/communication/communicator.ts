@@ -1,6 +1,6 @@
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { AppState, Collaborator, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
-import { RefObject, Dispatch, SetStateAction, useState, useRef } from "react"
+import { RefObject, Dispatch, SetStateAction, useState, useRef, useEffect } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps } from "../types"
@@ -197,12 +197,16 @@ export function useConnectionState(communicator: Communicator) {
   const [connectionState, setConnectionState] = useState<ConnectionStates>(
     communicator.connectionState
   )
-  communicator.connectionStateSetter = setConnectionState
+  useEffect(() => {
+    communicator.connectionStateSetter = setConnectionState
+  }, [communicator])
   return connectionState
 }
 
 export function useCommunicatorExcalidrawRef(communicator: Communicator) {
   const ref = useRef<ExcalidrawImperativeAPI>(null)
-  communicator.excalidrawApiRef = ref
+  useEffect(() => {
+    communicator.excalidrawApiRef = ref
+  }, [communicator])
   return ref
 }
