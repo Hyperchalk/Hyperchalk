@@ -33,6 +33,7 @@ auth_room = database_sync_to_async(
 def user_name(user):
     return user.username
 
+
 class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
     allowed_eventtypes = {'collaborator_change', 'elements_changed', 'save_room', 'full_sync'}
     channel_prefix = 'draw_room_'
@@ -208,7 +209,6 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
 
 get_log_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.get)
 
-
 @database_sync_to_async
 def get_log_record_info_for_room(room_name):
     return list(m.ExcalidrawLogRecord.objects
@@ -217,6 +217,7 @@ def get_log_record_info_for_room(room_name):
         .values_list('id', 'created_at'))
 
 MAX_WAIT_TIME = timedelta(milliseconds=settings.BROADCAST_RESOLUTION)
+
 
 class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
     # pylint: disable=attribute-defined-outside-init
@@ -228,13 +229,11 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
             return await self.disconnect(3000)
 
         url_route: dict = self.scope.get('url_route')
-        self.args: Sequence[Any] = url_route.get('args')
-        self.kwargs: Dict[str, Any] = url_route.get('kwargs')
-        self.room_name = self.kwargs.get('room_name')
+        self.room_name = url_route['kwargs']['room_name']
 
         # this will be fun :)
-        self.faker = Faker()
-        self.encountered_user_pseudonyms = defaultdict(self.faker.name)
+        faker = Faker()
+        self.encountered_user_pseudonyms = defaultdict(faker.name)
 
         await super().connect()
         await self.send_json({'eventtype': 'pause_replay'}) # reset the control button on connect
@@ -249,18 +248,21 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
             logger.debug(e)
 
     async def disconnect(self, code):
-        if hasattr(self, 'replay_task'):
+        if await self.cancel_replay_task():
             logger.debug('client disconnected before replay of room %s finished.', self.room_name)
-            await self.cancel_replay_task()
         return await super().disconnect(code)
 
-    async def cancel_replay_task(self):
+    async def cancel_replay_task(self) -> bool:
         """
         Waits until the replay task can be canceled (i.e. while it sleeps) and does that.
+
+        :returns: if a task was canceled
         """
         async with self.message_was_sent_condition:
             if hasattr(self, 'replay_task'):
                 self.replay_task.cancel()
+                return True
+            return False
 
     async def init_replay(self):
         self.log_record_info = await get_log_record_info_for_room(room_name=self.room_name)
@@ -286,15 +288,13 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
         await self.send_json({'eventtype': 'start_replay'})
 
     async def pause_replay(self, *args, **kwargs):
-        if hasattr(self, 'replay_task'):
+        if await self.cancel_replay_task():
             logger.debug('replay for room %s paused.', self.room_name)
-            await self.cancel_replay_task()
             await self.send_json({'eventtype': 'pause_replay'})
 
     async def restart_replay(self, *args, **kwargs):
         logger.debug('restart replay of room %s', self.room_name)
-        if hasattr(self, 'replay_task'):
-            await self.cancel_replay_task()
+        await self.cancel_replay_task()
         await self.init_replay()
         await self.start_replay()
 

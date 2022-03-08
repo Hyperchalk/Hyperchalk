@@ -71,6 +71,8 @@ export default class ReplayCommunicator extends Communicator<ReplayCommunicatorE
   }
 }
 
+// #region hooks
+
 /**
  * React hook to communicate control button presses to the server
  *
@@ -116,7 +118,6 @@ export function useReplayProgress(communicator: ReplayCommunicator): [number, nu
     setTime(0)
     const durationSecs = Math.ceil(event.duration / 1000)
     // add a 8th of the duration to compensate submission irregularities
-    // TODO: submit remaining time on server side
     setDuration(durationSecs + Math.ceil(durationSecs / 8))
   })
 
@@ -130,3 +131,5 @@ export function useReplayProgress(communicator: ReplayCommunicator): [number, nu
 
   return [time, duration]
 }
+
+// #endregion hooks

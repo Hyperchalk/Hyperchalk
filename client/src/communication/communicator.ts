@@ -237,6 +237,14 @@ export default class Communicator<TEventMap extends CommunicatorEventMap = Commu
   // #endregion collaborator awareness
 }
 
+// #region hooks
+
+/**
+ * hook into the communicator connection state
+ *
+ * @param communicator the commuinicator to attach to
+ * @returns the current connection state
+ */
 export function useConnectionState(communicator: Communicator) {
   const [connectionState, setConnectionState] = useState<ConnectionStates>(
     communicator.connectionState
@@ -248,6 +256,12 @@ export function useConnectionState(communicator: Communicator) {
   return connectionState
 }
 
+/**
+ * Hook to supply the excalidraw imperative api to the communicator.
+ *
+ * @param communicator the communicator to supply a ref to
+ * @returns the ref to be used by excalidraw
+ */
 export function useCommunicatorExcalidrawRef(communicator: Communicator) {
   const ref = useRef<ExcalidrawImperativeAPI>(null)
   useEffect(() => {
@@ -256,12 +270,4 @@ export function useCommunicatorExcalidrawRef(communicator: Communicator) {
   return ref
 }
 
-/**
- * # TODO:
- *
- * - rebuild the event system
- * - rebuild the hooks which use the event system
- * - events to implement:
- *   - Communicator#connectionStateChanged
- *   - ReplayCommunicator#controlStateChanged
- */
+// #endregion hooks
