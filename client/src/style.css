@@ -47,3 +47,8 @@ svg.gauge .value {
 svg.gauge .dial {
   stroke-width: 8px;
 }
+
+.replay-controls__progress {
+  height: 40px;
+  width: 40px;
+}

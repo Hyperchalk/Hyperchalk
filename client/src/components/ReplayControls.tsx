@@ -1,10 +1,14 @@
-import { ReplayCommunicator } from "./communication"
-import { useControlState, useReplayProgress } from "./communication/replay"
+import { GaugeOptions } from "svg-gauge"
+import { ReplayCommunicator } from "../communication"
+import { useControlState, useReplayProgress } from "../communication/replay"
 import Gauge from "./Gauge"
+
+const color = (val: number) => "green"
 
 export default function ReplayControls({ communicator }: { communicator: ReplayCommunicator }) {
   const [controlState, sendControlState] = useControlState(communicator)
-  const replayProgress = useReplayProgress(communicator)
+  const [current, duration] = useReplayProgress(communicator)
+  const options: GaugeOptions = { color }
 
   return (
     <div className="replay-controls">
@@ -29,7 +33,12 @@ export default function ReplayControls({ communicator }: { communicator: ReplayC
       >
         ⏮
       </button>
-      <Gauge value={replayProgress} />
+      <Gauge
+        className="replay-controls__progress"
+        maxValue={duration}
+        options={options}
+        value={current}
+      />
     </div>
   )
 }

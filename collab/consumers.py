@@ -4,7 +4,8 @@ import uuid
 from asyncio import gather
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Dict, List, Sequence
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Sequence
 
 from channels.db import database_sync_to_async
 from django.conf import settings
@@ -12,8 +13,8 @@ from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 from faker import Faker
 
-from draw.utils import (dump_content, user_id_for_room, user_is_authenticated, user_is_authorized,
-                        user_is_staff)
+from draw.utils import (Chain, dump_content, user_id_for_room, user_is_authenticated,
+                        user_is_authorized, user_is_staff)
 from draw.utils.django_loaded import LoggingAsyncJsonWebsocketConsumer
 from ltiapi.models import CustomUser
 
@@ -94,15 +95,27 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         # logger.debug("called collaborator_change")
         collaborator_to_send = deepcopy(changes[-1])
         records = []
+
+        # the reference datetime is calculated on the server so that we
+        # don't have to rely on the client to send the correct datetime.
+        # only the time delta of the client actions need to be correct.
+        client_reference_dt = collaborator_to_send.get('time', None)
+        client_reference_dt = parse_datetime(client_reference_dt) if client_reference_dt else now()
+        now_dt = now()
+
         for change in changes:
             del change['username']
-            time = change.pop('time', None)
-            time = parse_datetime(time) if time else now()
+
+            # time recalculation happens here.
+            client_dt = change.pop('time', None)
+            client_dt = parse_datetime(client_dt) if client_dt else now()
+            delta = client_reference_dt - client_dt
+
             record = m.ExcalidrawLogRecord(
                 room_name=room_name,
                 event_type=eventtype,
                 user_pseudonym=self.user_room_id,
-                created_at=time
+                created_at=now_dt - delta
             )
             record.content = change
             records.append(record)
@@ -195,12 +208,15 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
 
 get_log_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.get)
 
+
 @database_sync_to_async
-def get_log_record_ids_for_room(room_name):
-    return [val[0] for val in m.ExcalidrawLogRecord.objects
+def get_log_record_info_for_room(room_name):
+    return list(m.ExcalidrawLogRecord.objects
         .filter(room_name=room_name)
-        .order_by('id')
-        .values_list('id')]
+        .order_by('created_at')
+        .values_list('id', 'created_at'))
+
+MAX_WAIT_TIME = timedelta(milliseconds=settings.BROADCAST_RESOLUTION)
 
 class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
     # pylint: disable=attribute-defined-outside-init
@@ -247,16 +263,26 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
                 self.replay_task.cancel()
 
     async def init_replay(self):
-        self.log_record_ids = await get_log_record_ids_for_room(room_name=self.room_name)
-        await self.send_json({'eventtype': 'reset_scene', 'steps': len(self.log_record_ids)})
+        self.log_record_info = await get_log_record_info_for_room(room_name=self.room_name)
+
+        prev_record_time = self.log_record_info[0][1]
+        delta = timedelta(0)
+        for _, curr_record_time in self.log_record_info[1:]:
+            delta += min(MAX_WAIT_TIME, curr_record_time - prev_record_time)
+            prev_record_time = curr_record_time
+
+        await self.send_json({
+            'eventtype': 'reset_scene',
+            'duration': int(delta.total_seconds() * 1000),
+        })
         # ensure that the task is not canceled while sending a message but only while sleeping.
         self.message_was_sent_condition = asyncio.Condition()
 
     async def start_replay(self, *args, **kwargs):
         logger.info('start replay mode for room %s', self.room_name)
-        if not getattr(self, 'log_record_ids', []):
+        if not getattr(self, 'log_record_info', []):
             await self.init_replay()
-        self.replay_task = asyncio.create_task(self.wait_then_send())
+        self.replay_task = asyncio.create_task(self.send_then_wait())
         await self.send_json({'eventtype': 'start_replay'})
 
     async def pause_replay(self, *args, **kwargs):
@@ -273,7 +299,7 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
         await self.start_replay()
 
     async def send_next_event(self):
-        log_id = self.log_record_ids.pop(0)
+        log_id, _ = self.log_record_info.pop(0)
         record: m.ExcalidrawLogRecord = await get_log_record(pk=log_id)
         if record.event_type in ['full_sync', 'elements_changed']:
             await self.send_json({
@@ -290,12 +316,19 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
                 }]
             })
 
-    async def wait_then_send(self):
-        if self.log_record_ids:
+    async def send_then_wait(self):
+        if self.log_record_info:
+            recs = Chain(self)['log_record_info']
+            current_timestamp: datetime = recs[0][1].obj
+            next_timestamp: Optional[datetime] = recs[1][1].obj
+            sleep_time = \
+                min(MAX_WAIT_TIME, next_timestamp - current_timestamp) \
+                if next_timestamp else timedelta(0)
+
             async with self.message_was_sent_condition:
                 await self.send_next_event()
-            await asyncio.sleep(settings.BROADCAST_RESOLUTION / 1000)
-            self.replay_task = asyncio.create_task(self.wait_then_send())
+            await asyncio.sleep(sleep_time.total_seconds())
+            self.replay_task = asyncio.create_task(self.send_then_wait())
         else:
             async with self.message_was_sent_condition:
                 await self.send_json({'eventtype': 'pause_replay'})

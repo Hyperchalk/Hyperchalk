@@ -1,13 +1,14 @@
+import { useRef, useState } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
-import Communicator, { CommunicatorMessage } from "./communicator"
 import { ConfigProps } from "../types"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
+import { useEventEmitter } from "../hooks/useEventEmitter"
+import Communicator, { CommunicatorEventMap, CommunicatorMessage } from "./communicator"
 
 // #region message types
 interface ResetScene {
   eventtype: "reset_scene"
-  steps?: number
+  duration?: number
 }
 
 type ControlTypes = "start_replay" | "pause_replay" | "restart_replay"
@@ -21,45 +22,34 @@ type ReplayMessage = CommunicatorMessage | ResetScene | ControlMessage
 
 type ControlStates = "play" | "pause"
 
-type ControlStateSetter = Dispatch<SetStateAction<ControlStates>>
-type StepSetter = Dispatch<SetStateAction<number>>
+export interface ReplayCommunicatorEventMap extends CommunicatorEventMap {
+  controlStateChanged: { state: ControlStates }
+  reset: { duration: number }
+}
 
 /**
  * This Communicator is instantiated when we are in replay mode.
  */
-export default class ReplayCommunicator extends Communicator {
-  private _setControlState?: ControlStateSetter
-  private _setCurrentStep?: StepSetter
+export default class ReplayCommunicator extends Communicator<ReplayCommunicatorEventMap> {
   controlState: ControlStates = "pause"
-  steps = 0
+  duration = 0
 
   constructor(config: ConfigProps, ws: ReconnectingWebSocket) {
     super(config, ws)
   }
 
-  set controlStateSetter(setter: ControlStateSetter) {
-    this._setControlState = setter
-  }
-
-  set currentStepSetter(setter: StepSetter) {
-    this._setCurrentStep = setter
-  }
-
   protected routeMessage<MsgType extends ReplayMessage>(message: MsgType) {
-    if (["collaborator_change", "elements_changed", "full_sync"].indexOf(message.eventtype) > -1) {
-      this._setCurrentStep?.((current) => current + 1)
-    }
     let messageWasRouted = super.routeMessage(message as CommunicatorMessage)
     if (!messageWasRouted) {
       switch (message.eventtype) {
         case "reset_scene":
-          this.resetScene(message.steps ?? 0)
+          this.resetScene(message.duration ?? 0)
           return true
         case "start_replay":
-          this._setControlState?.("play")
+          this.emit("controlStateChanged", { state: "play" })
           return true
         case "pause_replay":
-          this._setControlState?.("pause")
+          this.emit("controlStateChanged", { state: "pause" })
           return true
       }
     }
@@ -69,11 +59,11 @@ export default class ReplayCommunicator extends Communicator {
   /**
    * Resets the scene. This is only for replay mode.
    */
-  private resetScene(steps: number) {
+  private resetScene(duration: number) {
     this.broadcastedVersions = new Map()
     this.excalidrawApi?.updateScene({ elements: [], commitToHistory: false })
-    this.steps = steps
-    this._setCurrentStep?.(0)
+    this.duration = duration
+    this.emit("reset", { duration })
   }
 
   sendControlState(eventtype: ControlTypes) {
@@ -91,9 +81,9 @@ export function useControlState(
   communicator: ReplayCommunicator
 ): [ControlStates, (newState: ControlTypes) => void] {
   const [controlState, setControlState] = useState<ControlStates>(communicator.controlState)
-  useEffect(() => {
-    communicator.controlStateSetter = setControlState
-  }, [communicator])
+  useEventEmitter(communicator, "controlStateChanged", (event) => {
+    setControlState(event.state)
+  })
   const sendControlState = (newState: ControlTypes) => {
     communicator.sendControlState(newState)
   }
@@ -106,10 +96,37 @@ export function useControlState(
  * @param communicator
  * @returns the current progress in percent
  */
-export function useReplayProgress(communicator: ReplayCommunicator): number {
-  let [currentStep, setCurrentStep] = useState(0)
-  useEffect(() => {
-    communicator.currentStepSetter = setCurrentStep
-  }, [communicator])
-  return (currentStep / communicator.steps) * 100 || 0
+export function useReplayProgress(communicator: ReplayCommunicator): [number, number] {
+  let [duration, setDuration] = useState(0)
+  let [time, setTime] = useState(0)
+  let interval = useRef<number | null>(null)
+
+  let stop = () => {
+    interval.current !== null && clearInterval(interval.current)
+  }
+
+  const start = () => {
+    interval.current = setInterval(() => {
+      setTime((time) => time + 1)
+    }, 1000)
+    return stop
+  }
+
+  useEventEmitter(communicator, "reset", (event) => {
+    setTime(0)
+    const durationSecs = Math.ceil(event.duration / 1000)
+    // add a 8th of the duration to compensate submission irregularities
+    // TODO: submit remaining time on server side
+    setDuration(durationSecs + Math.ceil(durationSecs / 8))
+  })
+
+  useEventEmitter(communicator, "controlStateChanged", ({ state }) => {
+    if (state == "play") {
+      start()
+    } else {
+      stop()
+    }
+  })
+
+  return [time, duration]
 }

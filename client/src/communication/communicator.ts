@@ -1,11 +1,13 @@
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { AppState, Collaborator, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
-import { RefObject, Dispatch, SetStateAction, useState, useRef, useEffect } from "react"
+import { RefObject, useState, useRef, useEffect } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps } from "../types"
+import { EventEmitter, EventHandler, EventKey } from "../events"
 import { reconcileElements } from "../reconciliation"
 import { noop } from "../utils"
+import { useEventEmitter } from "../hooks/useEventEmitter"
 
 // #region message types
 // userRoomId always gets patched into the change in the backend
@@ -26,12 +28,21 @@ export type CommunicatorMessage = CollaboratorChangeMessage | ElementsChangedMes
 
 export type ConnectionStates = "CONNECTED" | "DISCONNECTED"
 
-export default class Communicator {
+export interface CommunicatorEventMap {
+  connectionStateChanged: { state: ConnectionStates }
+}
+
+/**
+ * This class and its descendants communicate with the backend via a WebSocket. Descendants may
+ * implement their own message type to send and receive. They may also emit their own event types.
+ */
+export default class Communicator<TEventMap extends CommunicatorEventMap = CommunicatorEventMap>
+  implements EventEmitter<TEventMap>
+{
   protected ws: ReconnectingWebSocket
   protected config: ConfigProps
 
   protected _excalidrawApiRef?: RefObject<ExcalidrawImperativeAPI>
-  private _setConnectionState?: Dispatch<SetStateAction<ConnectionStates>>
   private _connectionState: ConnectionStates = "CONNECTED"
 
   // #region methods for excalidraw props
@@ -82,12 +93,45 @@ export default class Communicator {
     return this._excalidrawApiRef.current
   }
 
-  set connectionStateSetter(setter: typeof this._setConnectionState) {
-    this._setConnectionState = setter
-  }
-
   get connectionState() {
     return this._connectionState
+  }
+
+  private handlers: {
+    [Parameter in keyof TEventMap]?: Set<(event: TEventMap[Parameter]) => void>
+  } = {}
+
+  /**
+   * Emits an event on the Communicator.
+   *
+   * @param eventName event to emit
+   * @param event event data
+   */
+  emit<K extends EventKey<TEventMap>>(eventName: K, event: TEventMap[K]): void {
+    this.handlers[eventName]?.forEach((handler) => handler(event))
+  }
+
+  /**
+   * Register an event on the Communicator.
+   *
+   * @param eventName event to register. Supported: connectionStateChange
+   * @param handler event handler
+   */
+  on<K extends EventKey<TEventMap>>(eventName: K, handler: EventHandler<TEventMap, K>): void {
+    if (!this.handlers[eventName]) {
+      this.handlers[eventName] = new Set()
+    }
+    this.handlers[eventName]?.add(handler)
+  }
+
+  /**
+   * Unregister a previously registered event.
+   *
+   * @param eventName event to unregister
+   * @param handler handler to unregister
+   */
+  off<K extends EventKey<TEventMap>>(eventName: K, handler: EventHandler<TEventMap, K>): void {
+    this.handlers[eventName]?.delete(handler)
   }
   // #endregion component communication
 
@@ -127,7 +171,7 @@ export default class Communicator {
     console.warn("not logged in aborting session")
     this.ws.close(3000)
     this._connectionState = "DISCONNECTED"
-    this._setConnectionState?.(this._connectionState)
+    this.emit("connectionStateChanged", { state: this._connectionState })
   }
 
   // #endregion message hadling
@@ -197,9 +241,10 @@ export function useConnectionState(communicator: Communicator) {
   const [connectionState, setConnectionState] = useState<ConnectionStates>(
     communicator.connectionState
   )
-  useEffect(() => {
-    communicator.connectionStateSetter = setConnectionState
-  }, [communicator])
+
+  useEventEmitter(communicator, "connectionStateChanged", ({ state }) => {
+    setConnectionState(state)
+  })
   return connectionState
 }
 
@@ -210,3 +255,13 @@ export function useCommunicatorExcalidrawRef(communicator: Communicator) {
   }, [communicator])
   return ref
 }
+
+/**
+ * # TODO:
+ *
+ * - rebuild the event system
+ * - rebuild the hooks which use the event system
+ * - events to implement:
+ *   - Communicator#connectionStateChanged
+ *   - ReplayCommunicator#controlStateChanged
+ */

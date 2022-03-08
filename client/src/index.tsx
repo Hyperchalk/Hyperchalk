@@ -13,7 +13,7 @@ import { saveLibrary, useLoadLibraries } from "./persistance/library"
 
 import "./style.css"
 import { useCommunicatorExcalidrawRef, useConnectionState } from "./communication/communicator"
-import ReplayControls from "./ReplayControls"
+import ReplayControls from "./components/ReplayControls"
 
 window.React = React
 
