@@ -198,7 +198,7 @@ export default class Communicator<TEventMap extends CommunicatorEventMap = Commu
    * @param remoteElements elements that changed remotely. This can also be a full element set
    *                       if a remote client triggerd a full sync.
    */
-  private receiveElements(remoteElements: readonly BroadcastedExcalidrawElement[]) {
+  protected receiveElements(remoteElements: readonly BroadcastedExcalidrawElement[]) {
     if (this.excalidrawApi) {
       let reconciledElements = reconcileElements(
         this.excalidrawApi?.getSceneElementsIncludingDeleted(),

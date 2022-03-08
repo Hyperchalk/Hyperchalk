@@ -3,7 +3,11 @@ import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { ConfigProps } from "../types"
 import { useEventEmitter } from "../hooks/useEventEmitter"
-import Communicator, { CommunicatorEventMap, CommunicatorMessage } from "./communicator"
+import Communicator, {
+  CollaboratorChange,
+  CommunicatorEventMap,
+  CommunicatorMessage,
+} from "./communicator"
 
 // #region message types
 interface ResetScene {
@@ -56,12 +60,39 @@ export default class ReplayCommunicator extends Communicator<ReplayCommunicatorE
     return false
   }
 
+  // needed to remove stale cursors
+  private collaboratorUpdate = 0
+  private lastCollaboratorUpdate = new Map<string, number>()
+
+  protected receiveCollaboratorChange(change: CollaboratorChange): {
+    isKnownCollaborator: boolean
+  } {
+    // remove collaborators after not updating for 30 collaborator update steps
+    this.collaboratorUpdate += 1
+    change.userRoomId && this.lastCollaboratorUpdate.set(change.userRoomId, this.collaboratorUpdate)
+    for (let collaboratorId of this.collaborators.keys()) {
+      let lastUpdate = this.lastCollaboratorUpdate.get(collaboratorId) ?? 0
+      if (this.collaboratorUpdate - lastUpdate >= 30) {
+        this.collaborators.delete(collaboratorId)
+      }
+    }
+
+    return super.receiveCollaboratorChange(change)
+  }
+
   /**
    * Resets the scene. This is only for replay mode.
    */
   private resetScene(duration: number) {
     this.broadcastedVersions = new Map()
-    this.excalidrawApi?.updateScene({ elements: [], commitToHistory: false })
+    this.collaborators = new Map()
+    this.collaboratorUpdate = 0
+    this.lastCollaboratorUpdate = new Map()
+    this.excalidrawApi?.updateScene({
+      collaborators: this.collaborators,
+      elements: [],
+      commitToHistory: false,
+    })
     this.duration = duration
     this.emit("reset", { duration })
   }
