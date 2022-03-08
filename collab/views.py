@@ -85,6 +85,16 @@ async def get_log_record(request: HttpRequest, room_name: str, pk: int):
     log_obj = await async_get_object_or_404(m.ExcalidrawLogRecord, pk=pk)
     return JsonResponse(log_obj.content, safe=False)
 
+@sync_to_async
+def get_room_record_ids(room_name: str):
+    return [rec_id for (rec_id,) in m.ExcalidrawLogRecord.objects\
+        .filter(room_name=room_name)\
+        .order_by('id')\
+        .values_list('id')]
+
+@require_staff_user
+async def get_log_record_ids(request: HttpRequest, room_name: str, *args, **kwargs):
+    return JsonResponse(await get_room_record_ids(room_name), safe=False)
 
 @require_staff_user
 async def replay(request: HttpRequest, room_name: str, **kwargs):
