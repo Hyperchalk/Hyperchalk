@@ -235,8 +235,12 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
         faker = Faker()
         self.encountered_user_pseudonyms = defaultdict(faker.name)
 
+        # ensure that the task is not canceled while sending a message but only while sleeping.
+        self.message_was_sent_condition = asyncio.Condition()
+
         await super().connect()
         await self.send_json({'eventtype': 'pause_replay'}) # reset the control button on connect
+
 
     async def receive_json(self, content, *args, **kwargs):
         """
@@ -258,11 +262,11 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
 
         :returns: if a task was canceled
         """
-        async with self.message_was_sent_condition:
-            if hasattr(self, 'replay_task'):
+        if hasattr(self, 'replay_task') and hasattr(self, 'message_was_sent_condition'):
+            async with self.message_was_sent_condition:
                 self.replay_task.cancel()
-                return True
-            return False
+            return True
+        return False
 
     async def init_replay(self):
         self.log_record_info = await get_log_record_info_for_room(room_name=self.room_name)
@@ -277,8 +281,6 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
             'eventtype': 'reset_scene',
             'duration': int(delta.total_seconds() * 1000),
         })
-        # ensure that the task is not canceled while sending a message but only while sleeping.
-        self.message_was_sent_condition = asyncio.Condition()
 
     async def start_replay(self, *args, **kwargs):
         logger.info('start replay mode for room %s', self.room_name)
