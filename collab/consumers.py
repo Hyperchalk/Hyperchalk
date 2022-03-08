@@ -13,8 +13,8 @@ from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 from faker import Faker
 
-from draw.utils import (Chain, dump_content, user_id_for_room, user_is_authenticated,
-                        user_is_authorized, user_is_staff)
+from draw.utils import Chain, dump_content, user_id_for_room
+from draw.utils.auth import user_is_authenticated, user_is_authorized, user_is_staff
 from draw.utils.django_loaded import LoggingAsyncJsonWebsocketConsumer
 from ltiapi.models import CustomUser
 

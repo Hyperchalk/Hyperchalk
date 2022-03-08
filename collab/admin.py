@@ -8,7 +8,7 @@ from . import models as m
 
 @admin.register(m.ExcalidrawLogRecord)
 class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "room_name", "event_type"]
+    list_display = ["__str__", "room_name", "event_type", "created_at"]
     fields = [
         "room_name",
         "event_type",

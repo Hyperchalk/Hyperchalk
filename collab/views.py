@@ -9,8 +9,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from draw.utils import (absolute_reverse, make_room_name, require_login, require_staff_user,
-                        user_is_authenticated, user_is_authorized)
+from draw.utils import absolute_reverse, make_room_name
+from draw.utils.auth import (require_login, require_staff_user, user_is_authenticated,
+                             user_is_authorized)
 
 from . import models as m
 
