@@ -3,10 +3,12 @@ import logging
 from typing import List, Optional
 
 import aiohttp
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.auth import get_user_model, login
-from django.http import HttpRequest, HttpResponse, JsonResponse, HttpResponseBadRequest
-from django.shortcuts import redirect
+from django.core.signing import TimestampSigner
+from django.http import (HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden,
+                         JsonResponse)
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -15,8 +17,9 @@ from pylti1p3.contrib.django import DjangoCacheDataStorage, DjangoMessageLaunch,
 from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
 from pylti1p3.deep_link_resource import DeepLinkResource
 
-from draw.utils import absolute_reverse, make_room_name
 from collab.models import ExcalidrawRoom
+from draw.utils import absolute_reverse, make_room_name
+from draw.utils.auth import user_is_authorized
 
 from . import models as m
 from .utils import (get_launch_url, issuer_namespaced_username, lti_registration_data,
@@ -164,9 +167,11 @@ def lti_launch(request: HttpRequest):
 
     room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
 
+    course_context = message_launch_data\
+        .get('https://purl.imsglobal.org/spec/lti/claim/context', {})
+    course_id = course_context.get('id', None)
+
     if message_launch.is_deep_link_launch():
-        course_context = message_launch_data\
-            .get('https://purl.imsglobal.org/spec/lti/claim/context', {})
         # create a deep link
         course_title = course_context.get('title', None)
         title = message_launch_data\
@@ -178,7 +183,7 @@ def lti_launch(request: HttpRequest):
             room_name=room_name,
             room_created_by=user,
             room_consumer=lti_tool,
-            room_course_id=course_context.get('id', None))
+            room_course_id=course_id)
         room.save()
 
         resource = DeepLinkResource()
@@ -191,11 +196,16 @@ def lti_launch(request: HttpRequest):
 
     if message_launch.is_data_privacy_launch():
         # TODO: implement data privacy screen. (not as urgent. moodle does not support this anyway.)
+        #       see issue #17
         raise NotImplementedError()
 
     if message_launch.is_resource_launch():
-        # join the room
-        return redirect(room_uri)
+        # join the room if the user is allowed to access it
+        room = get_object_or_404(ExcalidrawRoom, room_name=room_name)
+        request_data = TimestampSigner().sign_object({'course_id': course_id})
+        if not async_to_sync(user_is_authorized)(user, room, request_data):
+            return HttpResponseForbidden("You are not allowed to access this room.")
+        return redirect(f"room_uri?data={request_data}")
 
     return HttpResponseBadRequest('Unknown or unsupported message type provided.')
 

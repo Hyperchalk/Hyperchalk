@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from urllib.parse import urlencode, urlunsplit
 
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
@@ -39,10 +40,12 @@ async def room(request: HttpRequest, room_name: str):
         get_username(request.user))
     room_obj, __ = room_tpl
 
+    request_data = request.GET.get('data', None)
+
     if not settings.ALLOW_ANONYMOUS_VISITS:
         authenticated, authorized = await asyncio.gather(
             user_is_authenticated(request.user),
-            user_is_authorized(request.user, room_obj))
+            user_is_authorized(request.user, room_obj, request_data))
         if not authenticated:
             logger.warning("Someone tried to access %s without being authenticated.", room_name)
             return HttpResponseForbidden(_("You need to be logged in."))
@@ -60,9 +63,12 @@ async def room(request: HttpRequest, room_name: str):
             'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
             'ROOM_NAME': room_name,
             'SAVE_ROOM_MAX_WAIT': 15000,
-            'SOCKET_URL': request.build_absolute_uri(f'/ws/collab/{room_name}/collaborate')\
-                .replace('http://', 'ws://', 1)\
-                .replace('https://', 'wss://', 1), # not beautiful but it works
+            'SOCKET_URL': urlunsplit((
+                'wss' if request.is_secure() else 'ws',
+                request.get_host(),
+                f'/ws/collab/{room_name}/collaborate',
+                urlencode({'data': request_data}) if request_data else None,
+                None)),
             'USER_NAME': username,
         },
         'custom_messages': {
