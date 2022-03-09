@@ -152,9 +152,13 @@ def lti_launch(request: HttpRequest):
 
     lti_tool = tool_conf.get_lti_tool(issuer, client_id)
     UserModel = get_user_model()
-    user, user_mod = UserModel.objects.get_or_create(username=username, registered_via=lti_tool)
+    user, user_mod = UserModel.objects.get_or_create(username=username)
     if not user.first_name:
         user.first_name = user_full_name
+        user_mod = True
+    # needed if tool was re-registered
+    if user.registered_via_id != lti_tool.pk:
+        user.registered_via = lti_tool
         user_mod = True
     if user_mod:
         user.save()
