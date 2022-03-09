@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from channels.db import database_sync_to_async
 from django.conf import settings
+from django.http import QueryDict
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 from faker import Faker
@@ -47,6 +48,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         # pylint: disable=attribute-defined-outside-init
         self.args: Sequence[Any] = url_route.get('args')
         self.kwargs: Dict[str, Any] = url_route.get('kwargs')
+        self.query = QueryDict(self.scope.get('query_string', ''))
 
         self.user: CustomUser = self.scope.get('user')
         self.room_name = self.kwargs.get('room_name')
@@ -54,7 +56,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
 
         authenticated, authorized = await gather(
             user_is_authenticated(self.user),
-            user_is_authorized(self.user, room))
+            user_is_authorized(self.user, room, self.query.get('data', None)))
         if not settings.ALLOW_ANONYMOUS_VISITS and not authenticated and not authorized:
             _, username = await gather(
                 super().connect(),

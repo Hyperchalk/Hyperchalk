@@ -205,7 +205,7 @@ def lti_launch(request: HttpRequest):
         request_data = TimestampSigner().sign_object({'course_id': course_id})
         if not async_to_sync(user_is_authorized)(user, room, request_data):
             return HttpResponseForbidden("You are not allowed to access this room.")
-        return redirect(f"room_uri?data={request_data}")
+        return redirect(f"{room_uri}?data={request_data}")
 
     return HttpResponseBadRequest('Unknown or unsupported message type provided.')
 
