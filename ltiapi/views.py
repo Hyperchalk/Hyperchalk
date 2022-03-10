@@ -5,7 +5,6 @@ from typing import List, Optional
 import aiohttp
 from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.auth import get_user_model, login
-from django.core.signing import TimestampSigner
 from django.http import (HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden,
                          JsonResponse)
 from django.shortcuts import get_object_or_404, redirect
@@ -29,6 +28,10 @@ logger = logging.getLogger("draw.ltiapi")
 
 
 class RegisterConsumerView(DetailView):
+    """
+    This View implements LTI Advantage Automatic registration. It supports GET for the user
+    to control the configuration steps and POST, which starts the consumer configuration.
+    """
     template_name = 'ltiapi/register_consumer_start.html'
     end_template_name = 'ltiapi/register_consumer_result.html'
     model = m.OneOffRegistrationLink
@@ -41,6 +44,7 @@ class RegisterConsumerView(DetailView):
 
     @classonlymethod
     def as_view(cls, **initkwargs):
+        # this needs to be "hacked", so that the class view supports async views.
         view = super().as_view(**initkwargs)
         # pylint: disable=protected-access
         view._is_coroutine = asyncio.coroutines._is_coroutine
@@ -56,6 +60,7 @@ class RegisterConsumerView(DetailView):
 
         The configuration flow is well explained at https://moodlelti.theedtech.dev/dynreg/
         """
+        # verify that the registration link is unused
         self.object = reg_link = await sync_to_async(self.get_object)() # type: ignore
         if reg_link.registered_consumer is not None:
             ctx = {'error': _(
@@ -63,20 +68,20 @@ class RegisterConsumerView(DetailView):
                 'the admin of the LTI app for a new registration link.')}
             return self.render_to_response(context=ctx)
 
+        # prepare for getting data about the consumer
         openid_config_endpoint = request.GET.get('openid_configuration')
         jwt_str = request.GET.get('registration_token')
 
         async with aiohttp.ClientSession() as session:
+            # get information about how to register to the consumer
             logger.info('Getting registration data from "%s"', openid_config_endpoint)
             resp = await session.get(openid_config_endpoint)
             openid_config = await resp.json()
 
+            # send registration to the consumer
             tool_provider_registration_endpoint = openid_config['registration_endpoint']
             registration_data = lti_registration_data(request)
             logger.info('Registering tool at "%s"', tool_provider_registration_endpoint)
-            # logger.info(
-            #     'Registering tool at "%s" with data:\n%s',
-            #     tool_provider_registration_endpoint, json.dumps(registration_data))
             resp = await session.post(
                 tool_provider_registration_endpoint,
                 json=registration_data,
@@ -86,9 +91,11 @@ class RegisterConsumerView(DetailView):
                 })
             openid_registration = await resp.json()
         try:
+            # use the information about the registration to regsiter the consumer to this app
             consumer = await make_tool_config_from_openid_config_via_link(
                 openid_config, openid_registration, reg_link)
         except AssertionError as e:
+            # error if the data from the consumer is missing mandatory information
             ctx = self.get_context_data(registration_success=False, error=e)
             return self.render_to_response(ctx, status=406)
 
@@ -105,12 +112,17 @@ async def oidc_jwks(
     request: HttpRequest, issuer: Optional[str] = None,
     client_id: Optional[str] = None
 ):
+    """ JWT signature delivery endpoint """
     tool_conf = DjangoDbToolConf()
     get_jwks = sync_to_async(tool_conf.get_jwks)
     return JsonResponse(await get_jwks(issuer, client_id))
 
 
 def oidc_login(request: HttpRequest):
+    """
+    This just verifies that the requesting consumer is allowed to log in and tells the consumer,
+    where to go next. The actual user login happens when the LTI launch is performed.
+    """
     tool_conf = DjangoDbToolConf()
     launch_data_storage = DjangoCacheDataStorage()
 
@@ -133,15 +145,19 @@ oidc_login.xframe_options_exempt = True # type: ignore
 
 @require_POST
 def lti_launch(request: HttpRequest):
+    """
+    Implements the LTI launch. It logs the user in and
+    redirects them according to the requested launch type.
+    """
+    # parse and verify the data that was passed by the LTI consumer
     tool_conf = DjangoDbToolConf()
     launch_data_storage = DjangoCacheDataStorage()
     message_launch = DjangoMessageLaunch(
         request, tool_conf, launch_data_storage=launch_data_storage)
     message_launch_data = message_launch.get_launch_data()
-    # lazy_pformat: only format the data if it will be logged.
-    # logger.debug("launch with data:\n%s", lazy_pformat(message_launch_data))
 
     # log the user in. if this is the user's first visit, save them to the database before.
+    # 1) extract user information from the data passed by the consumer
     username = message_launch_data\
         .get('https://purl.imsglobal.org/spec/lti/claim/ext', {})\
         .get('user_username') # type: ignore
@@ -149,21 +165,24 @@ def lti_launch(request: HttpRequest):
     client_id = message_launch_data['aud']
     user_full_name = message_launch_data.get('name', '')
     username = issuer_namespaced_username(issuer, username)
-
     lti_tool = tool_conf.get_lti_tool(issuer, client_id)
+
+    # 2) get / create the user from the db and log them in
     UserModel = get_user_model()
     user, user_mod = UserModel.objects.get_or_create(username=username)
     if not user.first_name:
         user.first_name = user_full_name
         user_mod = True
-    # needed if tool was re-registered
     if user.registered_via_id != lti_tool.pk:
+        # needed if tool was re-registered. otherwise trying
+        # to save the user would raise an IngrityError.
         user.registered_via = lti_tool
         user_mod = True
     if user_mod:
         user.save()
     login(request, user)
 
+    # room and course information are needed for every launch type.
     room_name = message_launch_data\
         .get('https://purl.imsglobal.org/spec/lti/claim/custom', {})\
         .get('room', None) \
@@ -176,7 +195,7 @@ def lti_launch(request: HttpRequest):
     course_id = course_context.get('id', None)
 
     if message_launch.is_deep_link_launch():
-        # create a deep link
+        # create a deep link and initialize the room
         course_title = course_context.get('title', None)
         title = message_launch_data\
             .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
@@ -204,12 +223,14 @@ def lti_launch(request: HttpRequest):
         raise NotImplementedError()
 
     if message_launch.is_resource_launch():
-        # join the room if the user is allowed to access it
+        # join the room if the user is allowed to access it.
         room = get_object_or_404(ExcalidrawRoom, room_name=room_name)
-        request_data = TimestampSigner().sign_object({'course_id': course_id})
-        if not async_to_sync(user_is_authorized)(user, room, request_data):
+        request.session.set_expiry(0)
+        request.session['course_ids'] = request.session.get('course_ids', []).append(course_id)
+        if not async_to_sync(user_is_authorized)(user, room, request.session):
             return HttpResponseForbidden("You are not allowed to access this room.")
-        return redirect(f"{room_uri}?data={request_data}")
+        # the data for the authorization check needs to be passed to every endpoint.
+        return redirect(room_uri)
 
     return HttpResponseBadRequest('Unknown or unsupported message type provided.')
 

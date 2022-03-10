@@ -64,7 +64,8 @@ MIDDLEWARE = [
 
 WS_MIDDLEWARE = [
     'channels.security.websocket.AllowedHostsOriginValidator',
-    'channels.auth.AuthMiddlewareStack'
+    'channels.auth.AuthMiddlewareStack',
+    'channels.sessions.SessionMiddlewareStack',
 ]
 
 ROOT_URLCONF = 'draw.urls'
@@ -125,6 +126,11 @@ DATABASES: Dict[str, Dict[str, Union[StrLike, Dict[str, StrLike]]]] = {}
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
 
 CHANNEL_LAYERS: Dict[str, Dict[str, Any]]
+
+# Session Engine
+# https://docs.djangoproject.com/en/dev/topics/http/sessions/#configuring-the-session-engine
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

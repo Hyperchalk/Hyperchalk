@@ -5,11 +5,10 @@ from asyncio import gather
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Sequence
+from typing import List, Optional
 
 from channels.db import database_sync_to_async
 from django.conf import settings
-from django.http import QueryDict
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 from faker import Faker
@@ -37,26 +36,19 @@ def user_name(user):
 
 class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
     allowed_eventtypes = {'collaborator_change', 'elements_changed', 'save_room', 'full_sync'}
-    channel_prefix = 'draw_room_'
+    channel_layer_namespace = 'draw_room_'
 
-    @property
-    def group_name(self):
-        return self.channel_prefix + self.room_name
-
+    # region connection handling
     async def connect(self):
-        url_route: dict = self.scope.get('url_route')
         # pylint: disable=attribute-defined-outside-init
-        self.args: Sequence[Any] = url_route.get('args')
-        self.kwargs: Dict[str, Any] = url_route.get('kwargs')
-        self.query = QueryDict(self.scope.get('query_string', ''))
-
+        url_route: dict = self.scope.get('url_route')
         self.user: CustomUser = self.scope.get('user')
-        self.room_name = self.kwargs.get('room_name')
+        self.room_name = url_route['kwargs']['room_name']
         room, _ = await auth_room(room_name=self.room_name)
 
         authenticated, authorized = await gather(
             user_is_authenticated(self.user),
-            user_is_authorized(self.user, room, self.query.get('data', None)))
+            user_is_authorized(self.user, room, self.scope.get("session")))
         if not settings.ALLOW_ANONYMOUS_VISITS and not authenticated and not authorized:
             _, username = await gather(
                 super().connect(),
@@ -78,19 +70,51 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             else user_id_for_room(uuid.uuid4(), self.room_name)
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
-        return await super().connect()
+        connect = await super().connect()
+
+        # the record can be created some time around here. we don't need to wait for that. but this
+        # should only be stored if the connection was successful. it would be nice if this entry
+        # would be the first one. however, collabotaror changes may be stored with the created_at
+        # datetime being at some point back in time. this happens if the client collected data while
+        # the connection has not been established yet. therefore, it just doesn't matter if the room
+        # entry record is stored as the first consumer event. it's just a nice data point to have.
+        asyncio.create_task(create_record(
+            room_name=self.room_name,
+            event_type='collaborator_entered',
+            user_pseudonym=self.user_room_id,
+            _content=b'null',
+            _compressed=False))
+
+        return connect
 
     async def disconnect(self, code):
         """
         Notify all collaborators if a client left, so they
         can remove it from their collaborator list, too.
         """
+        disconnect = await super().disconnect(code)
         if code != 3000:
-            await self.send_event(
-                'collaborator_left', collaborator={'userRoomId': self.user_room_id})
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        return await super().disconnect(code)
+            # it is not mandatory to wait for these. it just needs
+            # to be done at some point in the near future.
+            asyncio.create_task(self.notify_collaborators_about_leaving())
+            asyncio.create_task(create_record(
+                room_name=self.room_name,
+                event_type='collaborator_left',
+                user_pseudonym=self.user_room_id,
+                _content=b'null',
+                _compressed=False))
+        return disconnect
 
+    async def notify_collaborators_about_leaving(self):
+        """
+        notifiy collaborators about leaving the room and leave the channel layer
+        """
+        await self.send_event(
+            'collaborator_left', collaborator={'userRoomId': self.user_room_id})
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+    # endregion connection handling
+
+    # region user actions
     async def collaborator_change(self, room_name, eventtype, changes: List[dict], **kwargs):
         """
         Forwards all updates to users and their pointers to clients and logs them to the data base.
@@ -118,15 +142,14 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
                 room_name=room_name,
                 event_type=eventtype,
                 user_pseudonym=self.user_room_id,
-                created_at=now_dt - delta
-            )
+                created_at=now_dt - delta)
             record.content = change
             records.append(record)
 
         collaborator_to_send['userRoomId'] = self.user_room_id
-        await gather(
-            bulk_create_records(records),
-            self.send_event(eventtype, changes=[collaborator_to_send]))
+
+        asyncio.create_task(bulk_create_records(records))
+        asyncio.create_task(self.send_event(eventtype, changes=[collaborator_to_send]))
 
     async def full_sync(self, room_name, eventtype, elements, **kwargs):
         """
@@ -186,6 +209,13 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             room_name=room_name,
             defaults={'_elements': elements})
         logger.debug("room %s saved", room.room_name)
+    # endregion user actions
+
+    # region channel layer handling
+    @property
+    def group_name(self):
+        """ Group name for channel layer communication """
+        return self.channel_layer_namespace + self.room_name
 
     async def send_event(self, eventtype, **event_args):
         """
@@ -207,6 +237,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         # dont't send the event back to the sender
         if event['sender'] != self.channel_name:
             await self.send_json(event['notification'])
+    # endregion channel layer handling
 
 
 get_log_record = database_sync_to_async(m.ExcalidrawLogRecord.objects.get)
