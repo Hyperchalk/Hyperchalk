@@ -226,7 +226,9 @@ def lti_launch(request: HttpRequest):
         # join the room if the user is allowed to access it.
         room = get_object_or_404(ExcalidrawRoom, room_name=room_name)
         request.session.set_expiry(0)
-        request.session['course_ids'] = request.session.get('course_ids', []).append(course_id)
+        allowed_course_ids = request.session.get('course_ids', [])
+        allowed_course_ids.append(course_id)
+        request.session['course_ids'] = allowed_course_ids
         if not async_to_sync(user_is_authorized)(user, room, request.session):
             return HttpResponseForbidden("You are not allowed to access this room.")
         # the data for the authorization check needs to be passed to every endpoint.

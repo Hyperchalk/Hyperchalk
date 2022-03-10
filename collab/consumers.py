@@ -41,9 +41,9 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
     # region connection handling
     async def connect(self):
         # pylint: disable=attribute-defined-outside-init
-        url_route: dict = self.scope.get('url_route')
-        self.user: CustomUser = self.scope.get('user')
-        self.room_name = url_route['kwargs']['room_name']
+        self.kwargs = self.scope['url_route']['kwargs']
+        self.user: CustomUser = self.scope['user']
+        self.room_name = self.kwargs['room_name']
         room, _ = await auth_room(room_name=self.room_name)
 
         authenticated, authorized = await gather(
