@@ -8,20 +8,20 @@ from . import models as m
 
 @admin.register(m.ExcalidrawLogRecord)
 class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "room_name", "event_type", "created_at"]
+    list_display = ["__str__", "room_name", "short_user_pseudonym", "event_type", "created_at"]
     fields = [
         "room_name",
         "event_type",
-        "user_pseudonym",
+        ("short_user_pseudonym", "user_pseudonym"),
         ("_compressed", "compressed_size", "uncompressed_size", "compression_degree"),
         "view_json",
         "created_at",
     ]
     readonly_fields = [
-        "content", "_compressed", "compressed_size", "view_json",
-        "compression_degree", "uncompressed_size", "created_at"]
+        "content", "_compressed", "compressed_size", "view_json", "created_at",
+        "short_user_pseudonym", "compression_degree", "uncompressed_size"]
 
-    @admin.display(description="View Room in Browser JSON Viewer")
+    @admin.display(description=_("View Record in Browser JSON Viewer"))
     def view_json(self, obj: m.ExcalidrawLogRecord):
         if obj.pk:
             json_link = reverse('collab:record-json', kwargs={
@@ -31,6 +31,10 @@ class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
                 "<a href={json_link}>{text}</a>",
                 json_link=json_link, text=_("Go to JSON"))
         return _('will be generated after saving')
+
+    @admin.display(description=_("shortened pseudonym"))
+    def short_user_pseudonym(self, obj: m.ExcalidrawLogRecord):
+        return obj.user_pseudonym[:16]
 
 
 @admin.register(m.ExcalidrawRoom)
