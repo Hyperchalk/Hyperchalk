@@ -17,7 +17,7 @@ COPY --chown=builder:builder \
 
 USER builder
 
-RUN npm install
+RUN npm install --production
 
 COPY ./client/ ./
 

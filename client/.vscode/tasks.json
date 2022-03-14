@@ -1,0 +1,12 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "typecheck",
+      "problemMatcher": ["$tsc"],
+      "label": "npm: typecheck",
+      "detail": "tsc --noEmit --skipLibCheck"
+    }
+  ]
+}
