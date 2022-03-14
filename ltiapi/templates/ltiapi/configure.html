@@ -1,0 +1,41 @@
+{% extends 'ltiapi/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Configure Assignment" %}{% endblock title %}
+
+{% block body %}
+<form action="{% url 'lti:configure' launch_id %}" method="post">
+  {% csrf_token %}
+  <p>
+    <label for="mode">{% trans "Assignment type" %}</label>
+    <select name="mode" id="mode">
+      <option value="classroom">{% trans "Classroom Assignment" %}</option>
+      <option value="group">{% trans "Group Assignment" %}</option>
+      <option value="single">{% trans "Single Person Assignment" %}</option>
+    </select>
+  </p>
+  <p id="n-groups-line">
+    <label for="n-groups">{% trans "Number of groups:" %}</label>
+    <input type="number" name="n-groups" id="n-groups" min="1" max="50" />
+  </p>
+  <p>
+    <button type="submit">{% trans "Create Assignment" %}</button>
+  </p>
+</form>
+<script>
+  let select = document.getElementById("mode")
+  let ngr = document.getElementById("n-groups-line")
+  ngr.hidden = true
+  select.onchange = (e) => {
+    switch(select.value) {
+      case "classroom":
+      case "single":
+        ngr.hidden = true
+        break
+      case "group":
+        ngr.hidden = false
+        break
+    }
+  }
+</script>
+{% endblock body %}

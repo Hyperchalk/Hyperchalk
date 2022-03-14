@@ -1,6 +1,8 @@
 {% extends 'ltiapi/register_base.html' %}
 {% load i18n %}
 
+{% block title %}Register LTI Consumer{% endblock title %}
+
 {% block body %}
 {% if link.registered_consumer_id is None %}
   <p>{% blocktrans with consumer=link.consumer_name trimmed %}
