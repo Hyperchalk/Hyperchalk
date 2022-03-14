@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"Report-Msgid-Bugs-To: Lukas Menzel\n"
-"POT-Creation-Date: 2022-03-02 13:03+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-14 19:22+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -18,10 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: draw/utils/__init__.py
+#: draw/utils/auth.py
 msgid "You need to be logged in as staff or as admin."
 msgstr "Du musst als „staff“ oder als „superuser“ angemeldet sein."
 
-#: draw/utils/__init__.py
+#: draw/utils/auth.py
 msgid "You need to be logged in."
 msgstr "Du musst angemeldet sein."

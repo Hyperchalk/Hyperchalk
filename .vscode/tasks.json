@@ -102,9 +102,9 @@
     {
       "label": "Django: make translations",
       "type": "shell",
-      "command": "${workspaceFolder}/devscripts/handle_translations.sh",
+      "command": "make",
       "args": [
-        "-m"
+        "messages"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
