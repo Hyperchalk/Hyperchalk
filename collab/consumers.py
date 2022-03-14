@@ -213,7 +213,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         if not differences_detected:
             return
 
-        elements_to_store, _ = dump_content(elements_to_store)
+        elements_to_store, _ = dump_content(elements_to_store, force_compression=True)
         room, _ = await upsert_room(
             room_name=room_name,
             defaults={'_elements': elements_to_store})

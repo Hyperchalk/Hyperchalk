@@ -281,7 +281,7 @@ export default class CollaborationCommunicator extends Communicator {
     this.ws.send(
       JSON.stringify({
         eventtype: "save_room",
-        elements: this.excalidrawApi?.getSceneElements() ?? [],
+        elements: this.excalidrawApi?.getSceneElementsIncludingDeleted() ?? [],
       })
     )
   }
