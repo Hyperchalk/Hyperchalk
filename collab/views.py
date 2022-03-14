@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from draw.utils import absolute_reverse, make_room_name
+from draw.utils import absolute_reverse, make_room_name, validate_room_name
 from draw.utils.auth import (require_login, require_staff_user, user_is_authenticated,
                              user_is_authorized)
 
@@ -48,6 +48,8 @@ async def index(request: HttpRequest, *args, **kwargs):
 
 
 async def room(request: HttpRequest, room_name: str):
+    # FIXME: forbidden automatic room creation can be circumvented if someone makes up a valid id
+    validate_room_name(room_name)
     room_tpl, username = await asyncio.gather(
         get_or_create_room(room_name=room_name),
         get_username(request.user))
