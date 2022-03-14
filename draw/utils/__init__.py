@@ -10,8 +10,8 @@ import zlib
 from enum import Enum
 from hashlib import sha256
 from pprint import pformat
-from typing import (Any, Callable, Dict, Generic, List, Optional, Protocol, Tuple, TypeVar, Union,
-                    cast)
+from typing import (Any, Callable, Dict, Generic, List, Optional, Protocol, Sequence, Tuple,
+                    TypeVar, Union, cast)
 
 from django.http import HttpRequest
 from django.urls import reverse
@@ -101,8 +101,8 @@ class Chain(Generic[ChainedObj]):
 
     Contains a tree of ``dict`` s, ``list`` s and ``object`` s, that can be queried via
     ``__getitem__`` (``[...]``). The object contained in the class can be retrieved via
-    ``.obj``.If any of the items or attributes in the getter chain contains ``None``,
-    ``.obj`` will be None, too.
+    calling the ``Chain`` instance. If any of the items or attributes in the getter chain
+    contains ``None``, the call return value will be ``None``, too.
     """
     def __init__(self, obj: ChainedObj) -> None:
         self.obj = obj
@@ -118,6 +118,27 @@ class Chain(Generic[ChainedObj]):
         return Chain(default)
 
     __getitem__ = get
+
+    def __call__(self) -> ChainedObj:
+        return self.obj
+
+
+def chain(obj: Any, members: Sequence[Any], default=None):
+    """
+    Optional ``Chain`` as a function. The most capable getter you have ever seen.
+
+    :param obj: the object to wrap.
+
+    :param args: ``Sequence`` of object members that will be used to get into the object's members.
+
+    :returns: the seeked member or the default value.
+    """
+    members = list(members)
+    chained = Chain(obj)
+    while members:
+        chained = chained[members.pop(0)]
+    return chained() or default
+
 
 class StrLike(Protocol):
     def __str__(self) -> str:

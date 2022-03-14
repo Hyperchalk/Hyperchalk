@@ -69,6 +69,8 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             if self.user.id is not None \
             else user_id_for_room(uuid.uuid4(), self.room_name)
 
+        self.known_deleted_items = dict()
+
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         connect = await super().connect()
 
@@ -156,9 +158,6 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         Forwards all full syncs to clients, logs them to the data base ~~and saves the room~~.
         """
         await self.elements_changed(room_name, eventtype, elements=elements, **kwargs)
-        # await gather(
-        #     self.elements_changed(room_name, eventtype, elements=elements, **kwargs),
-        #     self.save_room(room_name, elements, **kwargs))
 
     async def elements_changed(self, room_name, eventtype, elements, **kwargs):
         """
@@ -189,25 +188,35 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         """
         old_room, created = await get_or_create_room(room_name=room_name)
         old_room_versions = {e['id']: e['version'] for e in old_room.elements}
-        elements = [e for e in elements if not e.get('isDeleted', False)]
 
         differences_detected = False
+        elements_to_store = []
 
         if not created:
             for e in elements:
                 old_version = old_room_versions.get(e['id'], -1)
+                if e.get('isDeleted', False):
+                    # known deleted items get precedence over the element version from the db
+                    old_version = self.known_deleted_items.get(e['id'], old_version)
                 if old_version > e['version']:
+                    # stop when an old version is newer. the reconciliation algo for merging the
+                    # elements is executed on the client side. clients should send a new save_room
+                    # event after merging the state, updating all elements to their newset versions.
                     return
-                # no difference if version is equal.
+                if e.get('isDeleted', False):
+                    self.known_deleted_items[e['id']] = e['version']
+                else:
+                    # only store non-deleted elements
+                    elements_to_store.append(e)
                 differences_detected = differences_detected or old_version < e['version']
 
         if not differences_detected:
             return
 
-        elements, _ = dump_content(elements)
+        elements_to_store, _ = dump_content(elements_to_store)
         room, _ = await upsert_room(
             room_name=room_name,
-            defaults={'_elements': elements})
+            defaults={'_elements': elements_to_store})
         logger.debug("room %s saved", room.room_name)
     # endregion user actions
 
@@ -354,8 +363,8 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
     async def send_then_wait(self):
         if self.log_record_info:
             recs = Chain(self)['log_record_info']
-            current_timestamp: datetime = recs[0][1].obj
-            next_timestamp: Optional[datetime] = recs[1][1].obj
+            current_timestamp: datetime = recs[0][1]()
+            next_timestamp: Optional[datetime] = recs[1][1]()
             sleep_time = \
                 min(MAX_WAIT_TIME, next_timestamp - current_timestamp) \
                 if next_timestamp else timedelta(0)
