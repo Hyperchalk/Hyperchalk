@@ -80,6 +80,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.media',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -198,6 +199,12 @@ STATIC_ROOT = BASE_DIR / 'static_copy'
 STATICFILES_DIRS = [
     BASE_DIR / 'client' / 'dist',
 ]
+
+# Media Uploads
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

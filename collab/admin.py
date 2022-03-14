@@ -59,3 +59,16 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
                 "<a href='{room_link}'>{text}</a>",
                 room_link=room_link, text=_("Replay this room"))
         return _('will be generated after saving')
+
+
+@admin.register(m.ExcalidrawFile)
+class ExcalidrawFileAdmin(admin.ModelAdmin):
+    readonly_fields = ['image']
+    list_display = ['__str__', 'belongs_to_id']
+
+    @admin.display(description=_("image"))
+    def image(self, obj: m.ExcalidrawFile):
+        return format_html(
+            '<img src="%(src)s" title="%(title)s" />',
+            src=obj.content.url,
+            title=_("image %s for room %s") % (obj.element_file_id, obj.belongs_to_id))

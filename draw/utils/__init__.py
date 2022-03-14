@@ -1,6 +1,7 @@
 """
 Helper functions and classes that don't need any configured state or django stuff loaded.
 """
+import base64
 import json
 import logging
 import random
@@ -224,3 +225,6 @@ class WebSocketFormatter(log.ServerFormatter):
 
         record.msg = msg
         return super().format(record)
+
+def bytes_to_data_uri(content: bytes, mime: str):
+    return f"data:{mime};base64,{base64.b64encode(content).decode('ascii')}"

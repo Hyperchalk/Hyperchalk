@@ -1,13 +1,21 @@
 import json
+import mimetypes
 from functools import cached_property
+from hashlib import sha256
+from typing import cast
+from urllib.request import urlopen
 
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
-from draw.utils import JSONType, dump_content, load_content
+from draw.utils import JSONType, bytes_to_data_uri, dump_content, load_content
 from ltiapi.models import CustomUser
+
+from .types import ALLOWED_IMAGE_MIME_TYPES, ExcalidrawBinaryFile
 
 
 class ExcalidrawLogRecord(models.Model):
@@ -82,3 +90,54 @@ class ExcalidrawRoom(models.Model):
     @elements.setter
     def elements(self, val: JSONType = None):
         self._elements = dump_content(val, force_compression=True)
+
+
+class ExcalidrawFile(models.Model):
+    """
+    File store
+
+    WARNING: don't delete the content file until there is no room which uses it anymore.
+
+    Orphaned files can be deleted from the admin view.
+    """
+    belongs_to = models.ForeignKey(
+        ExcalidrawRoom, on_delete=models.SET_NULL, null=True,
+        related_name="files", verbose_name=_("belongs to room"))
+    # we don't use the hash that's submitted by excalidraw as the pk
+    # because it is a sha1 hash and sha1 is broken. for filtering, this
+    # should therefore only be used on the relation manager of belongs_to.
+    element_file_id = models.CharField(max_length=40)
+    # file content will be stored as file, not to db
+    content = models.FileField(upload_to='excalidraw-uploads')
+    # this will not be compressed, as the file meta data is always relatively small in size.
+    meta = models.JSONField(verbose_name=_("excalidraw meta data"))
+
+    @classmethod
+    def from_excalidraw_file_dict(cls, room: ExcalidrawRoom, file_data: ExcalidrawBinaryFile):
+        data_uri = file_data.pop("dataURL")
+        mime_from_data_uri, _ = mimetypes.guess_type(data_uri)
+        if mime_from_data_uri not in ALLOWED_IMAGE_MIME_TYPES:
+            raise ValidationError({
+                "content": _("The content MIME type of %s is not allowed") % (mime_from_data_uri,)
+            })
+        file_data["mimeType"] = mime_from_data_uri # consider data from the client as being unsafe
+        with urlopen(data_uri) as response:
+            content_bytes = response.read()
+        file_hash = sha256(content_bytes)
+        file_name = file_hash.hexdigest() + (mimetypes.guess_extension(mime_from_data_uri) or "")
+
+        return cls(
+            belongs_to=room,
+            content=ContentFile(content_bytes, name=file_name),
+            element_file_id=file_data["id"],
+            meta=file_data)
+
+    def to_excalidraw_file_dict(self, data_uri=False) -> ExcalidrawBinaryFile:
+        return cast(ExcalidrawBinaryFile, {
+            **self.meta,
+            'dataURL':  bytes_to_data_uri(self.content.read(), self.meta['mimeType']) \
+                        if data_uri else self.content.url,
+        })
+
+    def __repr__(self) -> str:
+        return f"<ExcalidrawFile {self.element_file_id} for room {self.belongs_to_id}>"
