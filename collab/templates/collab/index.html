@@ -19,7 +19,8 @@
     production = "production"
   </script>
   {{excalidraw_config|json_script:'excalidraw-config'}}
-  {{initial_data|json_script:'initial-data'}}
+  {{initial_elements|json_script:'initial-data'}}
+  {{files|json_script:'files'}}
   {{custom_messages|json_script:'custom-messages'}}
   <script src="{% static 'app.js' %}"></script>
 </body>
