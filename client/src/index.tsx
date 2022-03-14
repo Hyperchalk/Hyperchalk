@@ -1,7 +1,7 @@
 // import { useState, useEffect } from "react";
 import React from "react"
 import { render } from "react-dom"
-import Excalidraw from "@excalidraw/excalidraw"
+import Excalidraw from "@excalidraw/excalidraw-next"
 
 import { ConfigProps } from "./types"
 import { getJsonScript, noop } from "./utils"

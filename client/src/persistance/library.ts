@@ -1,4 +1,4 @@
-import { ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types/types"
+import { ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw-next/types/types"
 import { RefObject, useCallback } from "react"
 
 import { getLocalStorageJson, setLocalStorageJson } from "../utils"

@@ -1,4 +1,4 @@
-import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw-next/types/types"
 
 declare global {
   interface Window {

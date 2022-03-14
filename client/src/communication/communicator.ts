@@ -1,5 +1,9 @@
-import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { AppState, Collaborator, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import { ExcalidrawElement } from "@excalidraw/excalidraw-next/types/element/types"
+import {
+  AppState,
+  Collaborator,
+  ExcalidrawImperativeAPI,
+} from "@excalidraw/excalidraw-next/types/types"
 import { RefObject, useState, useRef, useEffect } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
