@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"
+import { EventHandler, EventKey, EventMap, StrongEventTarget } from "../events"
 
 /**
  * Use an event listener as a hook.
@@ -29,13 +30,13 @@ import { useEffect, useRef } from "react"
  * @param handler event handler
  * @param element element for adding the event listener to. default is window.
  */
-export function useEventListener<Handler extends EventListener, Target extends EventTarget>(
-  eventName: string,
-  handler: Handler,
-  element: Target
+export function useEventListener<T extends EventMap, K extends EventKey<T> = EventKey<T>>(
+  element: StrongEventTarget<T, K>,
+  eventName: K,
+  handler: EventHandler<T, K>
 ) {
   // Create a ref that stores handler
-  const savedHandler = useRef<Handler>()
+  const savedHandler = useRef<EventHandler<T, K>>()
 
   // Update ref.current value if handler changes.
   // This allows our effect below to always get latest handler ...
