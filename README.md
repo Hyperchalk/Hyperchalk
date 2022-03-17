@@ -76,3 +76,10 @@ Channel layers (see [Channel Layers configuration guide]):
 - [In Memory](https://channels.readthedocs.io/en/stable/topics/channel_layers.html#in-memory-channel-layer) (don't use in production!)
 
 [Django configuration guide]: https://docs.djangoproject.com/en/4.0/ref/settings/#engine
+
+## Additional Software
+
+Moodle has a strange way to decide the iframe size for LTI apps. To circumvent this, ExcaLTIdraw
+supports the [LTI Message Handler](https://moodle.org/plugins/ltisource_message_handler) which can
+resize and configure the iframe of the LTI app via cross window messaging. It is advised to install
+this when using the app with moodle.
