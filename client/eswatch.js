@@ -4,12 +4,9 @@
 const copyDist = require("./build/copy-dist")
 
 copyDist("static", "dist")
+copyDist("node_modules/@excalidraw/excalidraw/dist/excalidraw-assets", "dist/excalidraw-assets")
 copyDist(
-  "node_modules/@excalidraw/excalidraw-next/dist/excalidraw-assets",
-  "dist/excalidraw-assets"
-)
-copyDist(
-  "node_modules/@excalidraw/excalidraw-next/dist/excalidraw-assets-dev",
+  "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev",
   "dist/excalidraw-assets-dev"
 )
 
@@ -42,11 +39,11 @@ require("esbuild")
       onRebuild(error, result) {
         copyDist("static", "dist")
         copyDist(
-          "node_modules/@excalidraw/excalidraw-next/dist/excalidraw-assets",
+          "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets",
           "dist/excalidraw-assets"
         )
         copyDist(
-          "node_modules/@excalidraw/excalidraw-next/dist/excalidraw-assets-dev",
+          "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev",
           "dist/excalidraw-assets-dev"
         )
         if (error) console.error("watch build failed:", error)

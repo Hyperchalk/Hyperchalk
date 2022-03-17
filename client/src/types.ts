@@ -1,5 +1,5 @@
-import { ExcalidrawElement } from "@excalidraw/excalidraw-next/types/element/types"
-import { AppState, Gesture } from "@excalidraw/excalidraw-next/types/types"
+import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
+import { AppState, Gesture } from "@excalidraw/excalidraw/types/types"
 
 export type BroadcastedExcalidrawElement = ExcalidrawElement & {
   parent?: string

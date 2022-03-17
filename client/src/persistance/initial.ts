@@ -1,10 +1,6 @@
-import {
-  AppState,
-  BinaryFiles,
-  ExcalidrawImperativeAPI,
-} from "@excalidraw/excalidraw-next/types/types"
-import { ImportedDataState } from "@excalidraw/excalidraw-next/types/data/types"
-import { serializeAsJSON } from "@excalidraw/excalidraw-next"
+import { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types"
+import { serializeAsJSON } from "@excalidraw/excalidraw"
 import { RefObject, useCallback } from "react"
 
 import { BroadcastedExcalidrawElement } from "../types"

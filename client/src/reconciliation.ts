@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { ExcalidrawElement } from "@excalidraw/excalidraw-next/types/element/types"
+import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { BroadcastedExcalidrawElement, ReconciliationAppState } from "./types"
 
 export type ReconciledElements = readonly ExcalidrawElement[] & {
