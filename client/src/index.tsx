@@ -14,8 +14,16 @@ import { saveLibrary, useLoadLibraries } from "./persistance/library"
 import "./style.css"
 import { useCommunicatorExcalidrawRef, useConnectionState } from "./communication/communicator"
 import ReplayControls from "./components/ReplayControls"
+import { dispatchLtiFrameMessage } from "./lti"
 
 window.React = React
+
+// moodle makes the frame very small. I don't know if other LMS do this as well. When the
+// LTI Message Handler plugin is installed, this will resize the frame to an appropriate
+// size. See https://moodle.org/plugins/ltisource_message_handler
+const resize90vh = () => dispatchLtiFrameMessage("lti.frameResize", { height: "90vh" })
+resize90vh()
+window.addEventListener("resize", resize90vh)
 
 const defaultConfig: ConfigProps = {
   BROADCAST_RESOLUTION: 150,
