@@ -1,0 +1,17 @@
+{% extends 'ltiapi/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Choose an Assignment Group" %}{% endblock title %}
+
+{% block body %}
+<h1>{% trans "Choose an Assignment Group" %}</h1>
+<ul>
+  {% for room_name in rooms %}
+  <li><a href="{% url 'collab:room' room_name %}">
+    {% blocktrans with num=forloop.counter trimmed %}
+    Group {{num}}
+    {% endblocktrans %}
+  </a></li>
+  {% endfor %}
+</ul>
+{% endblock body %}

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-03 17:17+0100\n"
+"POT-Creation-Date: 2022-03-14 19:22+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -19,12 +19,22 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: collab/admin.py
+#, fuzzy
+#| msgid "View Room in Browser JSON Viewer"
+msgid "View Record in Browser JSON Viewer"
+msgstr "Eintrag im JSON-Betrachter des Browsers ansehen"
+
+#: collab/admin.py
 msgid "Go to JSON"
 msgstr "Zum JSON gehen"
 
 #: collab/admin.py
 msgid "will be generated after saving"
 msgstr "wird nach dem Speichern generiert"
+
+#: collab/admin.py
+msgid "shortened pseudonym"
+msgstr "Kurz-Pseuonym"
 
 #: collab/admin.py
 msgid "View Room in Browser JSON Viewer"
@@ -42,9 +52,33 @@ msgstr "Replay-Modus"
 msgid "Replay this room"
 msgstr "Diesen Raum abspielen"
 
+#: collab/admin.py
+msgid "image"
+msgstr "Bild"
+
+#: collab/admin.py
+#, python-format
+msgid "image %s for room %s"
+msgstr "Bild %s für Raum %s"
+
 #: collab/models.py
 msgid "this is generated from ltiapi.models.CustomUser.id_for_room"
 msgstr "wird von ltiapi.models.CustomUser.id_for_room generiert"
+
+#: collab/models.py
+#, fuzzy
+#| msgid "Go to room JSON"
+msgid "belongs to room"
+msgstr "Zum Raum-JSON gehen"
+
+#: collab/models.py
+msgid "excalidraw meta data"
+msgstr "Excalidraw-Metadaten"
+
+#: collab/models.py
+#, python-format
+msgid "The content MIME type of %s is not allowed"
+msgstr "Der Inhalts-MIME-Typ von %s ist nicht erlaubt"
 
 #: collab/templates/collab/add_library.html
 msgid "Library Added"

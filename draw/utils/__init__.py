@@ -5,6 +5,7 @@ import base64
 import json
 import logging
 import random
+import re
 import string
 import uuid
 import zlib
@@ -14,6 +15,7 @@ from pprint import pformat
 from typing import (Any, Callable, Dict, Generic, List, Optional, Protocol, Sequence, Tuple,
                     TypeVar, Union, cast)
 
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import log
@@ -202,6 +204,12 @@ def user_id_for_room(uid: uuid.UUID, room_name: str):
 
 def make_room_name(length):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
+room_name_re = re.compile(r'[a-zA-Z0-9_-]{24}')
+
+def validate_room_name(room_name: str):
+    if not room_name_re.fullmatch(room_name):
+        raise ValidationError(_("'%s' is not a valid room name.") % (room_name,))
 
 def absolute_reverse(request: HttpRequest, *args, **kwargs):
     return request.build_absolute_uri(reverse(*args, **kwargs))

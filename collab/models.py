@@ -12,7 +12,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
-from draw.utils import JSONType, bytes_to_data_uri, dump_content, load_content
+from draw.utils import JSONType, bytes_to_data_uri, dump_content, load_content, validate_room_name
 from ltiapi.models import CustomUser
 
 from .types import ALLOWED_IMAGE_MIME_TYPES, ExcalidrawBinaryFile
@@ -29,7 +29,7 @@ class ExcalidrawLogRecord(models.Model):
     # dates are sorted after field size. this reduces table size in postgres.
     _compressed = models.BooleanField(editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    room_name = models.CharField(max_length=24, validators=[MinLengthValidator(24)])
+    room_name = models.CharField(max_length=24, validators=[validate_room_name])
     event_type = models.CharField(max_length=50)
     # if a user is deleted, keep the foreign key to be able to keep the action log
     user_pseudonym = models.CharField(
@@ -77,7 +77,7 @@ class ExcalidrawRoom(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     room_name = models.CharField(
         primary_key=True, max_length=24,
-        validators=[MinLengthValidator(24)])
+        validators=[validate_room_name])
     room_created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     room_consumer = models.ForeignKey(LtiTool, on_delete=models.SET_NULL, null=True)
     room_course_id = models.CharField(max_length=255, null=True, blank=True)

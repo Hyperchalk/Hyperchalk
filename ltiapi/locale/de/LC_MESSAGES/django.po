@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-03 13:44+0100\n"
+"POT-Creation-Date: 2022-03-14 19:22+0100\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -41,6 +41,43 @@ msgstr "Consumer-Registrierungs-Zeitstempel"
 #: ltiapi/models.py
 msgid "registered via"
 msgstr "Registriert via"
+
+#: ltiapi/templates/ltiapi/choose_group.html
+msgid "Choose an Assignment Group"
+msgstr "Wähle eine Gruppe"
+
+#: ltiapi/templates/ltiapi/choose_group.html
+#, python-format
+msgid "Group %(num)s"
+msgstr "Gruppe %(num)s"
+
+#: ltiapi/templates/ltiapi/configure.html
+msgid "Configure Assignment"
+msgstr "Aufgabe konfigurieren"
+
+#: ltiapi/templates/ltiapi/configure.html
+msgid "Assignment type"
+msgstr "Aufgabentyp"
+
+#: ltiapi/templates/ltiapi/configure.html
+msgid "Classroom Assignment"
+msgstr "Klassenraum"
+
+#: ltiapi/templates/ltiapi/configure.html ltiapi/views.py
+msgid "Group Assignment"
+msgstr "Gruppenarbeit"
+
+#: ltiapi/templates/ltiapi/configure.html ltiapi/views.py
+msgid "Single Person Assignment"
+msgstr "Einzelperson"
+
+#: ltiapi/templates/ltiapi/configure.html
+msgid "Number of groups:"
+msgstr "Anzahl der Gruppen:"
+
+#: ltiapi/templates/ltiapi/configure.html
+msgid "Create Assignment"
+msgstr "Aufgabe anlegen"
 
 #: ltiapi/templates/ltiapi/register_consumer_result.html
 msgid "The application registration succeeded."

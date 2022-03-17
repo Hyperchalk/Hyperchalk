@@ -1,13 +1,13 @@
 import asyncio
 import logging
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import aiohttp
 from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.auth import get_user_model, login
 from django.http import (HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden,
                          JsonResponse)
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -21,7 +21,9 @@ from draw.utils import absolute_reverse, make_room_name
 from draw.utils.auth import user_is_authorized
 
 from . import models as m
-from .utils import (get_launch_url, issuer_namespaced_username, lti_registration_data,
+from .utils import (get_course_context, get_course_id, get_custom_launch_data, get_ext_data,
+                    get_launch_url, get_lti_tool, get_room_name, get_user_room_name,
+                    issuer_namespaced_username, lti_registration_data,
                     make_tool_config_from_openid_config_via_link)
 
 logger = logging.getLogger("draw.ltiapi")
@@ -142,6 +144,52 @@ oidc_login.xframe_options_exempt = True # type: ignore
 # TODO: it would be nice to have the referrer check logic from the
 #       csrf middleware here so at least this could be checked.
 
+@require_POST
+def lti_configure(request: HttpRequest, launch_id: str):
+    tool_conf = DjangoDbToolConf()
+    launch_data_storage = DjangoCacheDataStorage()
+    message_launch = DjangoMessageLaunch.from_cache(
+        launch_id, request, tool_conf, launch_data_storage=launch_data_storage)
+    message_launch_data = cast(dict, message_launch.get_launch_data())
+    lti_tool = get_lti_tool(tool_conf, message_launch_data)
+
+    # create a deep link and initialize the room
+    course_title = get_course_context(message_launch_data).get('title', None)
+    title = message_launch_data\
+        .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
+        .get('title', course_title)
+    title = "Draw Together" + (f" – {title}" if title else "")
+
+    def upsert_rooms(room_names: List[str]):
+        for room_name in room_names:
+            ExcalidrawRoom.objects.get_or_create(
+                room_name=room_name, defaults={
+                    'room_created_by': request.user,
+                    'room_consumer': lti_tool,
+                    'room_course_id': get_course_id(message_launch_data)
+                })
+
+    mode = request.POST.get("mode")
+    resource = DeepLinkResource().set_url(absolute_reverse(request, 'lti:launch'))
+
+    if mode == "classroom":
+        room_name = get_room_name(request, message_launch_data)
+        upsert_rooms([room_name])
+        resource.set_title(title).set_custom_params({'mode': mode, 'room': room_name})
+
+    elif mode == "group":
+        n_groups = int(request.POST.get('n-groups'))
+        room_names = [make_room_name(24) for _ in range(n_groups)]
+        upsert_rooms(room_names)
+        resource.set_title(title + " – " + _("Group Assignment"))\
+            .set_custom_params({'mode': mode, 'rooms': ",".join(room_names)})
+
+    elif mode == "single":
+        resource.set_title(title + " – " + _("Single Person Assignment"))\
+            .set_custom_params({'mode': mode, 'room_prefix': make_room_name(16)})
+
+    return HttpResponse(message_launch.get_deep_link().output_response_form([resource]))
+
 
 @require_POST
 def lti_launch(request: HttpRequest):
@@ -154,18 +202,15 @@ def lti_launch(request: HttpRequest):
     launch_data_storage = DjangoCacheDataStorage()
     message_launch = DjangoMessageLaunch(
         request, tool_conf, launch_data_storage=launch_data_storage)
-    message_launch_data = message_launch.get_launch_data()
+    message_launch_data = cast(dict, message_launch.get_launch_data())
 
     # log the user in. if this is the user's first visit, save them to the database before.
     # 1) extract user information from the data passed by the consumer
-    username = message_launch_data\
-        .get('https://purl.imsglobal.org/spec/lti/claim/ext', {})\
-        .get('user_username') # type: ignore
-    issuer = message_launch_data['iss']
-    client_id = message_launch_data['aud']
+    username = get_ext_data(message_launch_data).get('user_username') # type: ignore
+    username = issuer_namespaced_username(message_launch_data['iss'], username)
     user_full_name = message_launch_data.get('name', '')
-    username = issuer_namespaced_username(issuer, username)
-    lti_tool = tool_conf.get_lti_tool(issuer, client_id)
+
+    lti_tool = get_lti_tool(tool_conf, message_launch_data)
 
     # 2) get / create the user from the db and log them in
     UserModel = get_user_model()
@@ -182,40 +227,10 @@ def lti_launch(request: HttpRequest):
         user.save()
     login(request, user)
 
-    # room and course information are needed for every launch type.
-    room_name = message_launch_data\
-        .get('https://purl.imsglobal.org/spec/lti/claim/custom', {})\
-        .get('room', None) \
-        or request.GET.get('room', make_room_name(24))
-
-    room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
-
-    course_context = message_launch_data\
-        .get('https://purl.imsglobal.org/spec/lti/claim/context', {})
-    course_id = course_context.get('id', None)
-
     if message_launch.is_deep_link_launch():
-        # create a deep link and initialize the room
-        course_title = course_context.get('title', None)
-        title = message_launch_data\
-            .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
-            .get('title', course_title)
-        title = "Draw Together" + (f" – {title}" if title else "")
-
-        room, _ = ExcalidrawRoom.objects.get_or_create(
-            room_name=room_name,
-            room_created_by=user,
-            room_consumer=lti_tool,
-            room_course_id=course_id)
-        room.save()
-
-        resource = DeepLinkResource()
-        resource.set_url(absolute_reverse(request, 'lti:launch'))\
-            .set_custom_params({'room': room_name})\
-            .set_title(title)
-
-        html = message_launch.get_deep_link().output_response_form([resource])
-        return HttpResponse(html)
+        return render(request, 'ltiapi/configure.html', {
+            'launch_id': message_launch.get_launch_id(),
+        })
 
     if message_launch.is_data_privacy_launch():
         # TODO: implement data privacy screen. (not as urgent. moodle does not support this anyway.)
@@ -223,16 +238,46 @@ def lti_launch(request: HttpRequest):
         raise NotImplementedError()
 
     if message_launch.is_resource_launch():
-        # join the room if the user is allowed to access it.
-        room = get_object_or_404(ExcalidrawRoom, room_name=room_name)
+        # every endpoint needs to do an auth check
         request.session.set_expiry(0)
         allowed_course_ids = request.session.get('course_ids', [])
+        course_id = get_course_id(message_launch_data)
         allowed_course_ids.append(course_id)
         request.session['course_ids'] = allowed_course_ids
-        if not async_to_sync(user_is_authorized)(user, room, request.session):
-            return HttpResponseForbidden("You are not allowed to access this room.")
-        # the data for the authorization check needs to be passed to every endpoint.
-        return redirect(room_uri)
+
+        # classroom is default for legacy db entry support
+        custom_data = get_custom_launch_data(message_launch_data)
+        mode = custom_data.get('mode', 'classroom')
+
+        if mode == "classroom":
+            room_name = get_room_name(request, message_launch_data)
+            room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
+            room = get_object_or_404(ExcalidrawRoom, room_name=room_name)
+            # join the room if the user is allowed to access it.
+            if not async_to_sync(user_is_authorized)(user, room, request.session):
+                return HttpResponseForbidden("You are not allowed to access this room.")
+            return redirect(room_uri)
+
+        if mode == "group":
+            return render(request, 'ltiapi/choose_group.html', {
+                'rooms': custom_data.get('rooms').split(",")
+            })
+
+        if mode == "single":
+            # XXX: users from the same course can edit boards of other users from that course
+            room_name = get_user_room_name(custom_data['room_prefix'], user)
+            room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
+            room, created = ExcalidrawRoom.objects.get_or_create(room_name=room_name)
+            if created:
+                room.room_created_by=request.user
+                room.room_consumer=lti_tool
+                room.room_course_id=course_id
+                room.save()
+            elif not async_to_sync(user_is_authorized)(user, room, request.session):
+                return HttpResponseForbidden("You are not allowed to access this room.")
+            return redirect(room_uri)
+
+        return HttpResponseBadRequest("Invalid assignment type.")
 
     return HttpResponseBadRequest('Unknown or unsupported message type provided.')
 

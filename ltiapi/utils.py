@@ -1,3 +1,4 @@
+import base64
 import json
 import re
 from typing import Any, Dict
@@ -10,9 +11,10 @@ from django.conf import settings
 from django.http import HttpRequest
 from django.templatetags.static import static
 from django.utils.translation import gettext as _
+from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool, LtiToolKey
 
-from draw.utils import absolute_reverse
+from draw.utils import absolute_reverse, make_room_name
 
 from . import models as m
 
@@ -137,3 +139,43 @@ def issuer_namespaced_username(issuer, username):
     username = user_transform.sub('_', username)
     return username + '@' + issuer_host
 # XXX: is there a possibility that multiple issuers reside at the same subdomain?
+
+CLAIM = 'https://purl.imsglobal.org/spec/lti/claim'
+
+def get_course_context(message_launch_data: dict):
+    return message_launch_data\
+        .get(f'{CLAIM}/context', {})
+
+def get_custom_launch_data(message_launch_data: dict):
+    return message_launch_data\
+        .get(f'{CLAIM}/custom', {})
+
+def get_ext_data(message_launch_data: dict):
+    return message_launch_data\
+        .get(f'{CLAIM}/ext', {})
+
+def get_roles(message_launch_data: dict):
+    return message_launch_data\
+        .get(f'{CLAIM}/roles', [])
+
+INSTRUCTOR_ROLE = "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
+
+def launched_by_instructor(message_launch_data: dict):
+    return INSTRUCTOR_ROLE in get_roles(message_launch_data)
+
+def get_mode(message_launch_data: dict):
+    return get_custom_launch_data(message_launch_data).get('mode', 'classroom')
+
+def get_room_name(request: HttpRequest, message_launch_data: dict):
+    return get_custom_launch_data(message_launch_data)\
+        .get('room', None) \
+        or request.GET.get('room', make_room_name(24))
+
+def get_lti_tool(tool_conf: DjangoDbToolConf, message_launch_data: dict):
+    return tool_conf.get_lti_tool(message_launch_data['iss'], message_launch_data['aud'])
+
+def get_course_id(message_launch_data: dict):
+    return get_course_context(message_launch_data).get('id', None)
+
+def get_user_room_name(room_prefix: str, user: m.CustomUser):
+    return room_prefix + base64.b64encode(user.id.bytes, altchars=b'_-').decode('ascii')[:8]
