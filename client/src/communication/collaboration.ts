@@ -67,7 +67,7 @@ export default class CollaborationCommunicator extends Communicator {
       }
     )
 
-    this.saveRoom = debounce(this._saveRoom.bind(this), 5000, {
+    this.saveRoom = debounce(this.saveRoomImmediately.bind(this), 5000, {
       leading: false,
       trailing: true,
       maxWait: config.SAVE_ROOM_MAX_WAIT,
@@ -154,7 +154,7 @@ export default class CollaborationCommunicator extends Communicator {
 
     // do a full sync after reconnect
     if (this.ws.readyState == WsState.OPEN) {
-      // FIXME: see issue #1
+      // FIXME: performance; see issue #1
       // https://gitlab.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application/-/issues/1
       this.saveRoom()
 
@@ -277,7 +277,7 @@ export default class CollaborationCommunicator extends Communicator {
   // #region collaborator awareness
 
   // #region backend communication
-  private _saveRoom() {
+  public saveRoomImmediately() {
     this.ws.send(
       JSON.stringify({
         eventtype: "save_room",

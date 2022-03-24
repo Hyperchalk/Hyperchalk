@@ -1,5 +1,5 @@
 // import { useState, useEffect } from "react";
-import React from "react"
+import React, { useCallback, useEffect } from "react"
 import { render } from "react-dom"
 import Excalidraw from "@excalidraw/excalidraw"
 
@@ -15,6 +15,7 @@ import "./style.css"
 import { useCommunicatorExcalidrawRef, useConnectionState } from "./communication/communicator"
 import ReplayControls from "./components/ReplayControls"
 import { dispatchLtiFrameMessage } from "./lti"
+import { EventKey } from "./events"
 
 window.React = React
 
@@ -48,22 +49,35 @@ let communicator = config.IS_REPLAY_MODE
   ? new ReplayCommunicator(config, ws)
   : new CollaborationCommunicator(config, ws)
 
+type WindowEK = EventKey<WindowEventMap>
+type DocEK = EventKey<DocumentEventMap>
+
 function IndexPage() {
   let draw = useCommunicatorExcalidrawRef(communicator)
   let connectionState = useConnectionState(communicator)
-  window.draw = draw
+  useEffect(() => {
+    window.draw = draw
+  }, [draw])
 
   const saveStateToLocalStorage = config.IS_REPLAY_MODE
-    ? noop
+    ? useCallback(noop, [])
     : useSaveState(draw, config.ROOM_NAME)
+
+  const saveToServerImmediately = config.IS_REPLAY_MODE
+    ? useCallback(noop, [])
+    : useCallback(
+        () => (communicator as CollaborationCommunicator).saveRoomImmediately(),
+        [communicator]
+      )
 
   const loadEnqueuedLibraries = useLoadLibraries(draw)
 
-  useEventListener("blur", saveStateToLocalStorage, window)
-  useEventListener("focus", loadEnqueuedLibraries, window)
-  useEventListener("hashchange", saveStateToLocalStorage, window)
-  useEventListener("beforeunload", saveStateToLocalStorage, window)
-  useEventListener("visibilitychange", saveStateToLocalStorage, document)
+  useEventListener<WindowEventMap, WindowEK>(window, "focus", loadEnqueuedLibraries)
+  useEventListener<WindowEventMap, WindowEK>(window, "blur", saveStateToLocalStorage)
+  useEventListener<WindowEventMap, WindowEK>(window, "hashchange", saveStateToLocalStorage)
+  useEventListener<WindowEventMap, WindowEK>(window, "beforeunload", saveStateToLocalStorage)
+  useEventListener<WindowEventMap, WindowEK>(window, "beforeunload", saveToServerImmediately)
+  useEventListener<DocumentEventMap, DocEK>(document, "visibilitychange", saveStateToLocalStorage)
 
   return connectionState == "CONNECTED" ? (
     <div className="excalidraw">
