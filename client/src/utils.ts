@@ -34,3 +34,8 @@ export function setLocalStorageJson(key: string, value: any) {
 }
 
 export function noop() {}
+
+export function assignAndReturn<T, S extends keyof T = keyof T>(o: T, attr: S, val: T[S]) {
+  o[attr] = val
+  return o
+}
