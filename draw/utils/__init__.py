@@ -12,8 +12,8 @@ import zlib
 from enum import Enum
 from hashlib import sha256
 from pprint import pformat
-from typing import (Any, Callable, Dict, Generic, List, Optional, Protocol, Sequence, Tuple,
-                    TypeVar, Union, cast)
+from typing import (Any, Callable, Collection, Dict, Generic, Hashable, List, Optional, Protocol,
+                    Sequence, Tuple, TypeVar, Union, cast)
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
@@ -141,6 +141,10 @@ def chain(obj: Any, members: Sequence[Any], default=None):
     while members:
         chained = chained[members.pop(0)]
     return chained() or default
+
+
+def pick(d: dict, keys: Collection[Hashable]):
+    return {k: v for k, v in d.items() if k in keys}
 
 
 class StrLike(Protocol):
