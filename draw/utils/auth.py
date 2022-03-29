@@ -1,3 +1,4 @@
+from functools import wraps
 from typing import Callable, Protocol, Union
 
 from asgiref.sync import sync_to_async
@@ -17,11 +18,15 @@ def user_is_staff(user: User):
     return user.is_superuser or user.is_staff
 
 def require_staff_user(async_func: Callable[..., HttpResponse]):
+    @wraps(async_func)
     async def inner(request: HttpRequest, *args, **kwargs):
         if not await user_is_staff(request.user):
             return HttpResponseForbidden(_("You need to be logged in as staff or as admin."))
         return await async_func(request, *args, **kwargs)
     return inner
+
+async def request_user_is_staff(request: HttpRequest, *args, **kwargs):
+    return await user_is_staff(request.user)
 
 @sync_to_async
 def user_is_authenticated(user: User) -> bool:
@@ -46,6 +51,7 @@ def user_is_authorized(user: User, room: Room, session: SessionBase) -> bool:
             and (room.room_course_id is None or room.room_course_id in allowed_course_ids)))
 
 def require_login(async_func: Callable[..., HttpResponse]):
+    @wraps(async_func)
     async def inner(request: HttpRequest, *args, **kwargs):
         if not await user_is_authenticated(request.user):
             return HttpResponseForbidden(_("You need to be logged in."))
