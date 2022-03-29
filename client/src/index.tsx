@@ -35,6 +35,7 @@ const defaultConfig: ConfigProps = {
   ROOM_NAME: "_default",
   SAVE_ROOM_MAX_WAIT: 15000,
   SOCKET_URL: "",
+  UPLOAD_RETRY_TIMEOUT: 1000,
   USER_NAME: "",
 }
 
@@ -48,7 +49,7 @@ const initialData = config.IS_REPLAY_MODE
 const ws = new ReconnectingWebSocket(config.SOCKET_URL)
 let communicator = config.IS_REPLAY_MODE
   ? new ReplayCommunicator(config, ws)
-  : new CollaborationCommunicator(config, ws)
+  : new CollaborationCommunicator(config, ws, initialData.files ?? {})
 
 type WindowEK = EventKey<WindowEventMap>
 type DocEK = EventKey<DocumentEventMap>
@@ -99,6 +100,7 @@ function IndexPage() {
         langCode={config.LANGUAGE_CODE}
         onLibraryChange={saveLibrary}
         libraryReturnUrl={config.LIBRARY_RETURN_URL}
+        renderTopRightUI={() => <div></div>}
       />
       {config.IS_REPLAY_MODE && (
         <ReplayControls communicator={communicator as ReplayCommunicator} />

@@ -29,12 +29,14 @@ export interface UserColor {
 export interface ConfigProps {
   BROADCAST_RESOLUTION: number
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: number
+  FILE_URL_TEMPLATE?: string
   IS_REPLAY_MODE: boolean
   LANGUAGE_CODE: string
   LIBRARY_RETURN_URL?: string
   ROOM_NAME: string
   SAVE_ROOM_MAX_WAIT: number
   SOCKET_URL: string
+  UPLOAD_RETRY_TIMEOUT: number
   USER_COLOR?: UserColor
   USER_NAME: string
 }

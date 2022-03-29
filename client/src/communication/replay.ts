@@ -84,7 +84,7 @@ export default class ReplayCommunicator extends Communicator<ReplayCommunicatorE
    * Resets the scene. This is only for replay mode.
    */
   private resetScene(duration: number) {
-    this.broadcastedVersions = new Map()
+    this.broadcastedElementsVersions = new Map()
     this.collaborators = new Map()
     this.collaboratorUpdate = 0
     this.lastCollaboratorUpdate = new Map()
