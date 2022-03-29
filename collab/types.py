@@ -1,11 +1,15 @@
-from typing import TypedDict
+from typing import Optional
+
+from ninja import Schema
 
 
-class ExcalidrawBinaryFile(TypedDict, total=False):
+class ExcalidrawBinaryFile(Schema):
     id: str
     created: int # unix time stamp
     dataURL: str
     mimeType: str
+    filePath: Optional[str]
+
 
 ALLOWED_IMAGE_MIME_TYPES = {
     "image/gif",

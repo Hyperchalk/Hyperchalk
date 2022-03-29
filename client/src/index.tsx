@@ -22,9 +22,10 @@ window.React = React
 // moodle makes the frame very small. I don't know if other LMS do this as well. When the
 // LTI Message Handler plugin is installed, this will resize the frame to an appropriate
 // size. See https://moodle.org/plugins/ltisource_message_handler
-const resize90vh = () => dispatchLtiFrameMessage("lti.frameResize", { height: "90vh" })
-resize90vh()
-window.addEventListener("resize", resize90vh)
+const adjustFrameHeight = () =>
+  dispatchLtiFrameMessage("lti.frameResize", { height: "calc(100vh - 75px)" })
+adjustFrameHeight()
+window.addEventListener("resize", adjustFrameHeight)
 
 const defaultConfig: ConfigProps = {
   BROADCAST_RESOLUTION: 150,
@@ -34,6 +35,7 @@ const defaultConfig: ConfigProps = {
   ROOM_NAME: "_default",
   SAVE_ROOM_MAX_WAIT: 15000,
   SOCKET_URL: "",
+  UPLOAD_RETRY_TIMEOUT: 1000,
   USER_NAME: "",
 }
 
@@ -47,7 +49,7 @@ const initialData = config.IS_REPLAY_MODE
 const ws = new ReconnectingWebSocket(config.SOCKET_URL)
 let communicator = config.IS_REPLAY_MODE
   ? new ReplayCommunicator(config, ws)
-  : new CollaborationCommunicator(config, ws)
+  : new CollaborationCommunicator(config, ws, initialData.files ?? {})
 
 type WindowEK = EventKey<WindowEventMap>
 type DocEK = EventKey<DocumentEventMap>
@@ -98,6 +100,7 @@ function IndexPage() {
         langCode={config.LANGUAGE_CODE}
         onLibraryChange={saveLibrary}
         libraryReturnUrl={config.LIBRARY_RETURN_URL}
+        renderTopRightUI={() => <div></div>}
       />
       {config.IS_REPLAY_MODE && (
         <ReplayControls communicator={communicator as ReplayCommunicator} />

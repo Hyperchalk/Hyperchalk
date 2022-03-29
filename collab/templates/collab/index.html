@@ -12,6 +12,7 @@
 
 <body>
   <div id="app"></div>
+  {% csrf_token %}
   <script>
     // this has to be configured before excalidraw is imported.
     // so we can't put it into the config json sadly.
@@ -19,7 +20,8 @@
     production = "production"
   </script>
   {{excalidraw_config|json_script:'excalidraw-config'}}
-  {{initial_data|json_script:'initial-data'}}
+  {{initial_elements|json_script:'initial-elements'}}
+  {{files|json_script:'files'}}
   {{custom_messages|json_script:'custom-messages'}}
   <script src="{% static 'app.js' %}"></script>
 </body>

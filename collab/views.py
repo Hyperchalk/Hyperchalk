@@ -3,24 +3,20 @@ import logging
 from typing import Literal
 from urllib.parse import urlunsplit
 
-from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from django.conf import settings
-from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpRequest, HttpResponseBadRequest
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from draw.utils import absolute_reverse, make_room_name, validate_room_name
-from draw.utils.auth import (require_login, require_staff_user, user_is_authenticated,
-                             user_is_authorized)
+from draw.utils.auth import require_staff_user
 
 from . import models as m
+from .utils import access_check, async_get_object_or_404, get_or_create_room
 
 logger = logging.getLogger('draw.collab')
-
-get_or_create_room = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
-async_get_object_or_404 = sync_to_async(get_object_or_404)
 
 
 @database_sync_to_async
@@ -34,7 +30,11 @@ def reverse_ws_url(request: HttpRequest, route: Literal["replay", "collaborate"]
         request.get_host(),
         f'/ws/collab/{room_name}/{route}',
         None,
-        None)),
+        None))
+
+@database_sync_to_async
+def get_file_dicts(room_obj: m.ExcalidrawRoom):
+    return {f.element_file_id: f.to_excalidraw_file_schema().dict() for f in room_obj.files.all()}
 
 NOT_LOGGED_IN = _("You need to be logged in.")
 
@@ -55,21 +55,12 @@ async def room(request: HttpRequest, room_name: str):
         get_username(request.user))
     room_obj, __ = room_tpl
 
-    if not settings.ALLOW_ANONYMOUS_VISITS:
-        authenticated, authorized = await asyncio.gather(
-            user_is_authenticated(request.user),
-            user_is_authorized(request.user, room_obj, request.session))
-        if not authenticated:
-            logger.warning("Someone tried to access %s without being authenticated.", room_name)
-            return HttpResponseForbidden(_("You need to be logged in."))
-        if not authorized:
-            logger.warning(
-                "User %s tried to access %s but is not allowed to access it.",
-                username, room_name)
-            return HttpResponseForbidden(_("You are not allowed to access this room."))
+    await access_check(request, room_obj)
 
     return render(request, 'collab/index.html', {
         'excalidraw_config': {
+            'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
+                'room_name': room_name, 'file_id': 'FILE_ID'}),
             'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
             'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
             'LANGUAGE_CODE': settings.LANGUAGE_CODE,
@@ -82,14 +73,18 @@ async def room(request: HttpRequest, room_name: str):
         'custom_messages': {
             'NOT_LOGGED_IN': NOT_LOGGED_IN
         },
-        'initial_data': room_obj.elements,
+        'initial_elements': room_obj.elements,
+        'files': await get_file_dicts(room_obj)
     })
 
 
 @require_staff_user
 async def replay(request: HttpRequest, room_name: str, **kwargs):
+    room_obj = await async_get_object_or_404(m.ExcalidrawRoom, room_name=room_name)
     return render(request, 'collab/index.html', {
         'excalidraw_config': {
+            'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
+                'room_name': room_name, 'file_id': '{file_id}'}),
             'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
             'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
             'IS_REPLAY_MODE': True,
@@ -103,32 +98,6 @@ async def replay(request: HttpRequest, room_name: str, **kwargs):
         'custom_messages': {
             'NOT_LOGGED_IN': NOT_LOGGED_IN
         },
-        'initial_data': []
+        'initial_elements': [],
+        'files': await get_file_dicts(room_obj)
     })
-
-
-@require_login
-async def get_current_elements(request: HttpRequest, room_name: str):
-    room_obj, __ = await get_or_create_room(room_name=room_name)
-    return JsonResponse({
-        'elements': room_obj.elements
-    })
-
-
-@require_staff_user
-async def get_log_record(request: HttpRequest, room_name: str, pk: int):
-    log_obj = await async_get_object_or_404(m.ExcalidrawLogRecord, pk=pk)
-    return JsonResponse(log_obj.content, safe=False)
-
-
-@sync_to_async
-def get_room_record_ids(room_name: str):
-    return [rec_id for (rec_id,) in m.ExcalidrawLogRecord.objects\
-        .filter(room_name=room_name)\
-        .order_by('id')\
-        .values_list('id')]
-
-
-@require_staff_user
-async def get_log_record_ids(request: HttpRequest, room_name: str, *args, **kwargs):
-    return JsonResponse(await get_room_record_ids(room_name), safe=False)

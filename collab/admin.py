@@ -24,7 +24,7 @@ class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
     @admin.display(description=_("View Record in Browser JSON Viewer"))
     def view_json(self, obj: m.ExcalidrawLogRecord):
         if obj.pk:
-            json_link = reverse('collab:record-json', kwargs={
+            json_link = reverse('api-1:get_record', kwargs={
                 'room_name': obj.room_name, 'pk': obj.pk
             })
             return format_html(
@@ -44,7 +44,7 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
     @admin.display(description=_("View Room in Browser JSON Viewer"))
     def room_json(self, obj: m.ExcalidrawRoom):
         if obj.pk:
-            room_link = reverse('collab:room-json', kwargs={'room_name': obj.room_name})
+            room_link = reverse('api-1:get_room', kwargs={'room_name': obj.room_name})
             return format_html(
                 "<a href='{room_link}'>{text}</a>",
                 room_link=room_link,
@@ -64,7 +64,7 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
 @admin.register(m.ExcalidrawFile)
 class ExcalidrawFileAdmin(admin.ModelAdmin):
     readonly_fields = ['image']
-    list_display = ['__str__', 'belongs_to_id']
+    list_display = ['__str__', 'belongs_to_id', 'element_file_id']
 
     @admin.display(description=_("image"))
     def image(self, obj: m.ExcalidrawFile):

@@ -1,5 +1,10 @@
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { AppState, Collaborator, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import {
+  AppState,
+  BinaryFiles,
+  Collaborator,
+  ExcalidrawImperativeAPI,
+} from "@excalidraw/excalidraw/types/types"
 import { RefObject, useState, useRef, useEffect } from "react"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
@@ -48,7 +53,11 @@ export default class Communicator<TEventMap extends CommunicatorEventMap = Commu
   // #region methods for excalidraw props
 
   broadcastCursorMovement: (collaborator: PointerUpdateProps) => void = noop
-  broadcastElements: (elements: readonly ExcalidrawElement[], appState: AppState) => void = noop
+  broadcastElements: (
+    elements: readonly ExcalidrawElement[],
+    appState: AppState,
+    files: BinaryFiles
+  ) => void = noop
   saveRoom: () => void = noop
 
   // #endregion methods for excalidraw props
@@ -177,7 +186,7 @@ export default class Communicator<TEventMap extends CommunicatorEventMap = Commu
   // #endregion message hadling
 
   // #region element changes
-  protected broadcastedVersions = new Map<string, number>()
+  protected broadcastedElementsVersions = new Map<string, number>()
 
   /**
    * Store the versions of the elements when they were broadcasted, so it can
@@ -185,10 +194,10 @@ export default class Communicator<TEventMap extends CommunicatorEventMap = Commu
    *
    * @param elements elements on the current canvas
    */
-  protected updateBroadcastedVersions(elements: readonly BroadcastedExcalidrawElement[]) {
+  protected updateBroadcastedElementsVersions(elements: readonly BroadcastedExcalidrawElement[]) {
     for (let index = 0; index < elements.length; index++) {
       let element = elements[index]
-      this.broadcastedVersions.set(element.id, element.version)
+      this.broadcastedElementsVersions.set(element.id, element.version)
     }
   }
 
@@ -205,11 +214,10 @@ export default class Communicator<TEventMap extends CommunicatorEventMap = Commu
         remoteElements,
         this.excalidrawApi?.getAppState()
       )
-      this.updateBroadcastedVersions(reconciledElements)
+      this.updateBroadcastedElementsVersions(reconciledElements)
       this.excalidrawApi?.updateScene({ elements: reconciledElements, commitToHistory: false })
     }
   }
-
   // #endregion element changes
 
   // #region collaborator awareness

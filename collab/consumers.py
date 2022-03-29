@@ -5,7 +5,7 @@ from asyncio import gather
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from channels.db import database_sync_to_async
 from django.conf import settings
@@ -30,12 +30,22 @@ auth_room = database_sync_to_async(
     m.ExcalidrawRoom.objects.only("room_name", "room_consumer").get_or_create)
 
 @database_sync_to_async
+def get_known_file_ids(room_name: str):
+    return {
+        element_file_id for (element_file_id,)
+        in m.ExcalidrawFile.objects
+            .filter(belongs_to=room_name)\
+            .values_list('element_file_id')}
+
+@database_sync_to_async
 def user_name(user):
     return user.username
 
 
 class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
-    allowed_eventtypes = {'collaborator_change', 'elements_changed', 'save_room', 'full_sync'}
+    allowed_eventtypes = {
+        'collaborator_change', 'elements_changed',
+        'save_room', 'full_sync', 'files_added'}
     channel_layer_namespace = 'draw_room_'
 
     # region connection handling
@@ -173,6 +183,26 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             self.send_event(eventtype, elements=elements, **kwargs),
             database_sync_to_async(record.save)())
 
+    async def files_added(self, room_name, eventtype, fileids: List[str], **kwargs):
+        """
+        Saves and forwards files that are newly added to the scene.
+
+        This event is not logged to the database as new files can also be detected when a file
+        element with a new file ID is added.
+        """
+        await self.send_event(eventtype, fileids=fileids)
+
+    async def maybe_request_missing_files(self, room_name, file_ids_known_by_client: Set[str]):
+        """
+        Checks if any files from the request are missing and asks the client to send those.
+        """
+        known_files = await get_known_file_ids(room_name)
+        missing_files = file_ids_known_by_client.difference(known_files)
+        if missing_files:
+            await self.send_json({
+                'eventtype': 'files_missing',
+                'missing': list(missing_files)})
+
     async def save_room(self, room_name, elements, **kwargs):
         """
         Saves the room if all submitted elements have a newser version than the saved version.
@@ -213,10 +243,13 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         if not differences_detected:
             return
 
+        known_file_ids = set(e['fileId'] for e in elements if 'fileId' in e)
+
         elements_to_store, _ = dump_content(elements_to_store, force_compression=True)
-        room, _ = await upsert_room(
-            room_name=room_name,
-            defaults={'_elements': elements_to_store})
+        room_tuple, _ = await gather(
+            upsert_room(room_name=room_name, defaults={'_elements': elements_to_store}),
+            self.maybe_request_missing_files(room_name, known_file_ids))
+        room, _ = room_tuple
         logger.debug("room %s saved", room.room_name)
     # endregion user actions
 

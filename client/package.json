@@ -19,7 +19,7 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@excalidraw/excalidraw": "^0.10.0",
+    "@excalidraw/excalidraw": "^0.11.0",
     "esbuild": "^0.14.20",
     "lodash": "^4.17.21",
     "react": "^17.0.2",

@@ -11,5 +11,5 @@ export function dispatchLtiFrameMessage<T extends Messages = Messages, K extends
   subject: K,
   data: T[K]
 ) {
-  ;(window.parent || window.opener).postMessage(JSON.stringify({ subject, ...data }), "*")
+  ;(window.parent || window.opener)?.postMessage(JSON.stringify({ subject, ...data }), "*")
 }

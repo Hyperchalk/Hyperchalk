@@ -1,4 +1,4 @@
-import { AppState, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
 import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types"
 import { serializeAsJSON } from "@excalidraw/excalidraw"
 import { RefObject, useCallback } from "react"
@@ -12,13 +12,14 @@ import { loadLibrary } from "./library"
 /**
  * Get initial data for the room by merging the data from localStorage
  * and the remote data which is supplied by the server via the room html
- * (JSON script with ID `#initial-data`).
+ * (JSON script with ID `#initial-elements`).
  *
  * @param roomName room name to get initial data for
  * @returns initial data for the room
  */
 export function getInitialData(roomName: string): ImportedDataState {
-  let elementsFromServer: BroadcastedExcalidrawElement[] = getJsonScript("initial-data", [])
+  let elementsFromServer: BroadcastedExcalidrawElement[] = getJsonScript("initial-elements", [])
+  let filesFromServer: BinaryFiles = getJsonScript("files", {})
 
   let localState: ImportedDataState = getLocalStorageJson(roomName)
   let localElements = localState?.elements ?? []
@@ -28,11 +29,13 @@ export function getInitialData(roomName: string): ImportedDataState {
     draggingElement: null,
     ...localState?.appState,
   }
+  let localFiles = localState?.files ?? {}
 
   return {
     elements: reconcileElements(localElements, elementsFromServer, localAppState),
     appState: localAppState,
     libraryItems: loadLibrary(),
+    files: { ...filesFromServer, ...localFiles },
   }
 }
 
@@ -40,7 +43,7 @@ export function getInitialData(roomName: string): ImportedDataState {
  * @returns initial data for replay mode
  */
 export function getInitialReplayData(): ImportedDataState {
-  return {}
+  return { files: getJsonScript("files", {}) }
 }
 
 /**
@@ -57,7 +60,8 @@ export function useSaveState(apiRef: RefObject<ExcalidrawImperativeAPI>, roomNam
     // deleted elements. is this a problem? how correct do we have to be here?
     const elements = apiRef.current?.getSceneElements() ?? []
     const appState: Partial<AppState> = { ...apiRef.current?.getAppState() }
+    const files = apiRef.current?.getFiles() ?? {}
     delete appState.collaborators
-    localStorage.setItem(roomName, serializeAsJSON(elements, appState))
+    localStorage.setItem(roomName, serializeAsJSON(elements, appState, files, "local"))
   }, [apiRef])
 }

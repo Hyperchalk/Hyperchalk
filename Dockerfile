@@ -31,7 +31,7 @@ WORKDIR /opt
 
 RUN apt update \
     && apt upgrade -y \
-    && apt install -y --no-install-recommends gosu \
+    && apt install -y --no-install-recommends \
         gcc libc-dev libmariadb-dev libpq-dev \
     && apt autoremove -y && apt autoclean && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

@@ -1,11 +1,17 @@
 import { isInvisiblySmallElement } from "@excalidraw/excalidraw"
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { AppState, Collaborator } from "@excalidraw/excalidraw/types/types"
+import {
+  AppState,
+  BinaryFileData,
+  BinaryFiles,
+  Collaborator,
+} from "@excalidraw/excalidraw/types/types"
 import debounce from "lodash/debounce"
 import throttle from "lodash/throttle"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps, WsState } from "../types"
+import { apiRequestInit, assignAndReturn } from "../utils"
 
 import Communicator, {
   CollaboratorChange,
@@ -20,11 +26,26 @@ interface CollaboratorLeftMessage {
   collaborator: CollaboratorChange
 }
 
+interface FilesAddedMessage {
+  eventtype: "files_added"
+  fileids: string[]
+}
+
+interface FilesMissingMessage {
+  eventtype: "files_missing"
+  missing: string[]
+}
+
 interface LoginRequired {
   eventtype: "login_required"
 }
 
-type CollaborationMessage = CommunicatorMessage | CollaboratorLeftMessage | LoginRequired
+type CollaborationMessage =
+  | CommunicatorMessage
+  | CollaboratorLeftMessage
+  | LoginRequired
+  | FilesAddedMessage
+  | FilesMissingMessage
 // #endregion message types
 
 function isSyncableElement(element: ExcalidrawElement): boolean {
@@ -35,13 +56,15 @@ function isSyncableElement(element: ExcalidrawElement): boolean {
  * This Communicator is instantiated when we are in collaboration mode.
  */
 export default class CollaborationCommunicator extends Communicator {
-  constructor(config: ConfigProps, ws: ReconnectingWebSocket) {
+  constructor(config: ConfigProps, ws: ReconnectingWebSocket, loadedFiles: BinaryFiles) {
     super(config, ws)
 
     this.meInfo = {
       username: config.USER_NAME,
       color: config.USER_COLOR,
     }
+
+    this.updateUploadedFileIDs(Object.keys(loadedFiles))
 
     // WebSocket setup
     this.ws.addEventListener("open", () => {
@@ -59,7 +82,7 @@ export default class CollaborationCommunicator extends Communicator {
     )
 
     this.broadcastElements = throttle(
-      this._broadcastElements.bind(this),
+      this._broadcastElementsAndUploadFiles.bind(this),
       config.BROADCAST_RESOLUTION,
       {
         leading: false,
@@ -85,6 +108,12 @@ export default class CollaborationCommunicator extends Communicator {
         case "login_required":
           this.endCollaboration()
           return true
+        case "files_added":
+          this.receiveFiles(message.fileids)
+          return true
+        case "files_missing":
+          this.sendFiles(message.missing)
+          return true
       }
     }
     return false
@@ -106,8 +135,8 @@ export default class CollaborationCommunicator extends Communicator {
       let shouldElementSync =
         isSyncableElement(element) &&
         (syncAll ||
-          !this.broadcastedVersions.has(element.id) ||
-          element.version > this.broadcastedVersions.get(element.id)!)
+          !this.broadcastedElementsVersions.has(element.id) ||
+          element.version > this.broadcastedElementsVersions.get(element.id)!)
 
       if (shouldElementSync) {
         toSync.push({
@@ -118,6 +147,140 @@ export default class CollaborationCommunicator extends Communicator {
       }
     }
     return toSync
+  }
+
+  private uploadedFileIds = new Set<string>()
+  private uploadingFileIds = new Set<string>()
+
+  /**
+   * Get a url for a file to upload or download.
+   *
+   * @param fileId the files id
+   * @returns a url for the file with the given id
+   */
+  private fileUrl(fileId: string) {
+    return this.config.FILE_URL_TEMPLATE!.replace("FILE_ID", fileId)
+  }
+
+  /**
+   * Update the set of broadcasted files.
+   *
+   * @param newlySyncedFiles files that just have been synced
+   */
+  private updateUploadedFileIDs(newlySyncedFileIds: string[]) {
+    for (let index = 0; index < newlySyncedFileIds.length; index++) {
+      this.uploadedFileIds.add(newlySyncedFileIds[index])
+      this.uploadingFileIds.delete(newlySyncedFileIds[index])
+    }
+  }
+
+  /**
+   * Update the set of files that are currently uploading.
+   *
+   * @param uploadingFileIds the Ids of the files for which an upload was just started
+   */
+  private startUploadingFileIDs(uploadingFileIds: string[]) {
+    for (let index = 0; index < uploadingFileIds.length; index++) {
+      this.uploadingFileIds.add(uploadingFileIds[index])
+    }
+  }
+
+  /**
+   * Receive files via WebSocket.
+   *
+   * This is not needed in {@link Communicator} because the
+   * other modes will have all files available from the start.
+   *
+   * @param files files received over socket
+   */
+  private async receiveFiles(files: string[], nextTryExponentMinusOne = -1) {
+    // construct requests. only files that are yet unknown are to be downloaded
+    const fileRequests = files
+      .filter((id) => !this.uploadedFileIds.has(id))
+      .map((id) => fetch(this.fileUrl(id), apiRequestInit("GET")))
+
+    // prevent files from being re-uploaded after this function finishes
+    this.updateUploadedFileIDs(files)
+
+    // TODO: what to do if api is not loaded yet? does this ever happen?
+
+    // download the files and add them to the scene if the download succeeded.
+    // success is defined as:
+    // 1. the download promise settled
+    // 2. the return status was 200. maybe this has to change in the future.
+    const settledPromises = await Promise.allSettled(fileRequests)
+    const succeededBinaryFileData = settledPromises
+      .filter((p) => p.status == "fulfilled")
+      .map((p) => (p as PromiseFulfilledResult<Response>).value)
+      .filter((r) => r.status == 200)
+      .map((r) => r.json() as Promise<BinaryFileData>)
+    const downloadedFiles = await Promise.all(succeededBinaryFileData)
+    this.excalidrawApi?.addFiles(downloadedFiles)
+
+    // retry downloading failed IDs after a timeout elapsed
+    const downloadedFileIds = downloadedFiles.map((f) => f.id as string)
+    const downloadFailedIds = files.filter((id) => !downloadedFileIds.includes(id))
+    if (downloadFailedIds.length) {
+      setTimeout(() => {
+        this.receiveFiles(downloadFailedIds, nextTryExponentMinusOne + 1)
+      }, this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1))
+    }
+  }
+
+  /**
+   * sends files with given ids to the server
+   *
+   * If the upload fails, the client just does exponential retries, ignoring all failure reasons.
+   * An upload is considered to have failed, if it has a non-200 status code!
+   *
+   * @param fileIds file ids to sned to the server
+   * @param nextTryExponentMinusOne if uploads fail, this will determine when the next try starts
+   */
+  private async sendFiles(fileIds: string[], nextTryExponentMinusOne = -1): Promise<string[]> {
+    // uploading files need to be locked for another upload so a new upload will
+    // not be triggered on every new change while the upload is still ongoing
+    this.startUploadingFileIDs(fileIds)
+
+    // make new PUT requests for all new and wait till they are settled.
+    const fileRequests = Object.entries(this.excalidrawApi?.getFiles() ?? {})
+      .filter(([id, e]) => fileIds.includes(id))
+      .map(([id, e]) => fetch(this.fileUrl(id), apiRequestInit("PUT", e)))
+    const settledPromises = await Promise.allSettled(fileRequests)
+
+    // for now, we only filter for succeeded uploads. success is defined as:
+    // 1. the upload promise settled
+    // 2. the return status was 200. maybe this has to change in the future.
+    const succeededFileInfo = settledPromises
+      .filter((p) => p.status == "fulfilled")
+      .map((p) => (p as PromiseFulfilledResult<Response>).value)
+      .filter((r) => r.status == 200)
+      .map((r) => r.json() as Promise<{ id: string }>)
+    const succeededIds = (await Promise.all(succeededFileInfo)).map((f) => f.id)
+    this.updateUploadedFileIDs(succeededIds)
+
+    // retry uploading failed IDs after a timeout elapsed
+    const uploadFailedIds = fileIds.filter((id) => !succeededIds.includes(id))
+    if (uploadFailedIds.length) {
+      setTimeout(() => {
+        this.sendFiles(uploadFailedIds, nextTryExponentMinusOne + 1)
+      }, this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1))
+    }
+
+    return succeededIds
+  }
+
+  /**
+   * Get unsynced files.
+   *
+   * **Warning:** don't change files without changing their IDs. Files are assumed to me immutable.
+   *
+   * @param files files in the scene
+   * @returns files that are not synced yet
+   */
+  private filesToSync(files: BinaryFiles) {
+    return Object.entries(files)
+      .filter(([id, e]) => !this.uploadedFileIds.has(id) && !this.uploadingFileIds.has(id))
+      .reduce((o, [id, e]) => assignAndReturn(o, id, e), {} as BinaryFiles)
   }
 
   private elementsSyncBroadcastCounter = 0
@@ -132,25 +295,31 @@ export default class CollaborationCommunicator extends Communicator {
   /**
    * Increases / resets the sync counter to its next value.
    */
-  private syncSuccess() {
+  private elementSyncSuccess() {
     this.elementsSyncBroadcastCounter =
       (this.elementsSyncBroadcastCounter + 1) % this.config.ELEMENT_UPDATES_BEFORE_FULL_RESYNC
   }
 
   /**
    * Sends the elements to the other clients that changed since the last broadcast. Every
-   * {@link CollabAPI#MAX_UPDATES_BEFORE_RESYNC} syncs will send all elements (ful sync).
+   * {@link ConfigProps#ELEMENT_UPDATES_BEFORE_FULL_RESYNC} syncs will send all elements (ful sync).
    * This method should only be called through its throttle wrapper which is the method
-   * {@link CollabAPI#broadcastElements} (without the `_`).
+   * {@link Communicator#broadcastElements} (without the `_`).
    *
    * @param elements the current elements on the canvas
    * @param appState excalidraw's app state
+   * @param files files that were added to the scene
    */
-  private _broadcastElements(elements: readonly ExcalidrawElement[], appState: AppState) {
+  private _broadcastElementsAndUploadFiles(
+    elements: readonly ExcalidrawElement[],
+    appState: AppState,
+    files: BinaryFiles
+  ) {
     let doFullSync = this.elementsSyncBroadcastCounter == 0
-    let toSync = doFullSync
+    let elementsToSync = doFullSync
       ? this.elementsToSync(elements, /* syncAll */ true)
       : this.elementsToSync(elements, /* syncAll */ false)
+    let filesToSync = this.filesToSync(files)
 
     // do a full sync after reconnect
     if (this.ws.readyState == WsState.OPEN) {
@@ -160,16 +329,29 @@ export default class CollaborationCommunicator extends Communicator {
 
       // don't send an update if there is nothing to sync.
       // e.g. the case after another client sent an update
-      if (!toSync.length) return
+      if (elementsToSync.length) {
+        this.ws.send(
+          JSON.stringify({
+            eventtype: doFullSync ? "full_sync" : "elements_changed",
+            elements: elementsToSync,
+          } as ElementsChangedMessage)
+        )
+        this.updateBroadcastedElementsVersions(elementsToSync)
+        this.elementSyncSuccess()
+      }
 
-      this.ws.send(
-        JSON.stringify({
-          eventtype: doFullSync ? "full_sync" : "elements_changed",
-          elements: toSync,
-        } as ElementsChangedMessage)
-      )
-      this.updateBroadcastedVersions(toSync)
-      this.syncSuccess()
+      if (Object.keys(filesToSync).length) {
+        // upload all missing files, then send a message.
+        this.sendFiles(Object.keys(filesToSync)).then((filesSent) => {
+          filesSent.length &&
+            this.ws.send(
+              JSON.stringify({
+                eventtype: "files_added",
+                fileids: filesSent,
+              } as FilesAddedMessage)
+            )
+        })
+      }
 
       // FIXME: why is the cursor position not send if elements are being dragged? see issue #2
       // https://gitlab.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application/-/issues/2
@@ -254,9 +436,10 @@ export default class CollaborationCommunicator extends Communicator {
   private broadcastEverything() {
     if (this.excalidrawApi) {
       this.scheduleFullSync()
-      this._broadcastElements(
+      this._broadcastElementsAndUploadFiles(
         this.excalidrawApi.getSceneElements(),
-        this.excalidrawApi.getAppState()
+        this.excalidrawApi.getAppState(),
+        this.excalidrawApi.getFiles()
       )
     }
     this.broadcastCollaboratorChange(this.meInfo)
@@ -278,6 +461,7 @@ export default class CollaborationCommunicator extends Communicator {
 
   // #region backend communication
   public saveRoomImmediately() {
+    // TODO: save files
     this.ws.send(
       JSON.stringify({
         eventtype: "save_room",
