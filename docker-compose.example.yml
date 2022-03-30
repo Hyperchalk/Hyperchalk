@@ -8,6 +8,7 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./data:/srv/data
+      - ./media:/srv/media
       - ./deployment_settings.py:/srv/deployment_settings.py:ro
       - ./static:/srv/static_copy
     command: "draw.asgi --bind=0.0.0.0:8000"
