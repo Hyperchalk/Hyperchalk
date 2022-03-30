@@ -100,6 +100,6 @@ export function apiRequestInit(
     ),
     ...additional,
   }
-  if (data !== undefined) init.body = JSON.stringify(data)
+  if (data !== undefined) init.body = new Blob([JSON.stringify(data)], { type: "application/json" })
   return init
 }
