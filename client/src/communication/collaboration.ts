@@ -236,15 +236,15 @@ export default class CollaborationCommunicator extends Communicator {
    * @param fileIds file ids to sned to the server
    * @param nextTryExponentMinusOne if uploads fail, this will determine when the next try starts
    */
-  private async sendFiles(fileIds: string[], nextTryExponentMinusOne = -1): Promise<string[]> {
+  private async sendFiles(fileIds: string[], nextTryExponentMinusOne = -1) {
     // uploading files need to be locked for another upload so a new upload will
     // not be triggered on every new change while the upload is still ongoing
     this.startUploadingFileIDs(fileIds)
 
     // make new PUT requests for all new and wait till they are settled.
     const fileRequests = Object.entries(this.excalidrawApi?.getFiles() ?? {})
-      .filter(([id, e]) => fileIds.includes(id))
-      .map(([id, e]) => fetch(this.fileUrl(id), apiRequestInit("PUT", e)))
+      .filter(([id, file]) => fileIds.includes(id))
+      .map(([id, file]) => fetch(this.fileUrl(id), apiRequestInit("PUT", file)))
     const settledPromises = await Promise.allSettled(fileRequests)
 
     // for now, we only filter for succeeded uploads. success is defined as:
@@ -258,6 +258,16 @@ export default class CollaborationCommunicator extends Communicator {
     const succeededIds = (await Promise.all(succeededFileInfo)).map((f) => f.id)
     this.updateUploadedFileIDs(succeededIds)
 
+    // notify the other clients about the added files
+    if (succeededIds.length) {
+      this.ws.send(
+        JSON.stringify({
+          eventtype: "files_added",
+          fileids: succeededIds,
+        } as FilesAddedMessage)
+      )
+    }
+
     // retry uploading failed IDs after a timeout elapsed
     const uploadFailedIds = fileIds.filter((id) => !succeededIds.includes(id))
     if (uploadFailedIds.length) {
@@ -265,8 +275,6 @@ export default class CollaborationCommunicator extends Communicator {
         this.sendFiles(uploadFailedIds, nextTryExponentMinusOne + 1)
       }, this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1))
     }
-
-    return succeededIds
   }
 
   /**
@@ -275,12 +283,12 @@ export default class CollaborationCommunicator extends Communicator {
    * **Warning:** don't change files without changing their IDs. Files are assumed to me immutable.
    *
    * @param files files in the scene
-   * @returns files that are not synced yet
+   * @returns IDs of files that are not synced yet
    */
   private filesToSync(files: BinaryFiles) {
-    return Object.entries(files)
-      .filter(([id, e]) => !this.uploadedFileIds.has(id) && !this.uploadingFileIds.has(id))
-      .reduce((o, [id, e]) => assignAndReturn(o, id, e), {} as BinaryFiles)
+    return Object.keys(files).filter(
+      (id) => !this.uploadedFileIds.has(id) && !this.uploadingFileIds.has(id)
+    )
   }
 
   private elementsSyncBroadcastCounter = 0
@@ -340,17 +348,9 @@ export default class CollaborationCommunicator extends Communicator {
         this.elementSyncSuccess()
       }
 
-      if (Object.keys(filesToSync).length) {
-        // upload all missing files, then send a message.
-        this.sendFiles(Object.keys(filesToSync)).then((filesSent) => {
-          filesSent.length &&
-            this.ws.send(
-              JSON.stringify({
-                eventtype: "files_added",
-                fileids: filesSent,
-              } as FilesAddedMessage)
-            )
-        })
+      // upload all missing files, then send a message.
+      if (filesToSync.length) {
+        this.sendFiles(filesToSync)
       }
 
       // FIXME: why is the cursor position not send if elements are being dragged? see issue #2
@@ -461,7 +461,7 @@ export default class CollaborationCommunicator extends Communicator {
 
   // #region backend communication
   public saveRoomImmediately() {
-    // TODO: save files
+    // the server will request missing files when it detects any.
     this.ws.send(
       JSON.stringify({
         eventtype: "save_room",
