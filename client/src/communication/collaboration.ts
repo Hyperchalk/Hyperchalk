@@ -116,7 +116,7 @@ export default class CollaborationCommunicator extends Communicator {
           this.receiveFiles(message.fileids)
           return true
         case "files_missing":
-          this.sendFiles(message.missing)
+          this.sendFiles(message.missing.filter((id) => !this.uploadingFileIds.has(id)))
           return true
       }
     }
