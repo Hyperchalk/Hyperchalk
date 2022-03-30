@@ -49,7 +49,7 @@ async def room_access_check(request: HttpRequest, room_obj: m.ExcalidrawRoom):
 
 def require_room_access(json=False):
     """
-    Creates a decorator for testing if the current user has access to the room.
+    Creates an async decorator for testing if the current user has access to the room.
 
     Decorator is to be applied to view functions. Works
     with both django views and django ninja routes.
