@@ -4,7 +4,8 @@ from typing import Callable, Protocol, Union
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.contrib.sessions.backends.base import SessionBase
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.utils.translation import gettext_lazy as _
 
 User = Union[AbstractBaseUser, AnonymousUser]
@@ -13,20 +14,33 @@ class Room(Protocol):
     room_consumer_id: int
     room_course_id: str
 
+def create_json_response_forbidden(e: PermissionDenied):
+    return JsonResponse({'detail': str(e)}, status=403)
+
+def create_html_response_forbidden(e: PermissionDenied):
+    return HttpResponseForbidden(e)
+
 @sync_to_async
 def user_is_staff(user: User):
     return user.is_superuser or user.is_staff
 
-def require_staff_user(async_func: Callable[..., HttpResponse]):
-    @wraps(async_func)
-    async def inner(request: HttpRequest, *args, **kwargs):
-        if not await user_is_staff(request.user):
-            return HttpResponseForbidden(_("You need to be logged in as staff or as admin."))
-        return await async_func(request, *args, **kwargs)
-    return inner
+async def staff_access_check(request: HttpRequest, *args, **kwargs):
+    if not await user_is_staff(request.user):
+        raise PermissionDenied(_("You need to be logged in as staff or as admin."))
 
-async def request_user_is_staff(request: HttpRequest, *args, **kwargs):
-    return await user_is_staff(request.user)
+def require_staff_user(json=False):
+    create_response = create_json_response_forbidden if json else create_html_response_forbidden
+
+    def decorator(async_func: Callable[..., HttpResponse]):
+        @wraps(async_func)
+        async def inner(request: HttpRequest, *args, **kwargs):
+            try:
+                await staff_access_check(request)
+                return await async_func(request, *args, **kwargs)
+            except PermissionDenied as e:
+                return create_response(e)
+        return inner
+    return decorator
 
 @sync_to_async
 def user_is_authenticated(user: User) -> bool:

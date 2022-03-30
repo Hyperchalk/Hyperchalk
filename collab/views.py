@@ -14,7 +14,7 @@ from draw.utils import absolute_reverse, make_room_name, validate_room_name
 from draw.utils.auth import require_staff_user
 
 from . import models as m
-from .utils import access_check, async_get_object_or_404, get_or_create_room
+from .utils import room_access_check, async_get_object_or_404, get_or_create_room
 
 logger = logging.getLogger('draw.collab')
 
@@ -55,7 +55,7 @@ async def room(request: HttpRequest, room_name: str):
         get_username(request.user))
     room_obj, __ = room_tpl
 
-    await access_check(request, room_obj)
+    await room_access_check(request, room_obj)
 
     return render(request, 'collab/index.html', {
         'excalidraw_config': {
@@ -78,7 +78,7 @@ async def room(request: HttpRequest, room_name: str):
     })
 
 
-@require_staff_user
+@require_staff_user()
 async def replay(request: HttpRequest, room_name: str, **kwargs):
     room_obj = await async_get_object_or_404(m.ExcalidrawRoom, room_name=room_name)
     return render(request, 'collab/index.html', {
