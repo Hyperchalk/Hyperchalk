@@ -19,6 +19,18 @@ import { EventKey } from "./events"
 
 window.React = React
 
+// welcome messages for dev tools
+console.log(
+  [
+    "%cWelcome Developer!",
+    "%c\n\nTo hook into the Excalidraw API, you can use 'window.draw.current'. ",
+    "For documentation on what's available there, have a look at ",
+    "https://github.com/excalidraw/excalidraw/tree/master/src/packages/excalidraw",
+  ].join(""),
+  "color: palevioletred; font-size: xx-large",
+  "color: inherit; font-size: inherit"
+)
+
 // moodle makes the frame very small. I don't know if other LMS do this as well. When the
 // LTI Message Handler plugin is installed, this will resize the frame to an appropriate
 // size. See https://moodle.org/plugins/ltisource_message_handler

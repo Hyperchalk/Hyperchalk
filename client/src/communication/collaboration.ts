@@ -11,7 +11,7 @@ import throttle from "lodash/throttle"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps, WsState } from "../types"
-import { apiRequestInit, assignAndReturn } from "../utils"
+import { apiRequestInit } from "../utils"
 
 import Communicator, {
   CollaboratorChange,
@@ -50,6 +50,10 @@ type CollaborationMessage =
 
 function isSyncableElement(element: ExcalidrawElement): boolean {
   return !isInvisiblySmallElement(element)
+}
+
+class UnknownFilesError extends Error {
+  unknownFileIds?: string[]
 }
 
 /**
@@ -242,7 +246,8 @@ export default class CollaborationCommunicator extends Communicator {
     this.startUploadingFileIDs(fileIds)
 
     // make new PUT requests for all new and wait till they are settled.
-    const fileRequests = Object.entries(this.excalidrawApi?.getFiles() ?? {})
+    const files = this.excalidrawApi?.getFiles() ?? {}
+    const fileRequests = Object.entries(files)
       .filter(([id, file]) => fileIds.includes(id))
       .map(([id, file]) => fetch(this.fileUrl(id), apiRequestInit("PUT", file)))
     const settledPromises = await Promise.allSettled(fileRequests)
@@ -269,11 +274,18 @@ export default class CollaborationCommunicator extends Communicator {
     }
 
     // retry uploading failed IDs after a timeout elapsed
-    const uploadFailedIds = fileIds.filter((id) => !succeededIds.includes(id))
+    const uploadFailedIds = fileIds.filter((id) => id in files && !succeededIds.includes(id))
     if (uploadFailedIds.length) {
       setTimeout(() => {
         this.sendFiles(uploadFailedIds, nextTryExponentMinusOne + 1)
       }, this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1))
+    }
+
+    const unknownFiles = fileIds.filter((id) => !(id in files))
+    if (unknownFiles.length) {
+      const err = new UnknownFilesError("Unknown files were requested for sending.")
+      err.unknownFileIds = unknownFiles
+      throw err
     }
   }
 
