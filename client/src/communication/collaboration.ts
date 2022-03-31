@@ -11,7 +11,7 @@ import throttle from "lodash/throttle"
 import ReconnectingWebSocket from "reconnectingwebsocket"
 
 import { BroadcastedExcalidrawElement, ConfigProps, PointerUpdateProps, WsState } from "../types"
-import { apiRequestInit } from "../utils"
+import { apiRequestInit, getJsonScript } from "../utils"
 
 import Communicator, {
   CollaboratorChange,
@@ -227,7 +227,7 @@ export default class CollaborationCommunicator extends Communicator {
     if (downloadFailedIds.length) {
       setTimeout(() => {
         this.receiveFiles(downloadFailedIds, nextTryExponentMinusOne + 1)
-      }, this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1))
+      }, Math.min(this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1), 300_000))
     }
   }
 
@@ -295,12 +295,19 @@ export default class CollaborationCommunicator extends Communicator {
    * **Warning:** don't change files without changing their IDs. Files are assumed to me immutable.
    *
    * @param files files in the scene
-   * @returns IDs of files that are not synced yet
+   * @returns [[IDs of files that are not synced yet], [IDs of files that are too large to sync]]
    */
-  private filesToSync(files: BinaryFiles) {
-    return Object.keys(files).filter(
-      (id) => !this.uploadedFileIds.has(id) && !this.uploadingFileIds.has(id)
+  private filesToSync(files: BinaryFiles): [string[], string[]] {
+    const tooLarge = Object.keys(files).filter(
+      (id) => files[id].dataURL.length > this.config.MAX_FILE_SIZE_B64
     )
+    const toSync = Object.keys(files).filter(
+      (id) =>
+        !this.uploadedFileIds.has(id) &&
+        !this.uploadingFileIds.has(id) &&
+        files[id].dataURL.length <= this.config.MAX_FILE_SIZE_B64
+    )
+    return [toSync, tooLarge]
   }
 
   private elementsSyncBroadcastCounter = 0
@@ -339,7 +346,24 @@ export default class CollaborationCommunicator extends Communicator {
     let elementsToSync = doFullSync
       ? this.elementsToSync(elements, /* syncAll */ true)
       : this.elementsToSync(elements, /* syncAll */ false)
-    let filesToSync = this.filesToSync(files)
+    let [filesToSync, tooLarge] = this.filesToSync(files)
+
+    // delete files that are too large and stop the broadcast if there are any.
+    // FIXME: appearantly excalidraw does not expect anyone to do this. this will throw an
+    //        unhandled promise to the terminal. everything will still work file though.
+    //        So this is not a problem of high priority.
+    if (tooLarge.length) {
+      let newElements = elements.filter(
+        (e) => e.type != "image" || e.fileId == null || !tooLarge.includes(e.fileId)
+      )
+      for (let fileId in files) {
+        if (tooLarge.includes(fileId)) delete files[fileId]
+      }
+      const msg: Record<string, string> = getJsonScript("custom-messages")
+      this.excalidrawApi?.setToastMessage(msg["FILE_TOO_LARGE"])
+      this.excalidrawApi?.updateScene({ elements: newElements })
+      return
+    }
 
     // do a full sync after reconnect
     if (this.ws.readyState == WsState.OPEN) {

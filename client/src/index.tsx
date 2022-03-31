@@ -44,15 +44,19 @@ const defaultConfig: ConfigProps = {
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: 50,
   IS_REPLAY_MODE: false,
   LANGUAGE_CODE: "en-US",
+  // When you set the MAX_FILE_SIZE_B64, please be aware that
+  // your servers upload limit should be slightly higher due to
+  // the metadata that is also attached when uploading a file.
+  MAX_FILE_SIZE_B64: 5_000_000,
   ROOM_NAME: "_default",
-  SAVE_ROOM_MAX_WAIT: 15000,
+  SAVE_ROOM_MAX_WAIT: 15_000,
   SOCKET_URL: "",
-  UPLOAD_RETRY_TIMEOUT: 1000,
+  UPLOAD_RETRY_TIMEOUT: 1_000,
   USER_NAME: "",
 }
 
 const config: ConfigProps = { ...defaultConfig, ...getJsonScript("excalidraw-config") }
-const msg: Record<string, string> = { ...getJsonScript("custom-messages") }
+const msg: Record<string, string> = getJsonScript("custom-messages")
 
 const initialData = config.IS_REPLAY_MODE
   ? getInitialReplayData()

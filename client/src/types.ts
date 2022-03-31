@@ -33,6 +33,7 @@ export interface ConfigProps {
   IS_REPLAY_MODE: boolean
   LANGUAGE_CODE: string
   LIBRARY_RETURN_URL?: string
+  MAX_FILE_SIZE_B64: number
   ROOM_NAME: string
   SAVE_ROOM_MAX_WAIT: number
   SOCKET_URL: string

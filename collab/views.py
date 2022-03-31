@@ -32,11 +32,17 @@ def reverse_ws_url(request: HttpRequest, route: Literal["replay", "collaborate"]
         None,
         None))
 
+
 @database_sync_to_async
 def get_file_dicts(room_obj: m.ExcalidrawRoom):
     return {f.element_file_id: f.to_excalidraw_file_schema().dict() for f in room_obj.files.all()}
 
-NOT_LOGGED_IN = _("You need to be logged in.")
+
+def custom_messages():
+    return {
+        'NOT_LOGGED_IN': _("You need to be logged in."),
+        'FILE_TOO_LARGE': _("The file you've added is too large."),
+    }
 
 
 async def index(request: HttpRequest, *args, **kwargs):
@@ -70,9 +76,7 @@ async def room(request: HttpRequest, room_name: str):
             'SOCKET_URL': reverse_ws_url(request, "collaborate", room_name),
             'USER_NAME': username,
         },
-        'custom_messages': {
-            'NOT_LOGGED_IN': NOT_LOGGED_IN
-        },
+        'custom_messages': custom_messages(),
         'initial_elements': room_obj.elements,
         'files': await get_file_dicts(room_obj)
     })
@@ -95,9 +99,7 @@ async def replay(request: HttpRequest, room_name: str, **kwargs):
             'SOCKET_URL': reverse_ws_url(request, "replay", room_name),
             'USER_NAME': '',
         },
-        'custom_messages': {
-            'NOT_LOGGED_IN': NOT_LOGGED_IN
-        },
+        'custom_messages': custom_messages(),
         'initial_elements': [],
         'files': await get_file_dicts(room_obj)
     })
