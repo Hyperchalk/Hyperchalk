@@ -144,6 +144,5 @@ class ExcalidrawFile(models.Model):
             dataURL=bytes_to_data_uri(self.content.read(), self.meta['mimeType']),
             filePath=self.content.url)
 
-
     def __repr__(self) -> str:
         return f"<ExcalidrawFile {self.element_file_id} for room {self.belongs_to_id}>"

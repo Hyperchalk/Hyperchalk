@@ -11,9 +11,12 @@ services:
       - ./media:/srv/media
       - ./deployment_settings.py:/srv/deployment_settings.py:ro
       - ./static:/srv/static_copy
-    command: "draw.asgi --bind=0.0.0.0:8000"
+    command: "draw.asgi --bind=0.0.0.0:8000 --workers=2"
     environment:
       - "DJANGO_SETTINGS_MODULE=deployment_settings"
+    # depends_on:
+    #   - maria
+    #   - redis
 
   # maria:
   #   image: mariadb:latest

@@ -11,16 +11,15 @@ You should also have a look at https://docs.djangoproject.com/en/2.0/howto/deplo
 from draw.settings import *
 from draw.utils import deepmerge
 
-DATA_DIR = BASE_DIR / 'data'
+# TODO: uncomment this if you are going to use SQLite. Otherwise you can delete it.
+# DATA_DIR = BASE_DIR / 'data'
 
 # Should NEVER be true in production!
 DEBUG = False
 
 # TODO: Change this and uncomment! You can get a good key by executing the following command:
-# python manage.py shell -c '
-#   from django.core.management import utils
-#   print(utils.get_random_secret_key())
-# '
+# < /dev/urandom tr -dc 'A-Za-z0-9!#$%&()*+,-./:;<=>?@[\]^_`{|}~' | head -c64; echo
+# the result won't include the quote-characters so you can safely put the output string in quotes
 
 # SECRET_KEY = "super_secret_key_that_has_to_be_changed_in_production!!!"
 
@@ -40,8 +39,8 @@ DEBUG = False
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 #
-# By default, this is an sqlite database in the BASE_PATH. PostgreSQL and
-# MySQL / MariaDB are all supported. Have a look at the link above to see
+# The first example is an sqlite database in the BASE_PATH. PostgreSQL and
+# MySQL / MariaDB are also supported. Have a look at the link above to see
 # how to configure this to integrate with your database.
 #
 # WARNING: do not use sqlite with more than one thread / process!
@@ -51,8 +50,14 @@ DEBUG = False
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': DATA_DIR / 'db.sqlite3',
-#     }
+#         'NAME':   DATA_DIR / 'db.sqlite3',
+#     },
+#     'default': {
+#         'ENGINE':   'django.db.backends.mysql',
+#         'NAME':     'TODO',
+#         'HOST':     'TODO',
+#         'PASSWORD': 'TODO',
+#     },
 # }
 
 # Channel Layers
