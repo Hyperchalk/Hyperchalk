@@ -14,6 +14,14 @@ html,
   --ui-font: "Helvetica Neue", Helvetica, sans-serif;
 }
 
+.excalidraw.excalidraw {
+  --color-primary: #fb9c04;
+  --color-primary-darker: #e08b03;
+  --color-primary-darkest: #d28203;
+  --select-highlight-color: #6da5d5;
+  --link-color: #6da5d5;
+}
+
 .excalidraw.excalidraw .color-picker-input {
   height: inherit;
 }
