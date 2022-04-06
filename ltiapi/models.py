@@ -9,8 +9,6 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
-from draw.utils import user_id_for_room
-
 
 class OneOffRegistrationLink(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -43,6 +41,3 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     registered_via = models.ForeignKey(
         LtiTool, on_delete=models.CASCADE, null=True, verbose_name=_("registered via"))
-
-    def id_for_room(self, room_name: str) -> str:
-        return user_id_for_room(self.id, room_name)

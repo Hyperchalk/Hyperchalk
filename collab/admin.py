@@ -61,6 +61,12 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
         return _('will be generated after saving')
 
 
+@admin.register(m.Pseudonym)
+class ExcalidrawPseudonymAdmin(admin.ModelAdmin):
+    readonly_fields = ['room', 'user', 'user_pseudonym']
+    list_display = ['__str__', 'room_id', 'user_id']
+
+
 @admin.register(m.ExcalidrawFile)
 class ExcalidrawFileAdmin(admin.ModelAdmin):
     readonly_fields = ['image']

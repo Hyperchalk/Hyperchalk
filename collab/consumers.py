@@ -28,6 +28,8 @@ upsert_room = database_sync_to_async(m.ExcalidrawRoom.objects.update_or_create)
 get_or_create_room = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
 auth_room = database_sync_to_async(
     m.ExcalidrawRoom.objects.only("room_name", "room_consumer").get_or_create)
+stored_pseudonym_for_user_in_room = database_sync_to_async(
+    m.Pseudonym.stored_pseudonym_for_user_in_room)
 
 @database_sync_to_async
 def get_known_file_ids(room_name: str):
@@ -75,7 +77,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             await self.send_json({'eventtype': 'login_required'})
             return await self.disconnect(3000)
 
-        self.user_room_id = self.user.id_for_room(self.room_name) \
+        self.user_room_id = (await stored_pseudonym_for_user_in_room(self.user, room)) \
             if self.user.id is not None \
             else user_id_for_room(uuid.uuid4(), self.room_name)
 

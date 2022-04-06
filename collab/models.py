@@ -2,6 +2,8 @@ import json
 import mimetypes
 from functools import cached_property
 from hashlib import sha256
+from sqlite3 import IntegrityError
+from typing import Optional, TypeVar
 from urllib.request import urlopen
 
 from django.core.exceptions import ValidationError
@@ -12,10 +14,23 @@ from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
 from draw.utils import (JSONType, bytes_to_data_uri, dump_content, load_content, pick,
-                        validate_room_name)
+                        user_id_for_room, validate_room_name)
 from ltiapi.models import CustomUser
 
 from .types import ALLOWED_IMAGE_MIME_TYPES, ExcalidrawBinaryFile
+
+TPseudonym = TypeVar('TPseudonym', bound='Pseudonym')
+TRoom = TypeVar('TRoom', bound='ExcalidrawRoom')
+
+
+class ExcalidrawLogRecordManager(models.Manager):
+    def records_for_pseudonym(self, pseudonym: TPseudonym):
+        return self.get_queryset().filter(user_pseudonym=pseudonym.user_pseudonym)
+
+    def records_for_user_in_room(self, user: CustomUser, room: TRoom):
+        return self.get_queryset().filter(user_pseudonym=models.Subquery(
+            Pseudonym.objects.filter(user=user, room=room).values('user_pseudonym')[:1]
+        ))
 
 
 class ExcalidrawLogRecord(models.Model):
@@ -34,8 +49,10 @@ class ExcalidrawLogRecord(models.Model):
     # if a user is deleted, keep the foreign key to be able to keep the action log
     user_pseudonym = models.CharField(
         max_length=64, validators=[MinLengthValidator(64)], null=True,
-        help_text=_("this is generated from ltiapi.models.CustomUser.id_for_room"))
+        help_text=_("this is generated from draw.utils.user_id_for_room"))
     _content = models.BinaryField(blank=True)
+
+    objects = ExcalidrawLogRecordManager()
 
     @property
     def content(self):
@@ -59,12 +76,18 @@ class ExcalidrawLogRecord(models.Model):
         return f"{comp:.2f} %"
 
     @property
-    def user(self):
-        return None
+    def user(self) -> Optional[CustomUser]:
+        """
+        :returns: user if there is one in the pseudonym table
+        """
+        try:
+            return Pseudonym.objects.get(user_pseudonym=self.user_pseudonym).user
+        except Pseudonym.DoesNotExist:
+            return None
 
     @user.setter
     def user(self, user: CustomUser):
-        self.user_pseudonym = user.id_for_room(self.room_name)
+        self.user_pseudonym = user_id_for_room(user.pk, self.room_name)
 
 # trust me
 EMPTY_JSON_LIST_ZLIB_COMPRESSED = b'x\x9c\x8b\x8e\x05\x00\x01\x15\x00\xb9'
@@ -90,6 +113,38 @@ class ExcalidrawRoom(models.Model):
     @elements.setter
     def elements(self, val: JSONType = None):
         self._elements = dump_content(val, force_compression=True)
+
+
+class Pseudonym(models.Model):
+    """
+    Table that stores which user belongs to which pseudonym.
+
+    Delete all records in this table to restore anonymity. No
+    record will be available for users who joined anonymously.
+    """
+    room = models.ForeignKey(ExcalidrawRoom, on_delete=models.CASCADE, verbose_name=_("room name"))
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=_("user"))
+    user_pseudonym = models.CharField(
+        primary_key=True, max_length=64, validators=[MinLengthValidator(64)],
+        help_text=_("this is generated from draw.utils.user_id_for_room"))
+
+    class Meta:
+        unique_together = [('room', 'user')]
+
+    @classmethod
+    def create_for_user_in_room(cls, user: CustomUser, room: ExcalidrawRoom):
+        return cls(room=room, user=user, user_pseudonym=user_id_for_room(user.pk, room.room_name))
+
+    @classmethod
+    def stored_pseudonym_for_user_in_room(cls, user: CustomUser, room: ExcalidrawRoom) -> str:
+        self = cls.create_for_user_in_room(user, room)
+        try:
+            self.save()
+        except IntegrityError:
+            # if the pseudonym is already stored, this error
+            # can be ignored because the data will never change.
+            pass
+        return self.user_pseudonym
 
 
 class ExcalidrawFile(models.Model):
