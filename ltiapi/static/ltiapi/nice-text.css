@@ -1,0 +1,38 @@
+ul {
+  padding-left: 1rem;
+}
+
+body {
+  line-height: 1.875;
+  max-width: 80ch !important;
+  margin: 1rem auto;
+  font-size: 15px;
+  font-family: 'Iowan Old Style', Georgia, serif !important;
+  text-align: justify;
+  hyphens: auto;
+  background: transparent;
+  color: #202122;
+  font-weight: 300;
+  -moz-osx-font-smoothing: grayscale;
+}
+@media (max-width: 44rem) {
+  body {
+      margin: 1rem!important;
+  }
+}
+
+html {
+  background: rgb(250,240,228);
+}
+
+a {
+  text-decoration: none;
+}
+
+a:link {
+  color: rgb(51,102,204)
+}
+
+h1 {
+  letter-spacing: -0.5px;
+}

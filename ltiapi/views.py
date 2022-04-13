@@ -6,7 +6,7 @@ import aiohttp
 from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.auth import get_user_model, login
 from django.http import (HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden,
-                         JsonResponse)
+                         HttpResponseRedirect, JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext_lazy as _
@@ -58,7 +58,7 @@ class RegisterConsumerView(DetailView):
 
     async def post(self, request: HttpRequest, *args, **kwargs):
         """
-        Register the application at the provider via the LTI registration flow.
+        Register the application as a provider via the LTI registration flow.
 
         The configuration flow is well explained at https://moodlelti.theedtech.dev/dynreg/
         """
@@ -233,9 +233,7 @@ def lti_launch(request: HttpRequest):
         })
 
     if message_launch.is_data_privacy_launch():
-        # TODO: implement data privacy screen. (not as urgent. moodle does not support this anyway.)
-        #       see issue #17
-        raise NotImplementedError()
+        return HttpResponseRedirect(absolute_reverse(request, 'lti:privacy'))
 
     if message_launch.is_resource_launch():
         # every endpoint needs to do an auth check
