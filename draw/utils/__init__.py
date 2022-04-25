@@ -188,7 +188,8 @@ def reverse_with_query(
 
 JSONType = Optional[Union[dict, list, str, int, float]]
 
-def load_content(content: bytes, compressed: bool = True) -> JSONType:
+def load_content(content: Union[bytes, bytearray, memoryview], compressed: bool = True) -> JSONType:
+    content = bytes(content)
     if compressed:
         return json.loads(zlib.decompress(content).decode('utf-8'))
     return json.loads(content.decode('utf-8'))

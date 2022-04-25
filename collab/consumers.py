@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 import uuid
 from asyncio import gather
 from collections import defaultdict
@@ -351,10 +352,13 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
         for _, curr_record_time in self.log_record_info[1:]:
             delta += min(MAX_WAIT_TIME, curr_record_time - prev_record_time)
             prev_record_time = curr_record_time
+        duration = int(delta.total_seconds() * 1000)
+
+        logger.debug("replay initialized. duration: %d", duration)
 
         await self.send_json({
             'eventtype': 'reset_scene',
-            'duration': int(delta.total_seconds() * 1000),
+            'duration': duration,
         })
 
     async def start_replay(self, *args, **kwargs):
@@ -404,8 +408,13 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
 
             async with self.message_was_sent_condition:
                 await self.send_next_event()
+                # print(
+                #     f'sent event. {len(self.log_record_info)} events remain. will '
+                #     f'sleep for {sleep_time.total_seconds():.2f} seconds.         ',
+                #     end="\r", file=sys.stderr)
             await asyncio.sleep(sleep_time.total_seconds())
             self.replay_task = asyncio.create_task(self.send_then_wait())
         else:
+            # print(file=sys.stderr)
             async with self.message_was_sent_condition:
                 await self.send_json({'eventtype': 'pause_replay'})
