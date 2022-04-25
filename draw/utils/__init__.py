@@ -200,6 +200,17 @@ def dump_content(content: JSONType, force_compression=False) -> Tuple[bytes, boo
         return compressed, True
     return val_bytes, False
 
+class HasCompressionInformation(Protocol):
+    compressed_size: int
+    uncompressed_size: int
+
+def compression_ratio(obj: HasCompressionInformation):
+    comp = 100 - obj.compressed_size / obj.uncompressed_size * 100
+    return f"{comp:.2f} %"
+
+def uncompressed_json_size(uncompressed_content: JSONType):
+    return len(json.dumps(uncompressed_content, ensure_ascii=False).encode('utf-8'))
+
 def flatten_list(l: list):
     return [flatten_list(e) if isinstance(e, list) else e for e in l]
 

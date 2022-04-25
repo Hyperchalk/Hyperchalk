@@ -1,4 +1,3 @@
-import json
 import mimetypes
 from functools import cached_property
 from hashlib import sha256
@@ -13,8 +12,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
-from draw.utils import (JSONType, bytes_to_data_uri, dump_content, load_content, pick,
-                        user_id_for_room, validate_room_name)
+from draw.utils import (JSONType, bytes_to_data_uri, compression_ratio, dump_content, load_content,
+                        pick, uncompressed_json_size, user_id_for_room, validate_room_name)
 from ltiapi.models import CustomUser
 
 from .types import ALLOWED_IMAGE_MIME_TYPES, ExcalidrawBinaryFile
@@ -68,12 +67,11 @@ class ExcalidrawLogRecord(models.Model):
 
     @cached_property
     def uncompressed_size(self):
-        return len(json.dumps(self.content, ensure_ascii=False).encode('utf-8'))
+        return uncompressed_json_size(self.content)
 
     @property
     def compression_degree(self):
-        comp = 100 - self.compressed_size / self.uncompressed_size * 100
-        return f"{comp:.2f} %"
+        return compression_ratio(self)
 
     @property
     def user(self) -> Optional[CustomUser]:
@@ -113,6 +111,19 @@ class ExcalidrawRoom(models.Model):
     @elements.setter
     def elements(self, val: JSONType = None):
         self._elements = dump_content(val, force_compression=True)
+
+    @cached_property
+    def compressed_size(self):
+        return len(self._elements)
+
+    @cached_property
+    def uncompressed_size(self):
+        return uncompressed_json_size(self.elements)
+
+    @property
+    def compression_degree(self):
+        return compression_ratio(self)
+
 
 
 class Pseudonym(models.Model):
