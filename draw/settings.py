@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Union
-from urllib.parse import urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.log import DEFAULT_LOGGING
@@ -124,6 +123,7 @@ LOGGING = deepmerge(DEFAULT_LOGGING, {
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES: Dict[str, Dict[str, Union[StrLike, Dict[str, StrLike]]]] = {}
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Channel Layers
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
