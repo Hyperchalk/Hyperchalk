@@ -52,7 +52,7 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
     readonly_fields = [
         "room_json", "replay_link", "room_link", "last_update", "created_at",
         "compressed_size", "uncompressed_size", "compression_degree"]
-    list_display = ["__str__", "room_link", "compressed_size"]
+    list_display = ["__str__", "room_link", "compressed_size", "created_at", "last_update"]
     actions = ["discard_unused_rooms"]
 
     @admin.display(description=_("View Room"))

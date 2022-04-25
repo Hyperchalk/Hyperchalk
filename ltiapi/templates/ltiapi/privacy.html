@@ -1,6 +1,8 @@
 {% extends 'ltiapi/base.html' %}
 {% load static i18n %}
 
+{% block title %}{{ block.super }} – {% trans "Privacy Notes" %}{% endblock title %}
+
 {% block head %}
 <link rel="stylesheet" href="{% static 'ltiapi/nice-text.css' %}">
 {% endblock head %}

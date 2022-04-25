@@ -76,7 +76,7 @@ CHANNELS_URLCONF = 'draw.urls_ws'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'draw' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -181,7 +181,8 @@ class TrustedOrigins(Iterable[str]):
 
         for (issuer,) in self.tool_model.objects.all().values_list('issuer'):
             print(f'csrf check issuer: {issuer}/')
-            yield urlparse(issuer).hostname
+            # yield urlparse(issuer).hostname
+            yield issuer
 
 CSRF_TRUSTED_ORIGINS = iter(TrustedOrigins())
 
@@ -205,6 +206,7 @@ STATIC_ROOT = BASE_DIR / 'static_copy'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'client' / 'dist',
+    BASE_DIR / 'draw' / 'static',
 ]
 
 # Media Uploads

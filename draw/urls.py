@@ -18,9 +18,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.templatetags.static import static as static_file
 from django.urls import include, path
+from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
 from .api import api
+
+admin.site.site_title = "Hyperchalk"
+admin.site.site_header = _("Hyperchalk Admin Page")
 
 urlpatterns = [
     path('lti/', include('ltiapi.urls')),

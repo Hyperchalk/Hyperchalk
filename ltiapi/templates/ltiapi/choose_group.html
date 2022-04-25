@@ -1,7 +1,7 @@
 {% extends 'ltiapi/base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Choose an Assignment Group" %}{% endblock title %}
+{% block title %}{{ block.super }} – {% trans "Choose an Assignment Group" %}{% endblock title %}
 
 {% block body %}
 <h1>{% trans "Choose an Assignment Group" %}</h1>

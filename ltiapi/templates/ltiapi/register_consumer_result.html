@@ -1,7 +1,7 @@
 {% extends 'ltiapi/base.html' %}
 {% load i18n %}
 
-{% block title %}Register LTI Consumer{% endblock title %}
+{% block title %}{{ block.super }} – Register LTI Consumer{% endblock title %}
 
 {% block body %}
 {% if registration_success %}

@@ -1,0 +1,61 @@
+:root {
+  --edutec-primary: #6DA5D5;
+  --edutec-primary-light: #aac8e2;
+  --edutec-primary-dark: #3075b1;
+  --edutec-secondary: #fb9c04;
+  --edutec-secondary-light: #ffe5bb;
+  --edutec-secondary-dark: #dd8800;
+  --white: #fff;
+  --red: #ba2121;
+  --red-light: #ffefef;
+  --red-dark: #a41515;
+  --green-light: #dfd;
+
+  --primary: var(--edutec-primary);
+  --secondary: var(--edutec-primary);
+  --accent: var(--white);
+  --primary-fg: var(--white);
+  --body-fg: #333;
+  --body-bg: var(--white);
+  --body-quiet-color: #666;
+  --body-loud-color: #000;
+  --header-color: var(--edutec-secondary-light);
+  --header-branding-color: var(--accent);
+  --header-bg: var(--secondary);
+  --header-link-color: var(--primary-fg);
+  --breadcrumbs-fg: var(--edutec-primary-light);
+  --breadcrumbs-link-fg: var(--body-bg);
+  --breadcrumbs-bg: var(--primary);
+  --link-fg: var(--edutec-primary);
+  --link-hover-color: var(--edutec-secondary);
+  --link-selected-fg: var(--edutec-secondary-dark);
+  --hairline-color: #e8e8e8;
+  --border-color: #ccc;
+  --error-fg: var(--red);
+  --message-success-bg: var(--green-light);
+  --message-warning-bg: var(--edutec-secondary-light);
+  --message-error-bg: var(--red-light);
+  --darkened-bg: #f8f8f8;
+  --selected-bg: #e4e4e4;
+  --selected-row: var(--edutec-secondary-light);
+  --button-fg: var(--white);
+  --button-bg: var(--primary);
+  --button-hover-bg: var(--edutec-primary-dark);
+  --default-button-bg: var(--edutec-primary);
+  --default-button-hover-bg: var(--edutec-primary-dark);
+  --close-button-bg: #888;
+  --close-button-hover-bg: #747474;
+  --delete-button-bg: var(--red);
+  --delete-button-hover-bg: var(--red-dark);
+  --object-tools-fg: var(--button-fg);
+  --object-tools-bg: var(--close-button-bg);
+  --object-tools-hover-bg: var(--close-button-hover-bg);
+}
+
+#user-tools a:focus, #user-tools a:hover {
+  color: var(--edutec-secondary);
+}
+
+#branding h1 {
+  font-weight: 600;
+}
