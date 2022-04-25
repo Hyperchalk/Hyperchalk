@@ -60,6 +60,23 @@ DEBUG = False
 #     },
 # }
 
+# Caching
+# https://docs.djangoproject.com/en/4.0/topics/cache/
+#
+# By default, Django will use the in-Memory cache. As the LTI lib will use the cache to look up the
+# LTI nonce over multiple requests on tool configuration, the cache needs to be the same for all
+# worker processes. This cannot be achieved via the in-memory caching-mechanism. If you use redis
+# anyway as the channels backend, you may want to just use it for caching, too.
+#
+# TODO: configure caching
+
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': ['redis://redis:6379']
+#     }
+# }
+
 # Channel Layers
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
 #
