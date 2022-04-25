@@ -67,12 +67,12 @@ async def room(request: HttpRequest, room_name: str):
         'excalidraw_config': {
             'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
                 'room_name': room_name, 'file_id': 'FILE_ID'}),
-            'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
+            'BROADCAST_RESOLUTION_THROTTLE_MSEC': settings.BROADCAST_RESOLUTION_THROTTLE_MSEC,
             'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
             'LANGUAGE_CODE': settings.LANGUAGE_CODE,
             'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
             'ROOM_NAME': room_name,
-            'SAVE_ROOM_MAX_WAIT': 15000,
+            'SAVE_ROOM_MAX_WAIT_MSEC': settings.SAVE_ROOM_MAX_WAIT_MSEC,
             'SOCKET_URL': reverse_ws_url(request, "collaborate", room_name),
             'USER_NAME': username,
         },
@@ -89,15 +89,11 @@ async def replay(request: HttpRequest, room_name: str, **kwargs):
         'excalidraw_config': {
             'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
                 'room_name': room_name, 'file_id': '{file_id}'}),
-            'BROADCAST_RESOLUTION': settings.BROADCAST_RESOLUTION,
-            'ELEMENT_UPDATES_BEFORE_FULL_RESYNC': 100,
             'IS_REPLAY_MODE': True,
             'LANGUAGE_CODE': settings.LANGUAGE_CODE,
             'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
             'ROOM_NAME': room_name,
-            'SAVE_ROOM_MAX_WAIT': settings.SAVE_ROOM_MAX_WAIT,
             'SOCKET_URL': reverse_ws_url(request, "replay", room_name),
-            'USER_NAME': '',
         },
         'custom_messages': custom_messages(),
         'initial_elements': [],

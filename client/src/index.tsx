@@ -40,7 +40,7 @@ adjustFrameHeight()
 window.addEventListener("resize", adjustFrameHeight)
 
 const defaultConfig: ConfigProps = {
-  BROADCAST_RESOLUTION: 150,
+  BROADCAST_RESOLUTION_THROTTLE_MSEC: 150,
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: 50,
   IS_REPLAY_MODE: false,
   LANGUAGE_CODE: "en-US",
@@ -48,10 +48,11 @@ const defaultConfig: ConfigProps = {
   // your servers upload limit should be slightly higher due to
   // the metadata that is also attached when uploading a file.
   MAX_FILE_SIZE_B64: 5_000_000,
+  MAX_RETRY_WAIT_MSEC: 300_000,
   ROOM_NAME: "_default",
-  SAVE_ROOM_MAX_WAIT: 15_000,
+  SAVE_ROOM_MAX_WAIT_MSEC: 15_000,
   SOCKET_URL: "",
-  UPLOAD_RETRY_TIMEOUT: 1_000,
+  UPLOAD_RETRY_TIMEOUT_MSEC: 1_000,
   USER_NAME: "",
 }
 

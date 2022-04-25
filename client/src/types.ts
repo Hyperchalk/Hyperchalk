@@ -27,17 +27,18 @@ export interface UserColor {
 }
 
 export interface ConfigProps {
-  BROADCAST_RESOLUTION: number
+  BROADCAST_RESOLUTION_THROTTLE_MSEC: number
   ELEMENT_UPDATES_BEFORE_FULL_RESYNC: number
   FILE_URL_TEMPLATE?: string
   IS_REPLAY_MODE: boolean
   LANGUAGE_CODE: string
   LIBRARY_RETURN_URL?: string
   MAX_FILE_SIZE_B64: number
+  MAX_RETRY_WAIT_MSEC: number
   ROOM_NAME: string
-  SAVE_ROOM_MAX_WAIT: number
+  SAVE_ROOM_MAX_WAIT_MSEC: number
   SOCKET_URL: string
-  UPLOAD_RETRY_TIMEOUT: number
+  UPLOAD_RETRY_TIMEOUT_MSEC: number
   USER_COLOR?: UserColor
   USER_NAME: string
 }

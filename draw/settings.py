@@ -19,6 +19,8 @@ from django.utils.module_loading import import_string
 
 from draw.utils import StrLike, deepmerge
 
+# FIXME: use redis cache so that cache keys will be available from all the workers!!!!!!
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -172,6 +174,11 @@ class TrustedOrigins(Iterable[str]):
         if not self.tool_model:
             lti_path = 'pylti1p3.contrib.django.lti1p3_tool_config.models.LtiTool'
             self.tool_model = import_string(lti_path)
+        # FIXME: in the async ninja context, this does not work until StopIteration is raised.
+        #        only one iteration per request seems to be called
+        #        what to do if this is called from an async context? It does not work until then!
+        # see #36
+
         for (issuer,) in self.tool_model.objects.all().values_list('issuer'):
             print(f'csrf check issuer: {issuer}/')
             yield urlparse(issuer).hostname
@@ -230,10 +237,10 @@ ALLOW_AUTOMATIC_ROOM_CREATION = False
 ALLOW_ANONYMOUS_VISITS = False
 
 # how often the clients are going to broadcast updates on change (milliseconds)
-BROADCAST_RESOLUTION = 100
+BROADCAST_RESOLUTION_THROTTLE_MSEC = 100
 
 # how many seconds after a change clients will wait before issuing a save command (milliseconds)
-SAVE_ROOM_MAX_WAIT = 15000
+SAVE_ROOM_MAX_WAIT_MSEC = 15_000
 
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):

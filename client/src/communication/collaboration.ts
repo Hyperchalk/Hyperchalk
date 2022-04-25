@@ -82,12 +82,12 @@ export default class CollaborationCommunicator extends Communicator {
     // methods for direct usage by excalidraw component
     this.broadcastCursorMovement = throttle(
       this._broadcastCursorMovement.bind(this),
-      config.BROADCAST_RESOLUTION
+      config.BROADCAST_RESOLUTION_THROTTLE_MSEC
     )
 
     this.broadcastElements = throttle(
       this._broadcastElementsAndUploadFiles.bind(this),
-      config.BROADCAST_RESOLUTION,
+      config.BROADCAST_RESOLUTION_THROTTLE_MSEC,
       {
         leading: false,
         trailing: true,
@@ -97,7 +97,7 @@ export default class CollaborationCommunicator extends Communicator {
     this.saveRoom = debounce(this.saveRoomImmediately.bind(this), 5000, {
       leading: false,
       trailing: true,
-      maxWait: config.SAVE_ROOM_MAX_WAIT,
+      maxWait: config.SAVE_ROOM_MAX_WAIT_MSEC,
     })
   }
 
@@ -166,6 +166,13 @@ export default class CollaborationCommunicator extends Communicator {
     return this.config.FILE_URL_TEMPLATE!.replace("FILE_ID", fileId)
   }
 
+  private nextTryTimeout(nextTryExponentMinusOne: number) {
+    return Math.min(
+      this.config.UPLOAD_RETRY_TIMEOUT_MSEC * Math.pow(2, nextTryExponentMinusOne + 1),
+      this.config.MAX_RETRY_WAIT_MSEC
+    )
+  }
+
   /**
    * Update the set of broadcasted files.
    *
@@ -227,7 +234,7 @@ export default class CollaborationCommunicator extends Communicator {
     if (downloadFailedIds.length) {
       setTimeout(() => {
         this.receiveFiles(downloadFailedIds, nextTryExponentMinusOne + 1)
-      }, Math.min(this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1), 300_000))
+      }, this.nextTryTimeout(nextTryExponentMinusOne))
     }
   }
 
@@ -278,7 +285,7 @@ export default class CollaborationCommunicator extends Communicator {
     if (uploadFailedIds.length) {
       setTimeout(() => {
         this.sendFiles(uploadFailedIds, nextTryExponentMinusOne + 1)
-      }, this.config.UPLOAD_RETRY_TIMEOUT * Math.pow(2, nextTryExponentMinusOne + 1))
+      }, this.nextTryTimeout(nextTryExponentMinusOne))
     }
 
     const unknownFiles = fileIds.filter((id) => !(id in files))

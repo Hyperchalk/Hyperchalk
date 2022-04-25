@@ -242,17 +242,15 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
                     elements_to_store.append(e)
                 differences_detected = differences_detected or old_version < e['version']
 
-        if not differences_detected:
-            return
+        if differences_detected:
+            known_file_ids = set(e['fileId'] for e in elements if 'fileId' in e)
 
-        known_file_ids = set(e['fileId'] for e in elements if 'fileId' in e)
-
-        elements_to_store, _ = dump_content(elements_to_store, force_compression=True)
-        room_tuple, _ = await gather(
-            upsert_room(room_name=room_name, defaults={'_elements': elements_to_store}),
-            self.maybe_request_missing_files(room_name, known_file_ids))
-        room, _ = room_tuple
-        logger.debug("room %s saved", room.room_name)
+            elements_to_store, _ = dump_content(elements_to_store, force_compression=True)
+            room_tuple, _ = await gather(
+                upsert_room(room_name=room_name, defaults={'_elements': elements_to_store}),
+                self.maybe_request_missing_files(room_name, known_file_ids))
+            room, _ = room_tuple
+            logger.debug("room %s saved", room.room_name)
     # endregion user actions
 
     # region channel layer handling
@@ -293,7 +291,7 @@ def get_log_record_info_for_room(room_name):
         .order_by('created_at')
         .values_list('id', 'created_at'))
 
-MAX_WAIT_TIME = timedelta(milliseconds=settings.BROADCAST_RESOLUTION)
+MAX_WAIT_TIME = timedelta(milliseconds=settings.BROADCAST_RESOLUTION_THROTTLE_MSEC)
 
 
 class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
