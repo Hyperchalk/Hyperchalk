@@ -58,4 +58,12 @@
 
 #branding h1 {
   font-weight: 600;
+  color: transparent;
+  background-image: url('./header.svg');
+  background-size: cover;
+  width: 325px;
+  margin-left: -4px;
+}
+#branding h1 > a {
+  color: transparent !important;
 }
