@@ -11,6 +11,18 @@ You should also have a look at https://docs.djangoproject.com/en/2.0/howto/deplo
 from draw.settings import *
 from draw.utils import deepmerge
 
+# TODO: important persons to the project
+
+# ADMINS = [('John Doe', 'doe@example.com')]
+# MANAGERS = ADMINS
+
+# allow the creation of rooms when the user visits the index page
+# without specifying a room in the URL. (default is false.)
+# ALLOW_AUTOMATIC_ROOM_CREATION = True
+
+# If set to false (default), users will need to be logged in.
+# ALLOW_ANONYMOUS_VISITS = True
+
 # TODO: uncomment this if you are going to use SQLite. Otherwise you can delete it.
 # DATA_DIR = BASE_DIR / 'data'
 
