@@ -10,13 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Dict, List, Union
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.log import DEFAULT_LOGGING
-from django.utils.module_loading import import_string
 
-from draw.utils import StrLike, deepmerge
+from draw.utils import StrLike, TrustedOrigins, deepmerge
 
 # FIXME: use redis cache so that cache keys will be available from all the workers!!!!!!
 
@@ -157,34 +156,8 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'ltiapi.CustomUser'
 
 # https://docs.djangoproject.com/en/3.2/ref/settings/#csrf-trusted-origins
-class TrustedOrigins(Iterable[str]):
-    """
-    Iterable of trusted origins for embedding this application in iframes.
 
-    The allowed origins should be the tools configured from the database. But since the settings
-    are loaded before the database, additional settings can't be pulled from the db at this point.
-    The CSRF middleware casts ``CSRF_TRUSTED_ORIGINS`` this to a ``list`` when it runs. So the
-    model will be loaded precisely at this point. The allowed hosts are then the hostnames of the
-    issuer field of the :model:`lti1p3_tool_config.LtiTool` configs (speak the LTI platforms).
-    """
-    def __init__(self) -> None:
-        self.tool_model = None
-
-    def __iter__(self):
-        if not self.tool_model:
-            lti_path = 'pylti1p3.contrib.django.lti1p3_tool_config.models.LtiTool'
-            self.tool_model = import_string(lti_path)
-        # FIXME: in the async ninja context, this does not work until StopIteration is raised.
-        #        only one iteration per request seems to be called
-        #        what to do if this is called from an async context? It does not work until then!
-        # see #36
-
-        for (issuer,) in self.tool_model.objects.all().values_list('issuer'):
-            print(f'csrf check issuer: {issuer}/')
-            # yield urlparse(issuer).hostname
-            yield issuer
-
-CSRF_TRUSTED_ORIGINS = iter(TrustedOrigins())
+CSRF_TRUSTED_ORIGINS = TrustedOrigins()
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

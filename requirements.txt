@@ -10,6 +10,7 @@ Faker ~= 13.3.0
 gunicorn ~= 20.1.0
 httptools ~= 0.3.0
 PyLTI1p3 ~= 1.11.0
+redis ~= 4.3.1
 uvicorn ~= 0.17.5
 uvloop ~= 0.16.0
 websockets ~= 10.2

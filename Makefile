@@ -3,13 +3,13 @@ BUILDFLAGS=
 
 .PHONY: latest upload-latest upload
 
-upload: upload-latest
-
 latest:
 	docker build \
 		-t drawlti\:latest \
 		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
 		--platform linux/x86-64 $(BUILDFLAGS) .
+
+upload: upload-latest
 
 upload-latest: latest
 	docker push \

@@ -12,8 +12,8 @@ import zlib
 from enum import Enum
 from hashlib import sha256
 from pprint import pformat
-from typing import (Any, Callable, Collection, Dict, Generic, Hashable, List, Optional, Protocol,
-                    Sequence, Tuple, TypeVar, Union, cast)
+from typing import (Any, Callable, Collection, Dict, Generic, Hashable, Iterable, List, Optional,
+                    Protocol, Sequence, Tuple, TypeVar, Union, cast)
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
@@ -231,6 +231,46 @@ def absolute_reverse(request: HttpRequest, *args, **kwargs):
     return request.build_absolute_uri(reverse(*args, **kwargs))
 
 lazy_pformat = lazy(pformat, str)
+
+
+class TrustedOrigins(Iterable[str]):
+    """
+    Iterable of trusted origins for embedding this application in iframes.
+
+    The allowed origins should be the tools configured from the database. But since the settings
+    are loaded before the database, additional settings can't be pulled from the db at this point.
+    The CSRF middleware casts ``CSRF_TRUSTED_ORIGINS`` this to a ``list`` when it runs. So the
+    model will be loaded precisely at this point. The allowed hosts are then the hostnames of the
+    issuer field of the :model:`lti1p3_tool_config.LtiTool` configs (speak the LTI platforms).
+    """
+    def __init__(self) -> None:
+        self.tool_model = None
+        self.is_connected = False
+        self.issuers: Iterable[str] = []
+
+    def connected(self):
+        self.is_connected = True
+
+    def update_issuers(self, issuers: Iterable[str]):
+        self.issuers = issuers
+
+    def __iter__(self):
+        yield from self.issuers
+        # if not self.is_connected:
+        #     yield from []
+        # else:
+            # if not self.tool_model:
+            #     lti_path = 'pylti1p3.contrib.django.lti1p3_tool_config.models.LtiTool'
+            #     self.tool_model = import_string(lti_path)
+            # FIXME: in the async ninja context, this does not work until StopIteration is raised.
+            #        only one iteration per request seems to be called
+            #        what to do if this is called from an async context? It does not work until then!
+            # see #36
+
+            # for (issuer,) in self.tool_model.objects.all().values_list('issuer'):
+            #     print(f'csrf check issuer: {issuer}/')
+            #     # yield urlparse(issuer).hostname
+            #     yield issuer
 
 
 class WebSocketFormatter(log.ServerFormatter):
