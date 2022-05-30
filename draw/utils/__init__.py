@@ -244,15 +244,17 @@ class TrustedOrigins(Iterable[str]):
     issuer field of the :model:`lti1p3_tool_config.LtiTool` configs (speak the LTI platforms).
     """
     def __init__(self) -> None:
-        self.tool_model = None
+        self.tool_model: Any = None
         self.is_connected = False
         self.issuers: Iterable[str] = []
 
-    def connected(self):
+    def connected(self, tool_model):
         self.is_connected = True
+        self.tool_model = tool_model
 
-    def update_issuers(self, issuers: Iterable[str]):
-        self.issuers = issuers
+    def update_issuers(self, additional_issuers: Iterable[str]):
+        issuers = self.tool_model.objects.all().values_list('issuer')
+        self.issuers = list(additional_issuers) + [issuer for (issuer,) in issuers]
 
     def __iter__(self):
         yield from self.issuers

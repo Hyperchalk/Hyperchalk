@@ -43,6 +43,7 @@ DEBUG = False
 # This command will display a URL to you that can be used to automatically configure this app
 # via the LTI Advantage registration protocol in consumers that support it. To be able to do
 # this, you have to configure your host name here, which will be used to generate said link.
+# The LINK_BASE will also be added to the list of CSRF_TRUSTED_ORIGINS as "https://LINK_BASE".
 #
 # TODO: uncomment this and enter your host name.
 

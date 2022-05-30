@@ -14,8 +14,8 @@ class LtiapiConfig(AppConfig):
         if isinstance(settings.CSRF_TRUSTED_ORIGINS, TrustedOrigins):
             def request_start_handler(sender, **kwargs):
                 Tool = import_string('pylti1p3.contrib.django.lti1p3_tool_config.models.LtiTool')
-                issuers = Tool.objects.all().values_list('issuer')
-                settings.CSRF_TRUSTED_ORIGINS.connected()
-                settings.CSRF_TRUSTED_ORIGINS.update_issuers(issuer for (issuer,) in issuers)
+                settings.CSRF_TRUSTED_ORIGINS.connected(Tool)
+                settings.CSRF_TRUSTED_ORIGINS\
+                    .update_issuers(additional_issuers=[f'https://{settings.LINK_BASE}'])
             request_started.connect(request_start_handler)
         return super().ready()

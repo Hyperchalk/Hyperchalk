@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import List, Optional, cast
+from pprint import pformat
 
 import aiohttp
 from asgiref.sync import async_to_sync, sync_to_async
@@ -55,6 +56,8 @@ class RegisterConsumerView(DetailView):
     # pylint: disable = invalid-overridden-method, attribute-defined-outside-init
     async def get(self, request: HttpRequest, *args, **kwargs):
         return await sync_to_async(super().get)(request, *args, **kwargs) # type: ignore
+    get.csrf_exempt = True # type: ignore
+    get.xframe_options_exempt = True # type: ignore
 
     async def post(self, request: HttpRequest, *args, **kwargs):
         """
@@ -73,6 +76,14 @@ class RegisterConsumerView(DetailView):
         # prepare for getting data about the consumer
         openid_config_endpoint = request.GET.get('openid_configuration')
         jwt_str = request.GET.get('registration_token')
+
+        if not openid_config_endpoint:
+            logger.warning(
+                "a client tried to register but did not supply the proper parameters. The supplied "
+                "parameters are:\n%s", pformat(request.GET.lists))
+            return HttpResponse(
+                "No configuration endpoint was found in the parameters. Are you trying to "
+                "register a legacy LTI consumer? This app only supports LTI 1.3 Advantage.")
 
         async with aiohttp.ClientSession() as session:
             # get information about how to register to the consumer
@@ -108,6 +119,8 @@ class RegisterConsumerView(DetailView):
             consumer.issuer, consumer.client_id)
         ctx = self.get_context_data(registration_success=True)
         return self.render_to_response(ctx)
+    post.csrf_exempt = True # type: ignore
+    post.xframe_options_exempt = True # type: ignore
 
 
 async def oidc_jwks(
