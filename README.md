@@ -1,7 +1,13 @@
-# Excalidraw for LTI
+# Hyperchalk – Excalidraw for LTI
 
-This is a port of the [Excalidraw](https://excalidraw.com) app to support LTI and data collection,
+Hyperchalk is a port of the [Excalidraw](https://excalidraw.com) app to support LTI and data collection,
 enabling its usage for learning analytics in LMS courses.
+
+If you use Hyperchalk in your scientific work, please cite this paper:
+
+> Lukas Menzel, Sebastian Gombert, Daniele Di Mitri and Hendrik Drachsler. "Superpowers in the Classroom:
+> Hyperchalk is an Online Whiteboard for Learning Analytics Data Collection". In:
+> Proceedings of the 17th European Conference on Technology Enhanced Learning. Mai 2022.
 
 ## Installation and Configuration
 
