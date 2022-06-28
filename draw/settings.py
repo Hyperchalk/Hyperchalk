@@ -197,12 +197,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # see lti.tool_config.py
 
 LTI_CONFIG = {
-    'title': 'Excalidraw',
+    'title': 'Hyperchalk',
     'description': 'The Excalidraw drawing board app as an LTI module.',
     'vendor_name': 'EduTec@DIPF',
     'vendor_url': 'https://www.edutec.science/',
-    'vendor_contact_name': 'Praktikant:in',
-    'vendor_contact_email': 'praktikum_alice@dipf.de',
+    'vendor_contact_name': 'Sebastian Gombert',
+    'vendor_contact_email': 'gombert@dipf.de',
 }
 
 # Allow the creation of rooms when the user visits the index page without a room query (?room=...)
