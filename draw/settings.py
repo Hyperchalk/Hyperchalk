@@ -17,8 +17,6 @@ from django.utils.log import DEFAULT_LOGGING
 
 from draw.utils import StrLike, TrustedOrigins, deepmerge
 
-# FIXME: use redis cache so that cache keys will be available from all the workers!!!!!!
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
