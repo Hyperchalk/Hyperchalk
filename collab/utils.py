@@ -10,8 +10,9 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 
-from draw.utils.auth import (create_html_response_forbidden, create_json_response_forbidden,
-                             user_is_authenticated, user_is_authorized)
+from draw.utils.auth import (Unauthenticated, Unauthorized, create_html_response_forbidden,
+                             create_json_response_forbidden, user_is_authenticated,
+                             user_is_authorized)
 
 from . import models as m
 
@@ -39,13 +40,13 @@ async def room_access_check(request: HttpRequest, room_obj: m.ExcalidrawRoom):
             logger.warning(
                 "Someone tried to access %s without being authenticated.",
                 room_obj.room_name)
-            raise PermissionDenied(_("You need to be logged in."))
+            raise Unauthenticated(_("You need to be logged in."))
         if not authorized:
             logger.warning(
                 "User %s tried to access %s but is not allowed to access it.",
                 await sync_to_async(lambda: request.user.username), # type: ignore
                 room_obj.room_name)
-            raise PermissionDenied(_("You are not allowed to access this room."))
+            raise Unauthorized(_("You are not allowed to access this room."))
 
 def require_room_access(json=False):
     """

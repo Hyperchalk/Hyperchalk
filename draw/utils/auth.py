@@ -14,6 +14,15 @@ class Room(Protocol):
     room_consumer_id: int
     room_course_id: str
 
+
+class Unauthenticated(PermissionDenied):
+    pass
+
+
+class Unauthorized(PermissionDenied):
+    pass
+
+
 def create_json_response_forbidden(e: PermissionDenied):
     return JsonResponse({'detail': str(e)}, status=403)
 

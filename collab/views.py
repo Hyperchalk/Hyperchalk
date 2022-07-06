@@ -10,8 +10,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from draw.utils import absolute_reverse, make_room_name, validate_room_name
-from draw.utils.auth import require_staff_user
+from draw.utils import absolute_reverse, make_room_name, reverse_with_query, validate_room_name
+from draw.utils.auth import require_staff_user, user_is_authenticated, Unauthenticated
 
 from . import models as m
 from .utils import room_access_check, async_get_object_or_404, get_or_create_room
@@ -48,8 +48,11 @@ def custom_messages():
 async def index(request: HttpRequest, *args, **kwargs):
     # See issue #8
     if settings.ALLOW_AUTOMATIC_ROOM_CREATION:
-        room_uri = reverse('collab:room', kwargs={'room_name': make_room_name(24)})
-        return redirect(request.build_absolute_uri(room_uri), permanent=False)
+        if settings.ALLOW_ANONYMOUS_VISITS or await user_is_authenticated(request.user):
+            room_uri = reverse('collab:room', kwargs={'room_name': make_room_name(24)})
+            return redirect(request.build_absolute_uri(room_uri), permanent=False)
+        return redirect(
+            reverse_with_query('admin:login', query_kwargs={'next': f'/{make_room_name(24)}/'}))
     return HttpResponseBadRequest(_('Automatic room creation is disabled here.'))
 
 
@@ -61,7 +64,10 @@ async def room(request: HttpRequest, room_name: str):
         get_username(request.user))
     room_obj, __ = room_tpl
 
-    await room_access_check(request, room_obj)
+    try:
+        await room_access_check(request, room_obj)
+    except Unauthenticated:
+        return redirect(reverse_with_query('admin:login', query_kwargs={'next': request.path}))
 
     return render(request, 'collab/index.html', {
         'excalidraw_config': {

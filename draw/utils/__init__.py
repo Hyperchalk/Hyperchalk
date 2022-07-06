@@ -174,8 +174,8 @@ def reverse_with_query(
     Custom reverse to add a query string after the url
     Example usage::
 
-        url = my_reverse('my_test_url', kwargs={'pk': object.id},
-                         query_kwargs={'next': reverse('home')})
+        url = reverse_with_query('my_test_url', kwargs={'pk': object.id},
+                                 query_kwargs={'next': reverse('home')})
     """
     # from https://stackoverflow.com/questions/4995279/
     # including-a-querystring-in-a-django-core-urlresolvers-reverse-call#4995467
