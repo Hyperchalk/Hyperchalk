@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-14 19:22+0100\n"
+"POT-Creation-Date: 2022-08-16 11:07+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -17,6 +17,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: draw/urls.py
+msgid "Hyperchalk Admin Page"
+msgstr "Hyperchalk Admin-Seite"
+
+#: draw/utils/__init__.py
+#, python-format
+msgid "'%s' is not a valid room name."
+msgstr "'%s' ist kein valider Raumname."
 
 #: draw/utils/auth.py
 msgid "You need to be logged in as staff or as admin."

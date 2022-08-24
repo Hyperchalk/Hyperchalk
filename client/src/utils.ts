@@ -22,7 +22,7 @@ export function generateRandomString(len?: number) {
 // #endregion crypto
 
 export function getJsonScript(id: string, init = {}) {
-  return JSON.parse(document.getElementById(id)?.innerText ?? JSON.stringify(init))
+  return JSON.parse(document.getElementById(id)?.textContent ?? JSON.stringify(init))
 }
 
 export function getLocalStorageJson(key: string, init = {}) {

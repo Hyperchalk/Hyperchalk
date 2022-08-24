@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-14 19:22+0100\n"
+"POT-Creation-Date: 2022-08-16 11:07+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -79,6 +79,27 @@ msgstr "Anzahl der Gruppen:"
 msgid "Create Assignment"
 msgstr "Aufgabe anlegen"
 
+#: ltiapi/templates/ltiapi/privacy.html
+msgid "Privacy Notes"
+msgstr "Datenschutzhinweise"
+
+#: ltiapi/templates/ltiapi/privacy.html
+msgid "Privacy"
+msgstr "Datenschutz"
+
+#: ltiapi/templates/ltiapi/privacy.html
+msgid ""
+"\n"
+"  As we value your privacy, it is of our deepest interest to tell you which "
+"data is collected in\n"
+"  this application.\n"
+msgstr "Deine Privatsphäre ist uns sehr wichtig. Darum ist es in unserem "
+"Interesse, dir mitzuteilen, welche Daten wir in dieser Anwendung sammeln."
+
+#: ltiapi/templates/ltiapi/privacy.html
+msgid "Collected Data"
+msgstr "Gesammelte Daten"
+
 #: ltiapi/templates/ltiapi/register_consumer_result.html
 msgid "The application registration succeeded."
 msgstr "Die Anwendungsregistrierung war erfolgreich."
@@ -125,3 +146,23 @@ msgstr "%s von %s"
 #: ltiapi/utils.py
 msgid "New drawing board"
 msgstr "Neues Whiteboard"
+
+#: ltiapi/views.py
+msgid ""
+"No configuration endpoint was found in the parameters. Are you trying to "
+"register a legacy LTI consumer? This app only supports LTI 1.3 Advantage."
+msgstr "Es wurde kein Konfigurations-Endpunkt in den Parametern gefunden. "
+"Möchtest Du einen Legacy-LTI-Consumer registrieren? Diese Anwendung unterstützt "
+"nur LTI 1.3 Advantage."
+
+#: ltiapi/views.py
+msgid "You are not allowed to access this room."
+msgstr "Du darfst diesen Raum nicht betreten."
+
+#: ltiapi/views.py
+msgid "Invalid assignment type."
+msgstr "Ungültiger Aufgabentyp."
+
+#: ltiapi/views.py
+msgid "Unknown or unsupported message type provided."
+msgstr "Unbekannter oder nicht unterstützter Nachrichtentyp."

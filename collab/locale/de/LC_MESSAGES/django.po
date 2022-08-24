@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-14 19:22+0100\n"
+"POT-Creation-Date: 2022-08-16 11:07+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -37,6 +37,14 @@ msgid "shortened pseudonym"
 msgstr "Kurz-Pseuonym"
 
 #: collab/admin.py
+msgid "View Room"
+msgstr "Raum ansehen"
+
+#: collab/admin.py
+msgid "Go to room"
+msgstr "Zum Raum gehen"
+
+#: collab/admin.py
 msgid "View Room in Browser JSON Viewer"
 msgstr "Raum im JSON-Betrachter des Browsers ansehen"
 
@@ -53,6 +61,10 @@ msgid "Replay this room"
 msgstr "Diesen Raum abspielen"
 
 #: collab/admin.py
+msgid "Discard all empty rooms (ONLY USE THIS ON TEST INSTANCES)"
+msgstr "Alle leeren Räume entfernen (NUR FÜR TESTINSTANZEN VERWENDEN)"
+
+#: collab/admin.py
 msgid "image"
 msgstr "Bild"
 
@@ -62,12 +74,18 @@ msgid "image %s for room %s"
 msgstr "Bild %s für Raum %s"
 
 #: collab/models.py
-msgid "this is generated from ltiapi.models.CustomUser.id_for_room"
-msgstr "wird von ltiapi.models.CustomUser.id_for_room generiert"
+msgid "this is generated from draw.utils.user_id_for_room"
+msgstr "wird von draw.utils.user_id_for_room generiert"
 
 #: collab/models.py
-#, fuzzy
-#| msgid "Go to room JSON"
+msgid "room name"
+msgstr "Raumname"
+
+#: collab/models.py
+msgid "user"
+msgstr "Benutzer:in"
+
+#: collab/models.py
 msgid "belongs to room"
 msgstr "Zum Raum-JSON gehen"
 
@@ -92,18 +110,22 @@ msgstr ""
 "Die importierte Bibliothek wird Deiner Bibliothek hinzugefügt, wenn Du zum "
 "Whiteboard zurückkehrst. Du kannst diesen Tab nun schließen."
 
+#: collab/utils.py collab/views.py
+msgid "You need to be logged in."
+msgstr "Du musst angemeldet sein."
+
+#: collab/utils.py
+msgid "You are not allowed to access this room."
+msgstr "Du hast keinen Zugriff auf diesen Raum."
+
 #: collab/views.py
 msgid "Anonymous"
 msgstr "Anonymous"
 
 #: collab/views.py
-msgid "You need to be logged in."
-msgstr "Du musst angemeldet sein."
+msgid "The file you've added is too large."
+msgstr "Die hochgeladene Datei ist zu groß."
 
 #: collab/views.py
 msgid "Automatic room creation is disabled here."
 msgstr "Die automatische Raum-Erstellung ist deaktiviert."
-
-#: collab/views.py
-msgid "You are not allowed to access this room."
-msgstr "Du hast keinen Zugriff auf diesen Raum."
