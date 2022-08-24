@@ -6,8 +6,8 @@
 {% block body %}
 <h1>{% trans "Choose an Assignment Group" %}</h1>
 <ul>
-  {% for room_name in rooms %}
-  <li><a href="{% url 'collab:room' room_name %}">
+  {% for pointer in room_pointers %}
+  <li><a href="{% url 'collab:room' pointer.room_id %}">
     {% blocktrans with num=forloop.counter trimmed %}
     Group {{num}}
     {% endblocktrans %}

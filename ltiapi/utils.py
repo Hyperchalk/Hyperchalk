@@ -154,14 +154,18 @@ def get_ext_data(message_launch_data: dict):
     return message_launch_data\
         .get(f'{CLAIM}/ext', {})
 
+ROLE_START = "http://purl.imsglobal.org/vocab/lis/v2/"
+INSTRUCTOR_ROLE = "membership#Instructor"
+SYS_ADMIN_ROLE = "system/person#Administrator"
+INSTITUTION_ADMIN_ROLE = "institution/person#Administrator"
+SUPERIOR_ROLES = [INSTRUCTOR_ROLE, SYS_ADMIN_ROLE, INSTITUTION_ADMIN_ROLE]
+
 def get_roles(message_launch_data: dict):
-    return message_launch_data\
-        .get(f'{CLAIM}/roles', [])
+    return [role[len(ROLE_START):] for role in message_launch_data.get(f'{CLAIM}/roles', [])]
 
-INSTRUCTOR_ROLE = "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
-
-def launched_by_instructor(message_launch_data: dict):
-    return INSTRUCTOR_ROLE in get_roles(message_launch_data)
+def launched_by_superior(message_launch_data: dict):
+    launch_data_roles = get_roles(message_launch_data)
+    return any(role in launch_data_roles for role in SUPERIOR_ROLES)
 
 def get_mode(message_launch_data: dict):
     return get_custom_launch_data(message_launch_data).get('mode', 'classroom')
@@ -169,7 +173,7 @@ def get_mode(message_launch_data: dict):
 def get_room_name(request: HttpRequest, message_launch_data: dict):
     return get_custom_launch_data(message_launch_data)\
         .get('room', None) \
-        or request.GET.get('room', make_room_name(24))
+        or request.GET.get('room')
 
 def get_lti_tool(tool_conf: DjangoDbToolConf, message_launch_data: dict):
     return tool_conf.get_lti_tool(message_launch_data['iss'], message_launch_data['aud'])

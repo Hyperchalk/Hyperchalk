@@ -17,7 +17,7 @@ from pylti1p3.contrib.django import DjangoCacheDataStorage, DjangoMessageLaunch,
 from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
 from pylti1p3.deep_link_resource import DeepLinkResource
 
-from collab.models import ExcalidrawRoom
+from collab.models import ExcalidrawRoom, CourseToRoomMapper
 from draw.utils import absolute_reverse, make_room_name
 from draw.utils.auth import user_is_authorized
 
@@ -172,34 +172,39 @@ def lti_configure(request: HttpRequest, launch_id: str):
         .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
         .get('title', course_title)
     title = "Draw Together" + (f" – {title}" if title else "")
-
-    def upsert_rooms(room_names: List[str]):
-        for room_name in room_names:
-            ExcalidrawRoom.objects.get_or_create(
-                room_name=room_name, defaults={
-                    'room_created_by': request.user,
-                    'room_consumer': lti_tool,
-                    'room_course_id': get_course_id(message_launch_data)
-                })
-
     mode = request.POST.get("mode")
-    resource = DeepLinkResource().set_url(absolute_reverse(request, 'lti:launch'))
 
-    if mode == "classroom":
-        room_name = get_room_name(request, message_launch_data)
-        upsert_rooms([room_name])
+    def upsert_room_mappers(room_names: List[str]):
+        for room_name in room_names:
+            CourseToRoomMapper.objects.get_or_create_mapper_for_course(
+                lti_data_room=room_name,
+                course_id=get_course_id(message_launch_data),
+                user=request.user,
+                mode=mode,
+                lti_tool=lti_tool)
+
+    resource = DeepLinkResource().set_url(absolute_reverse(request, 'lti:launch'))
+    # needed when the config is updated
+
+    Modes = CourseToRoomMapper.BoardMode
+
+    if mode == Modes.CLASSROOM:
+        lti_room_pointer = make_room_name(24)
+        upsert_room_mappers([room_name])
         resource.set_title(title).set_custom_params({'mode': mode, 'room': room_name})
 
-    elif mode == "group":
+    elif mode == Modes.GROUPWORK:
         n_groups = int(request.POST.get('n-groups'))
-        room_names = [make_room_name(24) for _ in range(n_groups)]
-        upsert_rooms(room_names)
-        resource.set_title(title + " – " + _("Group Assignment"))\
+        existing_groups = request.POST.get('groups', None)
+        existing_groups = existing_groups.split(",") if existing_groups else []
+        room_names = [make_room_name(24) for _ in range(n_groups - len(existing_groups))]
+        upsert_room_mappers(room_names)
+        resource.set_title(title + " – " + Modes.GROUPWORK.label)\
             .set_custom_params({'mode': mode, 'rooms': ",".join(room_names)})
 
-    elif mode == "single":
-        resource.set_title(title + " – " + _("Single Person Assignment"))\
-            .set_custom_params({'mode': mode, 'room_prefix': make_room_name(16)})
+    elif mode == Modes.STUDENT:
+        resource.set_title(title + " – " + Modes.STUDENT.label)\
+            .set_custom_params({'mode': mode, 'room': make_room_name(24)})
 
     return HttpResponse(message_launch.get_deep_link().output_response_form([resource]))
 
@@ -216,6 +221,8 @@ def lti_launch(request: HttpRequest):
     message_launch = DjangoMessageLaunch(
         request, tool_conf, launch_data_storage=launch_data_storage)
     message_launch_data = cast(dict, message_launch.get_launch_data())
+
+    custom_data = get_custom_launch_data(message_launch_data)
 
     # log the user in. if this is the user's first visit, save them to the database before.
     # 1) extract user information from the data passed by the consumer
@@ -243,13 +250,18 @@ def lti_launch(request: HttpRequest):
     if message_launch.is_deep_link_launch():
         return render(request, 'ltiapi/configure.html', {
             'launch_id': message_launch.get_launch_id(),
+            # these are needed if the config is changed.
+            'rooms': custom_data.get("rooms", ""),
+            'room_count': custom_data.get("rooms", "").count(",") + 1,
         })
 
     if message_launch.is_data_privacy_launch():
         return HttpResponseRedirect(absolute_reverse(request, 'lti:privacy'))
 
     if message_launch.is_resource_launch():
-        # every endpoint needs to do an auth check
+        # the course ids get stored to the session. one side effect of this is that a board that
+        # has been visited in the context of a course once could be visited in other courses
+        # contexts or with no context at all as well.
         request.session.set_expiry(0)
         allowed_course_ids = request.session.get('course_ids', [])
         course_id = get_course_id(message_launch_data)
@@ -257,34 +269,31 @@ def lti_launch(request: HttpRequest):
         request.session['course_ids'] = allowed_course_ids
 
         # classroom is default for legacy db entry support
-        custom_data = get_custom_launch_data(message_launch_data)
-        mode = custom_data.get('mode', 'classroom')
+        Modes = CourseToRoomMapper.BoardMode
+        mode = custom_data.get('mode', Modes.CLASSROOM)
 
-        if mode == "classroom":
-            room_name = get_room_name(request, message_launch_data)
-            room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
-            room = get_object_or_404(ExcalidrawRoom, room_name=room_name)
-            # join the room if the user is allowed to access it.
-            if not async_to_sync(user_is_authorized)(user, room, request.session):
-                return HttpResponseForbidden("You are not allowed to access this room.")
-            return redirect(room_uri)
-
-        if mode == "group":
+        if mode == Modes.GROUPWORK:
+            # not exactly performant but it works
+            room_pointers = [
+                CourseToRoomMapper.objects.get_or_create_mapper_for_course(
+                    lti_data_room=room_pointer_id, course_id=course_id,
+                    user=request.user, mode=mode, lti_tool=lti_tool)
+                for room_pointer_id in custom_data.get('rooms').split(",")]
             return render(request, 'ltiapi/choose_group.html', {
-                'rooms': custom_data.get('rooms').split(",")
+                'room_pointers': [pointer for pointer, created in room_pointers]
             })
 
-        if mode == "single":
-            # XXX: users from the same course can edit boards of other users from that course
-            room_name = get_user_room_name(custom_data['room_prefix'], user)
-            room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name})
-            room, created = ExcalidrawRoom.objects.get_or_create(room_name=room_name)
-            if created:
-                room.room_created_by=request.user
-                room.room_consumer=lti_tool
-                room.room_course_id=course_id
-                room.save()
-            elif not async_to_sync(user_is_authorized)(user, room, request.session):
+        if mode in [Modes.CLASSROOM, Modes.STUDENT, Modes.STUDENT_LEGACY]:
+            lti_data_room = get_room_name(request, message_launch_data)
+            # Mappers will be created automatically depending on the
+            # mode. rooms that don't exist yet will also be created.
+            room_pointer, created = CourseToRoomMapper.objects.get_or_create_mapper_for_course(
+                lti_data_room=lti_data_room, course_id=course_id,
+                user=request.user, mode=mode, lti_tool=lti_tool)
+            room = room_pointer.room
+            room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room.room_name})
+            # join the room if the user is allowed to access it.
+            if not async_to_sync(user_is_authorized)(user, room, request.session):
                 return HttpResponseForbidden("You are not allowed to access this room.")
             return redirect(room_uri)
 
