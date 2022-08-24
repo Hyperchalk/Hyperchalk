@@ -10,13 +10,15 @@
     <label for="mode">{% trans "Assignment type" %}</label>
     <select name="mode" id="mode">
       <option value="classroom">{% trans "Classroom Assignment" %}</option>
-      <option value="group">{% trans "Group Assignment" %}</option>
-      <option value="single">{% trans "Single Person Assignment" %}</option>
+      <option value="group"{% if rooms %} selected{%endif%}>{% trans "Group Assignment" %}</option>
+      <option value="single_v2">{% trans "Single Person Assignment" %}</option>
+      <!-- LEGACY: <option value="single">{% trans "Single Person Assignment" %}</option> -->
     </select>
   </p>
   <p id="n-groups-line">
     <label for="n-groups">{% trans "Number of groups:" %}</label>
-    <input type="number" name="n-groups" id="n-groups" min="1" max="50" />
+    <input type="number" name="n-groups" id="n-groups" min="{{room_count}}" max="50" value="{{room_count}}"/>
+    <input type="hidden" name="groups" value="{{groups}}"/>
   </p>
   <p>
     <button type="submit">{% trans "Create Assignment" %}</button>

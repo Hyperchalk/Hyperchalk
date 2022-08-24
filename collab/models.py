@@ -13,7 +13,8 @@ from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
 from draw.utils import (JSONType, bytes_to_data_uri, compression_ratio, dump_content, load_content,
-                        pick, uncompressed_json_size, user_id_for_room, validate_room_name)
+                        make_room_name, pick, uncompressed_json_size, user_id_for_room,
+                        validate_room_name)
 from ltiapi.models import CustomUser
 
 from .types import ALLOWED_IMAGE_MIME_TYPES, ExcalidrawBinaryFile
@@ -85,7 +86,7 @@ class ExcalidrawLogRecord(models.Model):
 
     @user.setter
     def user(self, user: CustomUser):
-        self.user_pseudonym = user_id_for_room(user.pk, self.room_name)
+        self.user_pseudonym = user_id_for_room(user.pk, self.room_name) if user else None
 
 # trust me
 EMPTY_JSON_LIST_ZLIB_COMPRESSED = b'x\x9c\x8b\x8e\x05\x00\x01\x15\x00\xb9'
@@ -124,6 +125,42 @@ class ExcalidrawRoom(models.Model):
     def compression_degree(self):
         return compression_ratio(self)
 
+    def clone(self, *, room_course_id: str, room_created_by: CustomUser, room_consumer: LtiTool):
+        """
+        Clone a room and its associated files.
+
+        This will insert the room as a new log record. So the replay of the
+        cloned room will begin from the moment where the clone was created.
+        """
+
+        # clone the board
+        old_name = self.room_name
+        self.pk = None
+        self.room_name = make_room_name(24)
+        self.room_course_id = room_course_id
+        self.room_consumer = room_consumer
+        self.save()
+
+        # clone the files
+        files = list(self.files.all())
+        for f in files:
+            f.pk = None
+            f.belongs_to = self.pk
+        ExcalidrawFile.objects.bulk_create(files)
+
+        # make visible that this room was cloned
+        record = ExcalidrawLogRecord(room_name=self.room_name, event_type="cloned")
+        record.user = user
+        record.content = {'clonedFrom': old_name}
+        record.save()
+
+        # insert the room as a new log record. the replay
+        # will begin from the moment the room is cloned.
+        record = ExcalidrawLogRecord(room_name=self.room_name, event_type="full_sync")
+        record.user = user
+        record.content = self.elements
+        record.save()
+        return self
 
 
 class Pseudonym(models.Model):
@@ -212,3 +249,151 @@ class ExcalidrawFile(models.Model):
 
     def __repr__(self) -> str:
         return f"<ExcalidrawFile {self.element_file_id} for room {self.belongs_to_id}>"
+
+
+class CourseToRoomMapperManager(models.Manager):
+    def create_from_room(
+        self, *, room: Optional[ExcalidrawRoom],
+        lti_data_room: str, course_id: str, mode: str,
+        user: CustomUser,  lti_tool: LtiTool
+    ) -> models.Model:
+        Modes = self.model.BoardMode
+        """ Create or clone a room if necessary, returning a mapper to it. """
+        if room and room.room_course_id == course_id:
+            # the room is opened from the course it was created in
+            new_room = room
+        elif room:
+            # the room exists but is openend from a cloned course
+            new_room = room.clone(
+                room_course_id=course_id,
+                room_created_by=user,
+                room_consumer=lti_tool)
+        else:
+            # the room was not created yet. the course might
+            # have been cloned but it does not matter here.
+            new_room = ExcalidrawRoom(
+                room_name=make_room_name(24),
+                room_created_by=user,
+                room_consumer=lti_tool,
+                room_course_id=course_id)
+            new_room.save()
+
+        redirect = self.model(
+            room=new_room, lti_data_room=lti_data_room, course_id=course_id, mode=mode,
+            user=user if mode in [Modes.STUDENT, Modes.STUDENT_LEGACY] else None)
+        redirect.clean()
+        redirect.save()
+
+        return redirect
+
+    def get_or_create_from_legacy_single_student_ex(
+        self, *, room_prefix: str, course_id: str,
+        user: CustomUser, lti_tool: LtiTool,
+    ) -> tuple[models.Model, bool]:
+        """
+        Convert legacy single student assignment to a
+        CourseToRoomMapper, creating a new room if necessary.
+        """
+        room_suffix = base64.b64encode(user.id.bytes, altchars=b'_-').decode('ascii')[:8]
+        legacy_room_name = room_prefix + room_suffix
+
+        try:
+            return self.get(
+                lti_data_room=legacy_room_name,
+                course_id=course_id, user=user.id
+            ), False
+        except self.model.DoesNotExist:
+            pass
+
+        room = ExcalidrawRoom.objects\
+            .filter(room_name=legacy_room_name)\
+            .first()
+
+        redirect = self.create_from_room(
+            room=room, lti_data_room=legacy_room_name, course_id=course_id,
+            mode=self.model.BoardMode.STUDENT_LEGACY, user=user, lti_tool=lti_tool)
+
+        return redirect, True
+
+    def get_or_create_mapper_for_course(
+        self, *, lti_data_room: str, course_id: str,
+        user: CustomUser, mode: str, lti_tool: LtiTool
+    ) -> tuple[models.Model, bool]:
+        """ Creates a redirect and clones a corresponding room if neccessary. """
+        Modes = self.model.BoardMode
+
+        if mode == Modes.STUDENT_LEGACY:
+            # legacy single mode has its own logic
+            return self.get_or_create_from_legacy_single_student_ex(
+                room_prefix=lti_data_room, course_id=course_id, user=user, lti_tool=lti_tool)
+
+        try:
+            # happy path: the room has already been requested from a course
+            if mode == Modes.STUDENT:
+                redirect = self.get(lti_data_room=lti_data_room, course_id=course_id, user=user.id)
+            else:
+                redirect = self.get(lti_data_room=lti_data_room, course_id=course_id)
+            return redirect, False
+
+        except self.model.DoesNotExist:
+            pass
+
+        room = ExcalidrawRoom.objects\
+            .filter(room_name=lti_data_room)\
+            .first()
+
+        # the room may have existed before and was opened from the course it was created on.
+        # legacy single does not have to be implemented here as it would have been created above
+        redirect = self.create_from_room(
+            room=room, lti_data_room=lti_data_room, course_id=course_id,
+            mode=mode, user=user, lti_tool=lti_tool)
+
+        return redirect, True
+
+
+class CourseToRoomMapper(models.Model):
+    """
+    Redirect to a board based on (lti data, course id, user name)
+
+    Since courses containing a board can be cloned, we want to clone the boards, too. The problem
+    with this is that the LTI custom data can't be changed without calling the configuration again.
+    To deal with this, this class provides a course cloning detection mechanism, redicreting users
+    to the appropriate boards. The ids translate as follows::
+
+        mode classroom:
+            (lti data, course id) -> room name
+
+        mode group:
+            (lti data, course id) -> room name
+
+        mode single:
+            (lti prefix, course id, user) -> room name
+    """
+    class BoardMode(models.TextChoices):
+        CLASSROOM      = "classroom", _("Classroom Assignment")
+        GROUPWORK      = "group",     _("Group Assignment")
+        STUDENT        = "single_v2", _("Single Student")
+        STUDENT_LEGACY = "single",    _("Single Student Assignment (legacy)")
+
+    room = models.OneToOneField(
+        ExcalidrawRoom, primary_key=True,
+        on_delete=models.CASCADE, verbose_name=_("room name"))
+    lti_data_room = models.CharField(max_length=24, validators=[validate_room_name])
+    mode = models.CharField(
+        max_length=12, verbose_name=_("board mode"),
+        choices=BoardMode.choices, default=BoardMode.CLASSROOM)
+    course_id = models.CharField(max_length=255, null=True, blank=True)
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL,
+        null=True, verbose_name=_("user"))
+
+    objects = CourseToRoomMapperManager()
+
+    class Meta:
+        unique_together = [("lti_data_room", "course_id", "user")]
+
+    def clean(self):
+        if self.user and self.mode not in [BoardMode.STUDENT, BoardMode.STUDENT_LEGACY]:
+            raise ValidationError({
+                "user": _("The user can only be set if the mode is set to “single student”"),
+            })

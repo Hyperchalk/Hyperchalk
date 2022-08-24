@@ -68,3 +68,11 @@ client-builder.log: $(shell find client -type f -and -not -path 'client/src/*' -
 	| tee client-builder.log
 client-builder: client-builder.log
 .PHONY: client-builder
+
+
+admin:
+	docker run --rm -it --entrypoint gosu \
+		-v $(ROOT_DIR):/srv \
+		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
+		ltiapp devscripts/create_admin.sh
+.PHONY: amdin
