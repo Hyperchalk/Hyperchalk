@@ -215,6 +215,9 @@ BROADCAST_RESOLUTION_THROTTLE_MSEC = 100
 # how many seconds after a change clients will wait before issuing a save command (milliseconds)
 SAVE_ROOM_MAX_WAIT_MSEC = 15_000
 
+# how many groups there are allowd in a group assignment
+MAX_GROUPS = 50
+
 # call this from your custom settings
 def finalize_settings(final_locals: Dict[str, Any]):
     required_vars = {'SECRET_KEY', 'DATABASES', 'TIME_ZONE', 'LINK_BASE'}

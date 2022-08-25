@@ -44,7 +44,7 @@ async def room_access_check(request: HttpRequest, room_obj: m.ExcalidrawRoom):
         if not authorized:
             logger.warning(
                 "User %s tried to access %s but is not allowed to access it.",
-                await sync_to_async(lambda: request.user.username), # type: ignore
+                await sync_to_async(lambda: request.user.username)(), # type: ignore
                 room_obj.room_name)
             raise Unauthorized(_("You are not allowed to access this room."))
 
