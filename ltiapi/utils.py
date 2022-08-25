@@ -181,5 +181,5 @@ def get_lti_tool(tool_conf: DjangoDbToolConf, message_launch_data: dict):
 def get_course_id(message_launch_data: dict):
     return get_course_context(message_launch_data).get('id', None)
 
-def get_user_room_name(room_prefix: str, user: m.CustomUser):
+def get_legacy_user_room_name(room_prefix: str, user: m.CustomUser):
     return room_prefix + base64.b64encode(user.id.bytes, altchars=b'_-').decode('ascii')[:8]
