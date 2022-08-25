@@ -23,9 +23,8 @@ from draw.utils.auth import user_is_authorized
 
 from . import models as m
 from .utils import (get_course_context, get_course_id, get_custom_launch_data, get_ext_data,
-                    get_launch_url, get_lti_tool, get_room_name, get_user_room_name,
-                    issuer_namespaced_username, lti_registration_data,
-                    make_tool_config_from_openid_config_via_link)
+                    get_launch_url, get_lti_tool, get_room_name, issuer_namespaced_username,
+                    lti_registration_data, make_tool_config_from_openid_config_via_link)
 
 logger = logging.getLogger("draw.ltiapi")
 
@@ -81,9 +80,9 @@ class RegisterConsumerView(DetailView):
             logger.warning(
                 "a client tried to register but did not supply the proper parameters. The supplied "
                 "parameters are:\n%s", pformat(request.GET.lists))
-            return HttpResponse(
+            return HttpResponse(_(
                 "No configuration endpoint was found in the parameters. Are you trying to "
-                "register a legacy LTI consumer? This app only supports LTI 1.3 Advantage.")
+                "register a legacy LTI consumer? This app only supports LTI 1.3 Advantage."))
 
         async with aiohttp.ClientSession() as session:
             # get information about how to register to the consumer
@@ -171,16 +170,16 @@ def lti_configure(request: HttpRequest, launch_id: str):
     title = message_launch_data\
         .get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})\
         .get('title', course_title)
-    title = "Draw Together" + (f" – {title}" if title else "")
+    title = "Hyperchalk" + (f" – {title}" if title else "")
     mode = request.POST.get("mode")
 
     def upsert_room_mappers(room_names: List[str]):
         for room_name in room_names:
-            CourseToRoomMapper.objects.get_or_create_mapper_for_course(
+            CourseToRoomMapper.objects.create_from_room_name(
                 lti_data_room=room_name,
                 course_id=get_course_id(message_launch_data),
-                user=request.user,
                 mode=mode,
+                user=request.user,
                 lti_tool=lti_tool)
 
     resource = DeepLinkResource().set_url(absolute_reverse(request, 'lti:launch'))
@@ -275,9 +274,9 @@ def lti_launch(request: HttpRequest):
         if mode == Modes.GROUPWORK:
             # not exactly performant but it works
             room_pointers = [
-                CourseToRoomMapper.objects.get_or_create_mapper_for_course(
+                CourseToRoomMapper.objects.get_or_create_for_course(
                     lti_data_room=room_pointer_id, course_id=course_id,
-                    user=request.user, mode=mode, lti_tool=lti_tool)
+                    user=user, mode=mode, lti_tool=lti_tool)
                 for room_pointer_id in custom_data.get('rooms').split(",")]
             return render(request, 'ltiapi/choose_group.html', {
                 'room_pointers': [pointer for pointer, created in room_pointers]
@@ -287,19 +286,22 @@ def lti_launch(request: HttpRequest):
             lti_data_room = get_room_name(request, message_launch_data)
             # Mappers will be created automatically depending on the
             # mode. rooms that don't exist yet will also be created.
-            room_pointer, created = CourseToRoomMapper.objects.get_or_create_mapper_for_course(
+            room_pointer, created = CourseToRoomMapper.objects.get_or_create_for_course(
                 lti_data_room=lti_data_room, course_id=course_id,
-                user=request.user, mode=mode, lti_tool=lti_tool)
+                user=user, mode=mode, lti_tool=lti_tool)
             room = room_pointer.room
             room_uri = absolute_reverse(request, 'collab:room', kwargs={'room_name': room.room_name})
             # join the room if the user is allowed to access it.
             if not async_to_sync(user_is_authorized)(user, room, request.session):
+                logger.warning(
+                    "User %s tried to join room (%s) %s, "
+                    "despite not being authorized.", user, mode, room)
                 return HttpResponseForbidden("You are not allowed to access this room.")
             return redirect(room_uri)
 
-        return HttpResponseBadRequest("Invalid assignment type.")
+        return HttpResponseBadRequest(_("Invalid assignment type."))
 
-    return HttpResponseBadRequest('Unknown or unsupported message type provided.')
+    return HttpResponseBadRequest(_('Unknown or unsupported message type provided.'))
 
 lti_launch.csrf_exempt = True
 lti_launch.xframe_options_exempt = True

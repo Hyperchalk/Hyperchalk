@@ -16,6 +16,7 @@ from draw.utils import (JSONType, bytes_to_data_uri, compression_ratio, dump_con
                         make_room_name, pick, uncompressed_json_size, user_id_for_room,
                         validate_room_name)
 from ltiapi.models import CustomUser
+from ltiapi.utils import get_legacy_user_room_name
 
 from .types import ALLOWED_IMAGE_MIME_TYPES, ExcalidrawBinaryFile
 
@@ -132,7 +133,6 @@ class ExcalidrawRoom(models.Model):
         This will insert the room as a new log record. So the replay of the
         cloned room will begin from the moment where the clone was created.
         """
-
         # clone the board
         old_name = self.room_name
         self.pk = None
@@ -150,16 +150,17 @@ class ExcalidrawRoom(models.Model):
 
         # make visible that this room was cloned
         record = ExcalidrawLogRecord(room_name=self.room_name, event_type="cloned")
-        record.user = user
+        record.user = room_created_by
         record.content = {'clonedFrom': old_name}
         record.save()
 
         # insert the room as a new log record. the replay
         # will begin from the moment the room is cloned.
         record = ExcalidrawLogRecord(room_name=self.room_name, event_type="full_sync")
-        record.user = user
+        record.user = room_created_by
         record.content = self.elements
         record.save()
+
         return self
 
 
@@ -252,13 +253,21 @@ class ExcalidrawFile(models.Model):
 
 
 class CourseToRoomMapperManager(models.Manager):
-    def create_from_room(
-        self, *, room: Optional[ExcalidrawRoom],
-        lti_data_room: str, course_id: str, mode: str,
-        user: CustomUser,  lti_tool: LtiTool
+    def create_from_room_name(
+        self, *, lti_data_room: str, course_id: str,
+        mode: str, user: CustomUser,  lti_tool: LtiTool
     ) -> models.Model:
+        """
+        Create or clone a room if necessary, returning a mapper to it.
+
+        This method should be used when creating a
+        """
         Modes = self.model.BoardMode
-        """ Create or clone a room if necessary, returning a mapper to it. """
+
+        room = ExcalidrawRoom.objects\
+            .filter(room_name=lti_data_room)\
+            .first()
+
         if room and room.room_course_id == course_id:
             # the room is opened from the course it was created in
             new_room = room
@@ -272,7 +281,7 @@ class CourseToRoomMapperManager(models.Manager):
             # the room was not created yet. the course might
             # have been cloned but it does not matter here.
             new_room = ExcalidrawRoom(
-                room_name=make_room_name(24),
+                room_name=lti_data_room,
                 room_created_by=user,
                 room_consumer=lti_tool,
                 room_course_id=course_id)
@@ -286,51 +295,20 @@ class CourseToRoomMapperManager(models.Manager):
 
         return redirect
 
-    def get_or_create_from_legacy_single_student_ex(
-        self, *, room_prefix: str, course_id: str,
-        user: CustomUser, lti_tool: LtiTool,
-    ) -> tuple[models.Model, bool]:
-        """
-        Convert legacy single student assignment to a
-        CourseToRoomMapper, creating a new room if necessary.
-        """
-        room_suffix = base64.b64encode(user.id.bytes, altchars=b'_-').decode('ascii')[:8]
-        legacy_room_name = room_prefix + room_suffix
-
-        try:
-            return self.get(
-                lti_data_room=legacy_room_name,
-                course_id=course_id, user=user.id
-            ), False
-        except self.model.DoesNotExist:
-            pass
-
-        room = ExcalidrawRoom.objects\
-            .filter(room_name=legacy_room_name)\
-            .first()
-
-        redirect = self.create_from_room(
-            room=room, lti_data_room=legacy_room_name, course_id=course_id,
-            mode=self.model.BoardMode.STUDENT_LEGACY, user=user, lti_tool=lti_tool)
-
-        return redirect, True
-
-    def get_or_create_mapper_for_course(
+    def get_or_create_for_course(
         self, *, lti_data_room: str, course_id: str,
-        user: CustomUser, mode: str, lti_tool: LtiTool
+        mode: str, user: CustomUser, lti_tool: LtiTool
     ) -> tuple[models.Model, bool]:
         """ Creates a redirect and clones a corresponding room if neccessary. """
         Modes = self.model.BoardMode
-
-        if mode == Modes.STUDENT_LEGACY:
-            # legacy single mode has its own logic
-            return self.get_or_create_from_legacy_single_student_ex(
-                room_prefix=lti_data_room, course_id=course_id, user=user, lti_tool=lti_tool)
 
         try:
             # happy path: the room has already been requested from a course
             if mode == Modes.STUDENT:
                 redirect = self.get(lti_data_room=lti_data_room, course_id=course_id, user=user.id)
+            elif mode == Modes.STUDENT_LEGACY:
+                lti_data_room = get_legacy_user_room_name(lti_data_room, user)
+                redirect = self.get(lti_data_room=lti_data_room,course_id=course_id, user=user.id)
             else:
                 redirect = self.get(lti_data_room=lti_data_room, course_id=course_id)
             return redirect, False
@@ -338,14 +316,10 @@ class CourseToRoomMapperManager(models.Manager):
         except self.model.DoesNotExist:
             pass
 
-        room = ExcalidrawRoom.objects\
-            .filter(room_name=lti_data_room)\
-            .first()
-
         # the room may have existed before and was opened from the course it was created on.
         # legacy single does not have to be implemented here as it would have been created above
-        redirect = self.create_from_room(
-            room=room, lti_data_room=lti_data_room, course_id=course_id,
+        redirect = self.create_from_room_name(
+            lti_data_room=lti_data_room, course_id=course_id,
             mode=mode, user=user, lti_tool=lti_tool)
 
         return redirect, True
