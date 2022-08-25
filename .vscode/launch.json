@@ -18,6 +18,19 @@
       "envFile": "${workspaceFolder}/.env"
     },
     {
+      "name": "Django: Shell",
+      "type": "python",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "python": "${command:python.interpreterPath}",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["shell"],
+      // "args": ["runserver", "localhost:8001", "--noreload", "--nothreading"],
+      "django": true,
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
       "name": "Django: Migrate",
       "type": "python",
       "request": "launch",

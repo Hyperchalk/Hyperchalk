@@ -36,7 +36,7 @@ class ExcalidrawLogRecordAdmin(admin.ModelAdmin):
 
     @admin.display(description=_("shortened pseudonym"))
     def short_user_pseudonym(self, obj: m.ExcalidrawLogRecord):
-        return obj.user_pseudonym[:16]
+        return obj.user and obj.user_pseudonym[:16]
 
 
 @admin.register(m.ExcalidrawRoom)

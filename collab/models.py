@@ -133,6 +133,9 @@ class ExcalidrawRoom(models.Model):
         This will insert the room as a new log record. So the replay of the
         cloned room will begin from the moment where the clone was created.
         """
+        # get the files from the original room
+        files = list(self.files.all())
+
         # clone the board
         old_name = self.room_name
         self.pk = None
@@ -142,10 +145,9 @@ class ExcalidrawRoom(models.Model):
         self.save()
 
         # clone the files
-        files = list(self.files.all())
         for f in files:
             f.pk = None
-            f.belongs_to = self.pk
+            f.belongs_to = self
         ExcalidrawFile.objects.bulk_create(files)
 
         # make visible that this room was cloned
