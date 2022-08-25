@@ -5,10 +5,11 @@ from pprint import pformat
 
 import aiohttp
 from asgiref.sync import async_to_sync, sync_to_async
-from django.contrib.auth import get_user_model, login
+from django.conf import settings
+from django.contrib.auth import login
 from django.http import (HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden,
                          HttpResponseRedirect, JsonResponse)
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -17,14 +18,14 @@ from pylti1p3.contrib.django import DjangoCacheDataStorage, DjangoMessageLaunch,
 from pylti1p3.contrib.django.lti1p3_tool_config import DjangoDbToolConf
 from pylti1p3.deep_link_resource import DeepLinkResource
 
-from collab.models import ExcalidrawRoom, CourseToRoomMapper
+from collab.models import CourseToRoomMapper
 from draw.utils import absolute_reverse, make_room_name
 from draw.utils.auth import user_is_authorized
 
 from . import models as m
-from .utils import (get_course_context, get_course_id, get_custom_launch_data, get_ext_data,
-                    get_launch_url, get_lti_tool, get_room_name, issuer_namespaced_username,
-                    lti_registration_data, make_tool_config_from_openid_config_via_link)
+from .utils import (get_course_context, get_course_id, get_custom_launch_data, get_launch_url,
+                    get_lti_tool, get_room_name, get_user_from_launch_data, lti_registration_data,
+                    make_tool_config_from_openid_config_via_link)
 
 logger = logging.getLogger("draw.ltiapi")
 
@@ -191,7 +192,7 @@ def lti_configure(request: HttpRequest, launch_id: str):
     Modes = CourseToRoomMapper.BoardMode
 
     if mode == Modes.CLASSROOM:
-        lti_room_pointer = make_room_name(24)
+        room_name = make_room_name(24)
         upsert_room_mappers([room_name])
         resource.set_title(title).set_custom_params({'mode': mode, 'room': room_name})
 
@@ -202,7 +203,7 @@ def lti_configure(request: HttpRequest, launch_id: str):
                 _("User %s tried to create a board with more than %d groups"),
                 user.username, settings.MAX_GROUPS)
             return HttpResponseForbidden(
-                _("The can't be more than %d groups.") % (settings.MAX_GROUPS))
+                _("There can't be more than %d groups.") % (settings.MAX_GROUPS))
 
         existing_groups = request.POST.get('groups', None)
         existing_groups = existing_groups.split(",") if existing_groups else []
@@ -226,7 +227,7 @@ def lti_configure(request: HttpRequest, launch_id: str):
 
     else:
         logger.warning(_("User %s tried to request an illegal board mode."), user.username)
-        return HttpRespHttpResponseForbiddenonse(_("The mode you requested does not exist."))
+        return HttpResponseBadRequest(_("The mode you requested does not exist."))
 
     return HttpResponse(message_launch.get_deep_link().output_response_form([resource]))
 
@@ -290,7 +291,7 @@ def lti_launch(request: HttpRequest):
             lti_data_room = get_room_name(request, message_launch_data)
             # Mappers will be created automatically depending on the
             # mode. rooms that don't exist yet will also be created.
-            room_pointer, created = CourseToRoomMapper.objects.get_or_create_for_course(
+            room_pointer, __ = CourseToRoomMapper.objects.get_or_create_for_course(
                 lti_data_room=lti_data_room, course_id=course_id,
                 user=user, mode=mode, lti_tool=lti_tool)
             room = room_pointer.room

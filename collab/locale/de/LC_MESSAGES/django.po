@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-16 11:07+0200\n"
+"POT-Creation-Date: 2022-08-25 07:33-0500\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -65,6 +65,15 @@ msgid "Discard all empty rooms (ONLY USE THIS ON TEST INSTANCES)"
 msgstr "Alle leeren Räume entfernen (NUR FÜR TESTINSTANZEN VERWENDEN)"
 
 #: collab/admin.py
+msgid "Clone room(s)"
+msgstr "Räume klonen"
+
+#: collab/admin.py
+#, python-format
+msgid "Rooms created: %s"
+msgstr "erstellte Räume: %s"
+
+#: collab/admin.py
 msgid "image"
 msgstr "Bild"
 
@@ -97,6 +106,30 @@ msgstr "Excalidraw-Metadaten"
 #, python-format
 msgid "The content MIME type of %s is not allowed"
 msgstr "Der Inhalts-MIME-Typ von %s ist nicht erlaubt"
+
+#: collab/models.py
+msgid "Classroom Assignment"
+msgstr "Klassenraum-Aufgabe"
+
+#: collab/models.py
+msgid "Group Assignment"
+msgstr "Gruppenaufgabe"
+
+#: collab/models.py
+msgid "Single Student"
+msgstr "Stillarbeit"
+
+#: collab/models.py
+msgid "Single Student Assignment (legacy)"
+msgstr "Stillarbeit (alt)"
+
+#: collab/models.py
+msgid "board mode"
+msgstr "Whiteboard-Modus"
+
+#: collab/models.py
+msgid "The user can only be set if the mode is set to “single student”"
+msgstr "Der:die Benutzer:in kann nur gesetzt werden, wenn der Modus auf „Stillarbeit” gesetzt ist"
 
 #: collab/templates/collab/add_library.html
 msgid "Library Added"

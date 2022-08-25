@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-16 11:07+0200\n"
+"POT-Creation-Date: 2022-08-25 07:33-0500\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -63,11 +63,11 @@ msgstr "Aufgabentyp"
 msgid "Classroom Assignment"
 msgstr "Klassenraum"
 
-#: ltiapi/templates/ltiapi/configure.html ltiapi/views.py
+#: ltiapi/templates/ltiapi/configure.html
 msgid "Group Assignment"
 msgstr "Gruppenarbeit"
 
-#: ltiapi/templates/ltiapi/configure.html ltiapi/views.py
+#: ltiapi/templates/ltiapi/configure.html
 msgid "Single Person Assignment"
 msgstr "Einzelperson"
 
@@ -93,8 +93,9 @@ msgid ""
 "  As we value your privacy, it is of our deepest interest to tell you which "
 "data is collected in\n"
 "  this application.\n"
-msgstr "Deine Privatsphäre ist uns sehr wichtig. Darum ist es in unserem "
-"Interesse, dir mitzuteilen, welche Daten wir in dieser Anwendung sammeln."
+msgstr ""
+"Deine Privatsphäre ist uns sehr wichtig. Darum ist es in unserem Interesse, "
+"dir mitzuteilen, welche Daten wir in dieser Anwendung sammeln."
 
 #: ltiapi/templates/ltiapi/privacy.html
 msgid "Collected Data"
@@ -151,13 +152,47 @@ msgstr "Neues Whiteboard"
 msgid ""
 "No configuration endpoint was found in the parameters. Are you trying to "
 "register a legacy LTI consumer? This app only supports LTI 1.3 Advantage."
-msgstr "Es wurde kein Konfigurations-Endpunkt in den Parametern gefunden. "
-"Möchtest Du einen Legacy-LTI-Consumer registrieren? Diese Anwendung unterstützt "
-"nur LTI 1.3 Advantage."
+msgstr ""
+"Es wurde kein Konfigurations-Endpunkt in den Parametern gefunden. Möchtest "
+"Du einen Legacy-LTI-Consumer registrieren? Diese Anwendung unterstützt nur "
+"LTI 1.3 Advantage."
 
 #: ltiapi/views.py
-msgid "You are not allowed to access this room."
-msgstr "Du darfst diesen Raum nicht betreten."
+#, python-format
+msgid "User %s tried to create a board with more than %d groups"
+msgstr ""
+"Der Benutzer %s hat versucht, ein Whiteboard mit mehr als %d Gruppen "
+"zu erstellen"
+
+#: ltiapi/views.py
+#, python-format
+msgid "There can't be more than %d groups."
+msgstr "Es können nicht mehr als %d Gruppen erstellt werden."
+
+#: ltiapi/views.py
+#, python-format
+msgid ""
+"User %s tried to create a board with less groups than what already existed."
+msgstr ""
+"Der Benutzer %s hat versucht, ein Whiteboard mit weniger als Gruppen "
+"zu erstellen als bereits existieren."
+
+#: ltiapi/views.py
+msgid ""
+"The number of groups you specified is smaller than the groups that currenty "
+"exist."
+msgstr ""
+"Die angegebene Anzahl an Gruppen ist kleiner als die Gruppen, die "
+"bereits existieren."
+
+#: ltiapi/views.py
+#, python-format
+msgid "User %s tried to request an illegal board mode."
+msgstr "Der Benutzer %s hat versucht, einen ungültigen Whiteboard-Modus anzufordern."
+
+#: ltiapi/views.py
+msgid "The mode you requested does not exist."
+msgstr "Der angeforderte Modus existiert nicht."
 
 #: ltiapi/views.py
 msgid "Invalid assignment type."
@@ -166,3 +201,6 @@ msgstr "Ungültiger Aufgabentyp."
 #: ltiapi/views.py
 msgid "Unknown or unsupported message type provided."
 msgstr "Unbekannter oder nicht unterstützter Nachrichtentyp."
+
+#~ msgid "You are not allowed to access this room."
+#~ msgstr "Du darfst diesen Raum nicht betreten."

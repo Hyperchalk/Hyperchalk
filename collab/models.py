@@ -367,7 +367,7 @@ class CourseToRoomMapper(models.Model):
         unique_together = [("lti_data_room", "course_id", "user")]
 
     def clean(self):
-        if self.user and self.mode not in [BoardMode.STUDENT, BoardMode.STUDENT_LEGACY]:
+        if self.user and self.mode not in [self.BoardMode.STUDENT, self.BoardMode.STUDENT_LEGACY]:
             raise ValidationError({
                 "user": _("The user can only be set if the mode is set to “single student”"),
             })
