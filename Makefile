@@ -8,26 +8,22 @@ MAKEFLAGS += --no-builtin-rules
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 
-docker-latest.log:
+latest:
 	docker build \
 		-t drawlti\:latest \
 		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
-		--platform linux/x86-64 $(BUILDFLAGS) . \
-	| tee docker-latest.log
-latest: docker-latest.log
+		--platform linux/x86-64 $(BUILDFLAGS) .
 .PHONY: latest
 
 
-docker-upload-latest.log: docker-latest.log
+upload-latest:
 	docker push \
-		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
-	| tee docker-upload-latest.log
-upload-latest: docker-upload-latest.log
+		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest
 upload: upload-latest
 .PHONY: upload-latest upload
 
 
-$(shell find . -name "*.po"): $(shell find . -name "*.py" -or -name "*.html")
+$(shell find . -name "*.po"):
 	python manage.py makemessages --locale=de \
 		--ignore="client" \
 		--ignore="devscripts" \
