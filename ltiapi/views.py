@@ -165,6 +165,9 @@ def lti_configure(request: HttpRequest, launch_id: str):
     message_launch_data = cast(dict, message_launch.get_launch_data())
     lti_tool = get_lti_tool(tool_conf, message_launch_data)
 
+    user = get_user_from_launch_data(message_launch_data, lti_tool)
+    login(request, user)
+
     # create a deep link and initialize the room
     course_title = get_course_context(message_launch_data).get('title', None)
     title = message_launch_data\
@@ -194,8 +197,24 @@ def lti_configure(request: HttpRequest, launch_id: str):
 
     elif mode == Modes.GROUPWORK:
         n_groups = int(request.POST.get('n-groups'))
+        if n_groups > 50:
+            logger.warning(
+                _("User %s tried to create a board with more than %d groups"),
+                user.username, settings.MAX_GROUPS)
+            return HttpResponseForbidden(
+                _("The can't be more than %d groups.") % (settings.MAX_GROUPS))
+
         existing_groups = request.POST.get('groups', None)
         existing_groups = existing_groups.split(",") if existing_groups else []
+        if len(existing_groups) > n_groups:
+            logger.warning(
+                _("User %s tried to create a board with less groups than what already existed."),
+                user.username, settings.MAX_GROUPS)
+            return HttpResponseBadRequest(
+                _("The number of groups you specified "
+                  "is smaller than the groups that currenty exist."
+                ) % (settings.MAX_GROUPS))
+
         room_names = [make_room_name(24) for _ in range(n_groups - len(existing_groups))]
         upsert_room_mappers(room_names)
         resource.set_title(title + " – " + Modes.GROUPWORK.label)\
@@ -204,6 +223,10 @@ def lti_configure(request: HttpRequest, launch_id: str):
     elif mode == Modes.STUDENT:
         resource.set_title(title + " – " + Modes.STUDENT.label)\
             .set_custom_params({'mode': mode, 'room': make_room_name(24)})
+
+    else:
+        logger.warning(_("User %s tried to request an illegal board mode."), user.username)
+        return HttpRespHttpResponseForbiddenonse(_("The mode you requested does not exist."))
 
     return HttpResponse(message_launch.get_deep_link().output_response_form([resource]))
 
@@ -222,28 +245,9 @@ def lti_launch(request: HttpRequest):
     message_launch_data = cast(dict, message_launch.get_launch_data())
 
     custom_data = get_custom_launch_data(message_launch_data)
-
-    # log the user in. if this is the user's first visit, save them to the database before.
-    # 1) extract user information from the data passed by the consumer
-    username = get_ext_data(message_launch_data).get('user_username') # type: ignore
-    username = issuer_namespaced_username(message_launch_data['iss'], username)
-    user_full_name = message_launch_data.get('name', '')
-
     lti_tool = get_lti_tool(tool_conf, message_launch_data)
 
-    # 2) get / create the user from the db and log them in
-    UserModel = get_user_model()
-    user, user_mod = UserModel.objects.get_or_create(username=username)
-    if not user.first_name:
-        user.first_name = user_full_name
-        user_mod = True
-    if user.registered_via_id != lti_tool.pk:
-        # needed if tool was re-registered. otherwise trying
-        # to save the user would raise an IngrityError.
-        user.registered_via = lti_tool
-        user_mod = True
-    if user_mod:
-        user.save()
+    user = get_user_from_launch_data(message_launch_data, lti_tool)
     login(request, user)
 
     if message_launch.is_deep_link_launch():

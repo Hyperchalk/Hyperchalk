@@ -308,7 +308,7 @@ class CourseToRoomMapperManager(models.Manager):
                 redirect = self.get(lti_data_room=lti_data_room, course_id=course_id, user=user.id)
             elif mode == Modes.STUDENT_LEGACY:
                 lti_data_room = get_legacy_user_room_name(lti_data_room, user)
-                redirect = self.get(lti_data_room=lti_data_room,course_id=course_id, user=user.id)
+                redirect = self.get(lti_data_room=lti_data_room, course_id=course_id, user=user.id)
             else:
                 redirect = self.get(lti_data_room=lti_data_room, course_id=course_id)
             return redirect, False

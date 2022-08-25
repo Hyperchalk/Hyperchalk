@@ -183,3 +183,25 @@ def get_course_id(message_launch_data: dict):
 
 def get_legacy_user_room_name(room_prefix: str, user: m.CustomUser):
     return room_prefix + base64.b64encode(user.id.bytes, altchars=b'_-').decode('ascii')[:8]
+
+def get_user_from_launch_data(message_launch_data: dict, lti_tool: LtiTool):
+    # log the user in. if this is the user's first visit, save them to the database before.
+    # 1) extract user information from the data passed by the consumer
+    username = get_ext_data(message_launch_data).get('user_username') # type: ignore
+    username = issuer_namespaced_username(message_launch_data['iss'], username)
+    user_full_name = message_launch_data.get('name', '')
+
+    # 2) get / create the user from the db so they can be logged in
+    user, user_mod = m.CustomUser.objects.get_or_create(
+        username=username, defaults={
+        'first_name': user_full_name,
+        'registered_via': lti_tool})
+    if user.registered_via_id != lti_tool.pk:
+        # needed if tool was re-registered. otherwise trying
+        # to save the user would raise an IngrityError.
+        user.registered_via = lti_tool
+        user_mod = True
+    if user_mod:
+        user.save()
+
+    return user
