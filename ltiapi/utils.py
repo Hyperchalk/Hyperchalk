@@ -192,7 +192,7 @@ def get_user_from_launch_data(message_launch_data: dict, lti_tool: LtiTool):
     user_full_name = message_launch_data.get('name', '')
 
     # 2) get / create the user from the db so they can be logged in
-    user, user_mod = m.CustomUser.objects.get_or_create(
+    user, __ = m.CustomUser.objects.get_or_create(
         username=username, defaults={
         'first_name': user_full_name,
         'registered_via': lti_tool})
@@ -200,8 +200,6 @@ def get_user_from_launch_data(message_launch_data: dict, lti_tool: LtiTool):
         # needed if tool was re-registered. otherwise trying
         # to save the user would raise an IngrityError.
         user.registered_via = lti_tool
-        user_mod = True
-    if user_mod:
         user.save()
 
     return user
