@@ -115,7 +115,7 @@ class ExcalidrawFileAdmin(admin.ModelAdmin):
     @admin.display(description=_("image"))
     def image(self, obj: m.ExcalidrawFile):
         return format_html(
-            '<img src="%(src)s" title="%(title)s" />',
+            '<img src="{src}" title="{title}" style="max-width: 100%"/>',
             src=obj.content.url,
             title=_("image %s for room %s") % (obj.element_file_id, obj.belongs_to_id))
 
