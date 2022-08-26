@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
 from .api import api
+from .utils.auth import user_is_staff_view
 
 admin.site.site_title = "Hyperchalk"
 admin.site.site_header = _("Hyperchalk Admin Page")
@@ -29,6 +30,7 @@ admin.site.site_header = _("Hyperchalk Admin Page")
 urlpatterns = [
     path('lti/', include('ltiapi.urls')),
     path('admin/', admin.site.urls),
+    path('is-staff/', user_is_staff_view, name='is-staff'),
     path('favicon.ico', generic.RedirectView.as_view(url=static_file('favicon.ico'))),
     path('', include('collab.urls')),
     path('api/', api.urls)
