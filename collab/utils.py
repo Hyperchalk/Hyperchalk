@@ -22,6 +22,8 @@ get_or_create_room = sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
 
 async_get_object_or_404 = sync_to_async(get_object_or_404)
 
+room_name = sync_to_async(lambda r: r.room_name)
+
 async def room_access_check(request: HttpRequest, room_obj: m.ExcalidrawRoom):
     """
     Checks if the logged in user has access to the supplied room object.
@@ -32,7 +34,9 @@ async def room_access_check(request: HttpRequest, room_obj: m.ExcalidrawRoom):
     :type room_obj: m.ExcalidrawRoom
     :raises PermissionDenied: if the user is not authenticated or authorized to access the room
     """
-    if not settings.ALLOW_ANONYMOUS_VISITS:
+    if await room_name(room_obj) in settings.PUBLIC_ROOMS:
+        pass
+    elif not settings.ALLOW_ANONYMOUS_VISITS:
         authenticated, authorized = await asyncio.gather(
             user_is_authenticated(request.user),
             user_is_authorized(request.user, room_obj, request.session))

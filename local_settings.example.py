@@ -23,6 +23,9 @@ from draw.utils import deepmerge
 # If set to false (default), users will need to be logged in.
 # ALLOW_ANONYMOUS_VISITS = True
 
+# These rooms are accessible without any authentication or authorization. List of room names.
+# PUBLIC_ROOMS = []
+
 # TODO: uncomment this if you are going to use SQLite. Otherwise you can delete it.
 # DATA_DIR = BASE_DIR / 'data'
 
