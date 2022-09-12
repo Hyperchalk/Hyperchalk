@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from draw.utils import absolute_reverse, make_room_name, reverse_with_query, validate_room_name
-from draw.utils.auth import require_staff_user, user_is_authenticated, Unauthenticated
+from draw.utils.auth import require_staff_user, user_is_authenticated, Unauthenticated, user_is_staff
 
 from . import models as m
 from .utils import room_access_check, async_get_object_or_404, get_or_create_room
@@ -81,6 +81,7 @@ async def room(request: HttpRequest, room_name: str):
             'SAVE_ROOM_MAX_WAIT_MSEC': settings.SAVE_ROOM_MAX_WAIT_MSEC,
             'SOCKET_URL': reverse_ws_url(request, "collaborate", room_name),
             'USER_NAME': username,
+            'USER_IS_STAFF': await user_is_staff(request.user),
         },
         'custom_messages': custom_messages(),
         'initial_elements': room_obj.elements,

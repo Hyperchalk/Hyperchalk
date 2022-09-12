@@ -107,7 +107,7 @@ function IndexPage() {
         onChange={communicator.broadcastElements}
         UIOptions={{
           canvasActions: {
-            loadScene: false,
+            loadScene: !!config.USER_IS_STAFF,
             clearCanvas: false,
           },
         }}

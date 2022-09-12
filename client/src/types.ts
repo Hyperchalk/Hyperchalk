@@ -40,6 +40,7 @@ export interface ConfigProps {
   SOCKET_URL: string
   UPLOAD_RETRY_TIMEOUT_MSEC: number
   USER_COLOR?: UserColor
+  USER_IS_STAFF?: boolean
   USER_NAME: string
 }
 
