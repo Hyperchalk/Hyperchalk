@@ -16,7 +16,7 @@ latest:
 .PHONY: latest
 
 
-upload-latest:
+upload-latest: latest
 	docker push \
 		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest
 upload: upload-latest
