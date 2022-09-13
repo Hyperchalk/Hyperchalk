@@ -61,7 +61,11 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         authenticated, authorized = await gather(
             user_is_authenticated(self.user),
             user_is_authorized(self.user, room, self.scope.get("session")))
-        if not settings.ALLOW_ANONYMOUS_VISITS and not authenticated and not authorized:
+        if (not settings.ALLOW_ANONYMOUS_VISITS
+            and self.room_name not in settings.PUBLIC_ROOMS
+            and not authenticated
+            and not authorized
+        ):
             _, username = await gather(
                 super().connect(),
                 user_name(self.user)
