@@ -86,7 +86,8 @@ def user_is_authorized(user: User, room: Room, session: SessionBase) -> bool:
     # if the session middleware is cookie based.
     allowed_course_ids = session.get('course_ids', [])
 
-    return (
+    # is_authenticated is needed because AnonymousUser don't has the attrs below.
+    return user.is_authenticated and (
         (user.is_staff and user.has_perm("collab.view_excalidrawroom"))
         or user.is_superuser
         or room.room_consumer_id is None

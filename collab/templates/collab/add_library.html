@@ -24,8 +24,11 @@
     (() => {
       let libsToAdd = getLocalStorageJson('_addLibraries', [])
       let hash = new URLSearchParams(window.location.hash.slice(1))
-      libsToAdd.push(hash.get('addLibrary'))
-      setLocalStorageJson('_addLibraries', libsToAdd)
+      let addLib = hash.get('addLibrary')
+      if (addLib) {
+        libsToAdd.push(addLib)
+        setLocalStorageJson('_addLibraries', libsToAdd)
+      }
     })()
   </script>
 </body>
