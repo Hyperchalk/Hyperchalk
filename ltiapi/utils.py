@@ -120,7 +120,7 @@ def lti_registration_data(request: HttpRequest):
             }],
             'description': settings.LTI_CONFIG['description'],
         },
-        'logo_uri': request.build_absolute_uri(static('ltiapi/fav.gif'))
+        'logo_uri': request.build_absolute_uri(static('ltiapi/fav.png'))
     }
 
 def get_launch_url(request: HttpRequest):

@@ -10,15 +10,15 @@ ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 latest:
 	docker build \
-		-t drawlti\:latest \
-		-t gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
+		-t hyperchalk\:latest \
+		-t ghcr.io/hyperchalk/hyperchalk\:latest \
 		--platform linux/x86-64 $(BUILDFLAGS) .
 .PHONY: latest
 
 
 upload-latest: latest
 	docker push \
-		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest
+		ghcr.io/hyperchalk/hyperchalk\:latest
 upload: upload-latest
 .PHONY: upload-latest upload
 
@@ -69,6 +69,6 @@ client-builder: client-builder.log
 admin:
 	docker run --rm -it --entrypoint gosu \
 		-v $(ROOT_DIR):/srv \
-		gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application\:latest \
+		ghcr.io/hyperchalk/hyperchalk\:latest \
 		ltiapp devscripts/create_admin.sh
 .PHONY: amdin
