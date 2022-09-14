@@ -6,12 +6,12 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-
+HC_VERSION := $(shell grep -hE "^__version__ =" draw/__init__.py | grep -ohE '(\d\.?)+')
 
 latest:
 	docker build \
-		-t hyperchalk\:latest \
-		-t ghcr.io/hyperchalk/hyperchalk\:latest \
+		-t hyperchalk\:latest -t hyperchalk\:$(HC_VERSION) \
+		-t ghcr.io/hyperchalk/hyperchalk\:latest -t ghcr.io/hyperchalk/hyperchalk\:$(HC_VERSION) \
 		--platform linux/x86-64 $(BUILDFLAGS) .
 .PHONY: latest
 
@@ -19,6 +19,8 @@ latest:
 upload-latest: latest
 	docker push \
 		ghcr.io/hyperchalk/hyperchalk\:latest
+	docker push \
+		ghcr.io/hyperchalk/hyperchalk\:$(HC_VERSION)
 upload: upload-latest
 .PHONY: upload-latest upload
 

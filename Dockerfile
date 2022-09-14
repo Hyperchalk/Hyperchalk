@@ -88,3 +88,5 @@ ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["draw.asgi", "--bind=0.0.0.0:8000"]
 
 EXPOSE 8000
+
+LABEL org.opencontainers.image.source https://github.com/Hyperchalk/Hyperchalk
