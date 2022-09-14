@@ -26,3 +26,4 @@ media/
 nginx-site.conf
 tmp/
 tooling.requirements.txt
+Makefile
