@@ -10,26 +10,78 @@ services:
     volumes:
       - ./data:/srv/data
       - ./media:/srv/media
-      - ./deployment_settings.py:/srv/deployment_settings.py:ro
       - ./static:/srv/static_copy
-    command: ["draw.asgi", "--bind=0.0.0.0:8000", "--workers=2"]
+      # use this if you want to create your own config file instead of using the environment vars
+      # - ./deployment_settings.py:/srv/deployment_settings.py:ro
+    command: [ "draw.asgi", "--bind=0.0.0.0:8000", "--workers=4" ]
     environment:
-      - "DJANGO_SETTINGS_MODULE=deployment_settings"
-    # depends_on:
-    #   - maria
-    #   - redis
+      # use this if you want to create your own config file instead of using the environment vars
+      # DJANGO_SETTINGS_MODULE: "deployment_settings"
 
-  # maria:
-  #   image: mariadb:latest
-  #   environment:
-  #     - MARIADB_DATABASE=draw
-  #     - MARIADB_USER=draw
-  #     - MARIADB_PASSWORD=drawpass666
-  #   volumes:
-  #     - './mariadb:/var/lib/mysql'
+      # these three settings make this compose file compatible with hyperchalk.
+      # TODO: change the mariadb password to your own!
+      DJANGO_SETTINGS_MODULE: "draw.env_settings"
+      DATABASE_URL: "mysql://hyperchalk:CHANGE_THIS_PASSWORD@maria:3306/hyperchalk"
+      HC_REDIS_URL: "redis://redis:6379"
 
-  # redis:
-  #   image: redis:alpine
-  #   volumes:
-  #     - ./redis/data:/data
-  #     - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      # the secret key is needed to encrypt cookies etc.
+      # You can get a good SECRET_KEY by executing the following command:
+      # < /dev/urandom tr -dc 'A-Za-z0-9!#$%&()*+,-./:;<=>?@[\]^_`{|}~' | head -c64; echo
+      # the result won't include the quote-characters so you can safely put the output string in quotes
+      # TODO: change this to your own SECRET_KEY
+      HC_SECRET_KEY: ""
+
+      # TODO: swap your.hostna.me for your own domain name.
+      HC_ALLOWED_HOSTS: "localhost,127.0.0.1,your.hostna.me"
+      HC_LINK_BASE: "your.hostna.me"
+
+      # the admin gets mailed in case something goes wrong
+      # TODO: enter your name/mail here
+      HC_ADMIN_NAME: "John Doe"
+      HC_ADMIN_MAIL: "jondoe@your.hostna.me"
+
+      # TODO: configure your time zone. get your time zone here:
+      # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      HC_TIME_ZONE: CET
+
+      # TODO: if you want to receive admin mail, configure it here
+      # HC_EMAIL_HOST:
+      # HC_EMAIL_PORT: 465
+      # HC_EMAIL_HOST_USER:
+      # HC_EMAIL_HOST_PASSWORD:
+      # HC_EMAIL_USE_TLS: true
+      # HC_EMAIL_USE_SSL: false # mutually exclusive to EMAIL_USE_TLS
+      # HC_EMAIL_SUBJECT_PREFIX: "[Hyperchalk]"
+
+      # allow the creation of rooms when the user visits the index page
+      # without specifying a room in the URL. (default is false.)
+      HC_ALLOW_AUTOMATIC_ROOM_CREATION: "false"
+
+      # If set to false (default), users will need to be logged in.
+      HC_ALLOW_ANONYMOUS_VISITS: "false"
+
+      # These rooms are accessible without any authentication or authorization. List of room names.
+      # comma-seperated list of room names, like this: "asdf,qwer,..."
+      HC_PUBLIC_ROOMS: ""
+
+      # Should NEVER be true in production! Set to "true" for debug messages if you encounter an error.
+      HC_DEBUG: "false"
+
+    depends_on:
+      - maria
+      - redis
+
+  maria:
+    image: mariadb:latest
+    # environment:
+    #   - MARIADB_DATABASE=hyperchalk
+    #   - MARIADB_USER=hyperchalk
+    #   - MARIADB_PASSWORD=CHANGE_THIS_PASSWORD
+    volumes:
+      - './mariadb:/var/lib/mysql'
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - ./redis/data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
