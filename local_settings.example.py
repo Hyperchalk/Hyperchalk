@@ -93,8 +93,10 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 # CACHES = {
 #     'default': {
 #         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         # 6379 is the default redis port. if you use docker,
-#         # the hostname is the name of the redis service.
+#         # 6379 is the default redis port. if you use docker, the hostname is the name of
+#         # the redis service. if you have a redis cluster, just add all servers to the list,
+#         # beginning with the leader. the url scheme is: 'redis://username:password@host:port'
+#         # or 'redis://host:port' if authentication is disabled on your redis.
 #         'LOCATION': ['redis://redis:6379']
 #     }
 # }
@@ -110,11 +112,12 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 # room being created twice with diverging local copies and either of the copies being saved to the
 # room table alternatingly.
 #
-# To prevent this from happening, use either the Redis layer [1], the layers implementation for
+# To prevent this from happening, use either the Redis layer [1][2], the layers implementation for
 # postgres [2] or any other layers implementation that suits your needs.
 #
 # [1]: https://channels.readthedocs.io/en/stable/topics/channel_layers.html#redis-channel-layer
-# [2]: https://github.com/danidee10/channels_postgres/
+# [2]: https://pypi.org/project/channels-redis/
+# [3]: https://github.com/danidee10/channels_postgres/
 #
 # TODO: uncomment this and configure your desired channel layer
 
