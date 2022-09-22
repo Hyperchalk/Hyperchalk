@@ -11,11 +11,12 @@ copyDist(
 )
 
 const basicconf = {
-  entryPoints: ["src/index.tsx"],
   bundle: true,
-  outfile: "dist/app.js",
+  entryPoints: ["src/app.tsx"],
+  format: "esm",
+  outdir: "dist/",
   sourcemap: true,
-  // plugins: [preactCompatPlugin],
+  splitting: true,
 }
 
 require("esbuild")

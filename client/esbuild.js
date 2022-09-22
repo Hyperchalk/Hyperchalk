@@ -13,18 +13,19 @@ copyDist(
 
 require("esbuild")
   .build({
-    entryPoints: ["src/index.tsx"],
     bundle: true,
-    outfile: "dist/app.js",
-    sourcemap: true,
-    minify: true,
+    entryPoints: ["src/app.tsx"],
+    format: "esm",
     metafile: true,
+    minify: true,
+    outdir: "dist/",
+    sourcemap: true,
+    splitting: true,
     treeShaking: true,
     define: {
       "process.env.NODE_ENV": "'production'",
       production: "'production'",
     },
-    // plugins: [preactCompatPlugin],
   })
   .then((result) => {
     fs.writeFileSync("dist/meta.json", JSON.stringify(result.metafile))

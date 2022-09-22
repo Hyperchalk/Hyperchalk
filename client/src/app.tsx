@@ -18,8 +18,6 @@ import { dispatchLtiFrameMessage } from "./lti"
 import { EventKey } from "./events"
 import TopRightUI from "./components/TopRightUI"
 
-window.React = React
-
 // welcome messages for dev tools
 console.log(
   [
