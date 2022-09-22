@@ -1,6 +1,5 @@
 import { AppState, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
-import React, { lazy, ReactChild, RefObject, Suspense } from "react"
-import { useState } from "react"
+import React, { lazy, ReactChild, RefObject, Suspense, useState } from "react"
 import IslandSection from "./IslandSection"
 
 const LazyHyperShow = lazy(() => import("./HyperShow"))
@@ -29,7 +28,7 @@ export default function TopRightUI({ isMobile, appState, apiRef }: TopRightUIPro
   const [panel, setPanel] = useState<"hypershow" | null>(null)
 
   return (
-    <div className="Stack Stack_vertical">
+    <div className="Stack Stack_vertical" style={{ "--gap": 4 } as React.CSSProperties}>
       <IslandSection title="Hyperchalk functions">
         <div className="Stack Stack_vertical">
           <div

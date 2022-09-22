@@ -1,3 +1,4 @@
+import React from "react"
 import { GaugeOptions } from "svg-gauge"
 import { ReplayCommunicator } from "../communication"
 import { useControlState, useReplayProgress } from "../communication/replay"
