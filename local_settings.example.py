@@ -29,7 +29,7 @@ from draw.utils import deepmerge
 # TODO: uncomment this if you are going to use SQLite. Otherwise you can delete it.
 # DATA_DIR = BASE_DIR / 'data'
 
-# Should NEVER be true in production!
+# Should NEVER be true in production! Set to True for debug messages if you encounter an error.
 DEBUG = False
 
 # TODO: Change this and uncomment! You can get a good key by executing the following command:
@@ -38,9 +38,9 @@ DEBUG = False
 
 # SECRET_KEY = "super_secret_key_that_has_to_be_changed_in_production!!!"
 
-# TODO: uncomment and add your host name(s) here!
+# TODO: add your host name(s) here!
 
-# ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # When you register an LTI consumer, you can call the command './manage.py makeconsumerlink'.
 # This command will display a URL to you that can be used to automatically configure this app
@@ -64,14 +64,18 @@ DEBUG = False
 # TODO: uncommment this and enter your database settings here.
 
 # DATABASES = {
+#     # uncomment this if you want SQLite
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
 #         'NAME':   DATA_DIR / 'db.sqlite3',
 #     },
+#     # uncomment this if you want MySQL / Postgres
 #     'default': {
-#         'ENGINE':   'django.db.backends.mysql',
-#         'NAME':     'TODO',
-#         'HOST':     'TODO',
+#         'ENGINE':   'django.db.backends.mysql',       # uncomment for mysql
+#         'ENGINE':   'django.db.backends.postgresql',  # uncomment for postgres
+#         'HOST':     'TODO', # db host. name of your docker service if you connect a db via docker.
+#         'NAME':     'TODO', # name of your database
+#         'USER':     'TODO',
 #         'PASSWORD': 'TODO',
 #     },
 # }
@@ -84,11 +88,13 @@ DEBUG = False
 # worker processes. This cannot be achieved via the in-memory caching-mechanism. If you use redis
 # anyway as the channels backend, you may want to just use it for caching, too.
 #
-# TODO: configure caching
+# TODO: uncomment to configure caching. required if you want to run more than one worker process.
 
 # CACHES = {
 #     'default': {
 #         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         # 6379 is the default redis port. if you use docker,
+#         # the hostname is the name of the redis service.
 #         'LOCATION': ['redis://redis:6379']
 #     }
 # }
@@ -113,12 +119,16 @@ DEBUG = False
 # TODO: uncomment this and configure your desired channel layer
 
 # CHANNEL_LAYERS = {
+#     # uncomment this if you only run one worker process
 #     "default": {
 #         "BACKEND": "channels.layers.InMemoryChannelLayer",
 #     },
+#     # uncomment this if you have more than one worker process and use redis
 #     "default": {
 #         "BACKEND": "channels_redis.core.RedisChannelLayer",
 #         "CONFIG": {
+#             # schema of this tuple is (hostname, port). if you use
+#             # docker, the hostname is the name of your service.
 #             "hosts": [("redis", 6379)],
 #         },
 #     },
@@ -162,15 +172,20 @@ LOGGING = deepmerge(LOGGING, {
 # EMAIL_HOST_PASSWORD = ...
 # EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = False                     # mutually exclusive to EMAIL_USE_TLS
-# EMAIL_SUBJECT_PREFIX = '[LTI DrawApp]'
+# EMAIL_SUBJECT_PREFIX = '[Hyperchalk]'
 
 # Static files
 # https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/
+#
+# usually, you don't need to change this.
 #
 # TODO: if you want to serve some custom static files, configure them here.
 
 # STATICFILES_DIRS.append(BASE_DIR / 'tmp')
 
+# Time Zones
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+#
 # TODO: configure your time zone.
 
 TIME_ZONE = 'CET'
