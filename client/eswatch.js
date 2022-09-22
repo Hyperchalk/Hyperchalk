@@ -37,15 +37,15 @@ require("esbuild")
     ...basicconf,
     watch: {
       onRebuild(error, result) {
-        copyDist("static", "dist")
-        copyDist(
-          "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets",
-          "dist/excalidraw-assets"
-        )
-        copyDist(
-          "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev",
-          "dist/excalidraw-assets-dev"
-        )
+        // copyDist("static", "dist")
+        // copyDist(
+        //   "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets",
+        //   "dist/excalidraw-assets"
+        // )
+        // copyDist(
+        //   "node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev",
+        //   "dist/excalidraw-assets-dev"
+        // )
         if (error) console.error("watch build failed:", error)
         else console.log("watch build succeeded:", result)
       },
