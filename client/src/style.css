@@ -64,3 +64,14 @@ svg.gauge .dial {
   height: 40px;
   width: 40px;
 }
+
+.excalidraw .ToolIcon_type_button {
+  background-color: var(--button-gray-1);
+  border-radius: var(--border-radius-md);
+  white-space: nowrap;
+}
+
+.hypershow__list {
+  list-style-type: none;
+  padding: 0;
+}

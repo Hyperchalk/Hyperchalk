@@ -1,5 +1,8 @@
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { AppState, Gesture } from "@excalidraw/excalidraw/types/types"
+import { AppState, ExcalidrawImperativeAPI, Gesture } from "@excalidraw/excalidraw/types/types"
+import { RefObject } from "react"
+
+export type ApiRef = RefObject<ExcalidrawImperativeAPI>
 
 export type BroadcastedExcalidrawElement = ExcalidrawElement & {
   parent?: string

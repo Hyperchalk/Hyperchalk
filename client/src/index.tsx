@@ -16,6 +16,7 @@ import { useCommunicatorExcalidrawRef, useConnectionState } from "./communicatio
 import ReplayControls from "./components/ReplayControls"
 import { dispatchLtiFrameMessage } from "./lti"
 import { EventKey } from "./events"
+import TopRightUI from "./components/TopRightUI"
 
 window.React = React
 
@@ -117,7 +118,9 @@ function IndexPage() {
         langCode={config.LANGUAGE_CODE}
         onLibraryChange={saveLibrary}
         libraryReturnUrl={config.LIBRARY_RETURN_URL}
-        renderTopRightUI={() => <div></div>}
+        renderTopRightUI={(isMobile, appState) => (
+          <TopRightUI isMobile={isMobile} appState={appState} apiRef={draw} />
+        )}
       />
       {config.IS_REPLAY_MODE && (
         <ReplayControls communicator={communicator as ReplayCommunicator} />
