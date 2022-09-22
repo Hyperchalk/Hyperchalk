@@ -3,7 +3,7 @@ version: "3.9"
 services:
   # these are the recommended settings to run your app
   drawapp:
-    image: gitlab-container.tba-hosting.de/lpa-aflek-alice/excalidraw-lti-application:latest
+    image: ghcr.io/hyperchalk/hyperchalk:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:8000:8000"
