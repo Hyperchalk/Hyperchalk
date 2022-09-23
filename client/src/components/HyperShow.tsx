@@ -2,8 +2,9 @@ import React, { RefObject, useCallback, useState } from "react"
 import IslandSection from "./IslandSection"
 import { Droppable, Draggable, DragDropContext, DropResult } from "react-beautiful-dnd"
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
-import { AppState, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types"
+import { AppState, ExcalidrawImperativeAPI, ExportOpts } from "@excalidraw/excalidraw/types/types"
 import { ApiRef } from "../types"
+import { exportToSvg } from "@excalidraw/excalidraw"
 
 interface DraggableElements {
   elements: ExcalidrawElement[]
@@ -15,6 +16,21 @@ interface ListItemProps {
   index: number
   rm: (idx: number) => void
   show: (elements: ExcalidrawElement[]) => void
+}
+
+function createDiagramWithElements(
+  elements: ExcalidrawElement[],
+  api: ExcalidrawImperativeAPI
+): ReturnType<typeof exportToSvg> {
+  return exportToSvg({
+    elements,
+    appState: {
+      viewBackgroundColor: "#fff",
+      exportBackground: false,
+    },
+    files: api.getFiles(),
+    exportPadding: 2,
+  })
 }
 
 function ListItem({ item, index, rm, show }: ListItemProps) {
