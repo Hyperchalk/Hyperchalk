@@ -25,7 +25,21 @@ export function useLoadLibraries(apiRef: RefObject<ExcalidrawImperativeAPI>) {
     let urls: string[] = getLocalStorageJson(_addLibraries, [])
     if (apiRef.current) {
       for (let url of urls) {
-        apiRef.current.importLibrary(url)
+        apiRef.current.updateLibrary({
+          libraryItems: new Promise<Blob>(async (resolve, reject) => {
+            try {
+              const request = await fetch(decodeURIComponent(url))
+              const blob = await request.blob()
+              resolve(blob)
+            } catch (error: any) {
+              reject(error)
+            }
+          }),
+          prompt: true,
+          merge: true,
+          defaultStatus: "published",
+          openLibraryMenu: true,
+        })
       }
       setLocalStorageJson(_addLibraries, [])
     }

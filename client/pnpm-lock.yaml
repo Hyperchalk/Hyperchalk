@@ -1,23 +1,25 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@excalidraw/excalidraw': ^0.11.0
-  '@types/lodash': ^4.14.179
-  '@types/react': ^17.0.39
+  '@excalidraw/excalidraw': ^0.12.0
+  '@excalidraw/utils': ^0.1.2
+  '@types/lodash': ^4.14.185
+  '@types/react': ^17.0.50
   '@types/react-beautiful-dnd': ^13.1.2
-  '@types/react-dom': ^17.0.11
+  '@types/react-dom': ^17.0.17
   '@types/reconnectingwebsocket': ^1.0.7
-  esbuild: ^0.14.20
+  esbuild: ^0.14.54
   lodash: ^4.17.21
   react: ^17.0.2
   react-beautiful-dnd: ^13.1.1
   react-dom: ^17.0.2
   reconnectingwebsocket: ^1.0.0
-  svg-gauge: ^1.0.6
-  typescript: ^4.6.2
+  svg-gauge: ^1.0.7
+  typescript: ^4.8.3
 
 dependencies:
-  '@excalidraw/excalidraw': 0.11.0_sfoxds7t5ydpegc3knd667wn6m
+  '@excalidraw/excalidraw': 0.12.0_sfoxds7t5ydpegc3knd667wn6m
+  '@excalidraw/utils': 0.1.2
   '@types/react-beautiful-dnd': 13.1.2
   esbuild: 0.14.54
   lodash: 4.17.21
@@ -52,8 +54,8 @@ packages:
     dev: false
     optional: true
 
-  /@excalidraw/excalidraw/0.11.0_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-wY0UdnN9JAcBKLzkGlVXiPSKgTO06YeeBhoIy/ezIiMJtfFtWBPjRjJROkdIGqnUmBz5L16MkuXE7b8j1b1ouw==}
+  /@excalidraw/excalidraw/0.12.0_sfoxds7t5ydpegc3knd667wn6m:
+    resolution: {integrity: sha512-xMPmKmOEgKij43k5m6Koaevb+SBw6La7MT9UDY8Iq7nQCMhA1HQwcUURfSkZ3ERibdQmMsAGtjSLbkX7hrA3+A==}
     peerDependencies:
       react: ^17.0.2
       react-dom: ^17.0.2
@@ -61,6 +63,10 @@ packages:
       dotenv: 10.0.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@excalidraw/utils/0.1.2:
+    resolution: {integrity: sha512-hypi3np+Do3e8Eb0Y1ug52EyJP4JAP3RPQRfAgiMN0ftag7M49vahiWVXd9yX4wsviCKYacTbBDs2mRqt3nyUQ==}
     dev: false
 
   /@types/hoist-non-react-statics/3.3.1:
