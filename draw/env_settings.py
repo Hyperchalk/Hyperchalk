@@ -31,6 +31,11 @@ PUBLIC_ROOMS = env.get("HC_PUBLIC_ROOMS", "").split(",")
 # Should NEVER be true in production! Set to True for debug messages if you encounter an error.
 DEBUG = env.get("HC_DEBUG") == "true"
 
+# set to true if you want to serve static files. we only recommend this if you want to try out
+# Hyperchalk. For any serious installation, you shold serve the static files in BASE_DIR/static_copy
+# using a real webserver like Nginx, Apache or Caddy.
+SERVE_FILES = env.get("HC_SERVE_FILES") == "true"
+
 # You can get a good key by executing the following command:
 # < /dev/urandom tr -dc 'A-Za-z0-9!#$%&()*+,-./:;<=>?@[\]^_`{|}~' | head -c64; echo
 # the result won't include the quote-characters so you can safely put the output string in quotes
@@ -139,6 +144,8 @@ LOGGING = deepmerge(LOGGING, {
 # Though this application does not send custom mails (yet), you might be interested in configuring
 # mail, so get admin-mailed when critical events get logged.
 
+if env.get("HC_EMAIL_BACKEND"):
+    EMAIL_BACKEND = env.get("HC_EMAIL_BACKEND")
 if env.get("HC_EMAIL_HOST"):
     EMAIL_BACKEND = env.get("HC_EMAIL_BACKEND", 'django.core.mail.backends.smtp.EmailBackend')
     EMAIL_HOST = env.get("HC_EMAIL_HOST")
@@ -147,6 +154,7 @@ if env.get("HC_EMAIL_HOST"):
     EMAIL_HOST_PASSWORD = env.get("HC_EMAIL_HOST_PASSWORD")
     EMAIL_USE_TLS = env.get("HC_EMAIL_USE_TLS", "true") == "true"
     EMAIL_USE_SSL = env.get("HC_EMAIL_USE_SSL", "false") == "true" # mutually exclusive to EMAIL_USE_TLS
+if env.get("HC_EMAIL_HOST") or env.get("HC_EMAIL_BACKEND"):
     EMAIL_SUBJECT_PREFIX = env.get("HC_EMAIL_SUBJECT_PREFIX", '[Hyperchalk]')
 
 # Time Zones

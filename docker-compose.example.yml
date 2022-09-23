@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   # these are the recommended settings to run your app
-  drawapp:
+  hyperchalk:
     image: ghcr.io/hyperchalk/hyperchalk:latest
     restart: unless-stopped
     ports:
@@ -66,6 +66,11 @@ services:
 
       # Should NEVER be true in production! Set to "true" for debug messages if you encounter an error.
       HC_DEBUG: "false"
+
+      # set to true if you want to serve static files. we only recommend this if you want to try out
+      # Hyperchalk. For any serious installation, you shold serve the static files in BASE_DIR/static_copy
+      # using a real webserver like Nginx, Apache or Caddy.
+      HC_SERVE_FILES: "false"
 
     depends_on:
       - maria
