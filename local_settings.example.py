@@ -34,7 +34,7 @@ DEBUG = False
 
 # set to true if you want to serve static files. we only recommend this if you want to try out
 # Hyperchalk. For any serious installation, you shold serve the static files in BASE_DIR/static_copy
-# using a real webserver like Nginx, Apache or Caddy.
+# and BASE_DIR/media using a real webserver like Nginx, Apache or Caddy.
 SERVE_FILES = False
 
 # TODO: Change this and uncomment! You can get a good key by executing the following command:
