@@ -31,6 +31,11 @@ PUBLIC_ROOMS = env.get("HC_PUBLIC_ROOMS", "").split(",")
 # Should NEVER be true in production! Set to True for debug messages if you encounter an error.
 DEBUG = env.get("HC_DEBUG") == "true"
 
+# set to true if you want to serve static files. we only recommend this if you want to try out
+# Hyperchalk. For any serious installation, you shold serve the static files in BASE_DIR/static_copy
+# using a real webserver like Nginx, Apache or Caddy.
+SERVE_FILES = env.get("HC_SERVE_FILES") == "true"
+
 # You can get a good key by executing the following command:
 # < /dev/urandom tr -dc 'A-Za-z0-9!#$%&()*+,-./:;<=>?@[\]^_`{|}~' | head -c64; echo
 # the result won't include the quote-characters so you can safely put the output string in quotes
