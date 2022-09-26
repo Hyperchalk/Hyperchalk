@@ -10,7 +10,9 @@ ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 # retrieve the software version from the draw/__init__.py file
 HC_VERSION := $(shell grep -hE "^__version__ =" draw/__init__.py | grep -ohE '(\d\.?)+')
 
+# TODO: compile messages in the Dockerfile
 latest:
+	python manage.py compilemessages
 	docker build \
 		-t hyperchalk\:latest -t hyperchalk\:$(HC_VERSION) \
 		-t ghcr.io/hyperchalk/hyperchalk\:latest -t ghcr.io/hyperchalk/hyperchalk\:$(HC_VERSION) \

@@ -52,7 +52,7 @@ msgid ""
 "overview after you have visited a board, simply reload the page."
 msgstr ""
 "Sie können nur Schüler:innen sehen, die bereits ein Whiteboard geöffnet "
-"haben.Um nach dem Besuch eines Whiteboards wieder auf diese Übersicht zu "
+"haben. Um nach dem Besuch eines Whiteboards wieder auf diese Übersicht zu "
 "kommen, laden Sie einfach die Seite neu."
 
 #: ltiapi/templates/ltiapi/choose_group.html
