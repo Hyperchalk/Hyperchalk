@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-25 07:33-0500\n"
+"POT-Creation-Date: 2022-09-26 13:29+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -41,6 +41,19 @@ msgstr "Consumer-Registrierungs-Zeitstempel"
 #: ltiapi/models.py
 msgid "registered via"
 msgstr "Registriert via"
+
+#: ltiapi/templates/ltiapi/board_teacher_overview.html
+msgid "Choose a student"
+msgstr "Wählen sie eine:n Schüler:in"
+
+#: ltiapi/templates/ltiapi/board_teacher_overview.html
+msgid ""
+"You can only see students who already opened a board. To come back to this "
+"overview after you have visited a board, simply reload the page."
+msgstr ""
+"Sie können nur Schüler:innen sehen, die bereits ein Whiteboard geöffnet "
+"haben.Um nach dem Besuch eines Whiteboards wieder auf diese Übersicht zu "
+"kommen, laden Sie einfach die Seite neu."
 
 #: ltiapi/templates/ltiapi/choose_group.html
 msgid "Choose an Assignment Group"
@@ -100,6 +113,36 @@ msgstr ""
 #: ltiapi/templates/ltiapi/privacy.html
 msgid "Collected Data"
 msgstr "Gesammelte Daten"
+
+#: ltiapi/templates/ltiapi/privacy.html
+msgid ""
+"\n"
+"  This application tracks every cursor movement of the collaborators and "
+"every change to the elements\n"
+"  on the board, as well as information on connections and disconnections to "
+"the board. All those data\n"
+"  points carry timestamps. It also has a user database, where a user record "
+"is automatically created\n"
+"  from the information supplied by your Learning Management System when you "
+"log in via LTI. This record\n"
+"  contains your user name, your real name that is provided by the LMS, a "
+"user ID and the ID of the LMS\n"
+"  that you used.\n"
+"\n"
+"  However, we do not link you to the stored actions directly. Instead, we "
+"create a pseudonym for you\n"
+"  on every board which is then stored in an association table. This table "
+"can be deleted at any time\n"
+"  to restore your anonymity. We need this to assign your pseudonyms to your "
+"pre- and\n"
+"  post-tests during learning indicator evaluation. We can also delete your "
+"entries in this table,\n"
+"  which has the effect that, while individual changes can still be traced "
+"back to the actions of\n"
+"  a single person per board, you cannot be tracked across multiple boards if "
+"your user record is\n"
+"  also deleted from the database.\n"
+msgstr ""
 
 #: ltiapi/templates/ltiapi/register_consumer_result.html
 msgid "The application registration succeeded."
@@ -161,8 +204,8 @@ msgstr ""
 #, python-format
 msgid "User %s tried to create a board with more than %d groups"
 msgstr ""
-"Der Benutzer %s hat versucht, ein Whiteboard mit mehr als %d Gruppen "
-"zu erstellen"
+"Der Benutzer %s hat versucht, ein Whiteboard mit mehr als %d Gruppen zu "
+"erstellen"
 
 #: ltiapi/views.py
 #, python-format
@@ -174,21 +217,22 @@ msgstr "Es können nicht mehr als %d Gruppen erstellt werden."
 msgid ""
 "User %s tried to create a board with less groups than what already existed."
 msgstr ""
-"Der Benutzer %s hat versucht, ein Whiteboard mit weniger als Gruppen "
-"zu erstellen als bereits existieren."
+"Der Benutzer %s hat versucht, ein Whiteboard mit weniger als Gruppen zu "
+"erstellen als bereits existieren."
 
 #: ltiapi/views.py
 msgid ""
 "The number of groups you specified is smaller than the groups that currenty "
 "exist."
 msgstr ""
-"Die angegebene Anzahl an Gruppen ist kleiner als die Gruppen, die "
-"bereits existieren."
+"Die angegebene Anzahl an Gruppen ist kleiner als die Gruppen, die bereits "
+"existieren."
 
 #: ltiapi/views.py
 #, python-format
 msgid "User %s tried to request an illegal board mode."
-msgstr "Der Benutzer %s hat versucht, einen ungültigen Whiteboard-Modus anzufordern."
+msgstr ""
+"Der Benutzer %s hat versucht, einen ungültigen Whiteboard-Modus anzufordern."
 
 #: ltiapi/views.py
 msgid "The mode you requested does not exist."

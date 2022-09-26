@@ -27,7 +27,7 @@ upload: upload-latest
 .PHONY: upload-latest upload
 
 
-$(shell find . -name "*.po"):
+messages:
 	python manage.py makemessages --locale=de \
 		--ignore="client" \
 		--ignore="devscripts" \
@@ -35,7 +35,6 @@ $(shell find . -name "*.po"):
 		--ignore="htmlcov" \
 		--ignore="tmp" \
 		--add-location="file"
-messages: $(shell find . -name "*.po")
 .PHONY: messages
 
 

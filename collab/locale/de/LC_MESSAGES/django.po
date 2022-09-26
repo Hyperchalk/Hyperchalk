@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-25 07:33-0500\n"
+"POT-Creation-Date: 2022-09-26 13:26+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -129,7 +129,9 @@ msgstr "Whiteboard-Modus"
 
 #: collab/models.py
 msgid "The user can only be set if the mode is set to “single student”"
-msgstr "Der:die Benutzer:in kann nur gesetzt werden, wenn der Modus auf „Stillarbeit” gesetzt ist"
+msgstr ""
+"Der:die Benutzer:in kann nur gesetzt werden, wenn der Modus auf "
+"„Stillarbeit” gesetzt ist"
 
 #: collab/templates/collab/add_library.html
 msgid "Library Added"
