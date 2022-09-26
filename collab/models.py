@@ -261,8 +261,6 @@ class CourseToRoomMapperManager(models.Manager):
     ) -> models.Model:
         """
         Create or clone a room if necessary, returning a mapper to it.
-
-        This method should be used when creating a
         """
         Modes = self.model.BoardMode
 
@@ -282,8 +280,9 @@ class CourseToRoomMapperManager(models.Manager):
         else:
             # the room was not created yet. the course might
             # have been cloned but it does not matter here.
+            new_room_name = make_room_name(24) if mode == Modes.STUDENT else lti_data_room
             new_room = ExcalidrawRoom(
-                room_name=lti_data_room,
+                room_name=new_room_name,
                 room_created_by=user,
                 room_consumer=lti_tool,
                 room_course_id=course_id)
@@ -320,6 +319,7 @@ class CourseToRoomMapperManager(models.Manager):
 
         # the room may have existed before and was opened from the course it was created on.
         # legacy single does not have to be implemented here as it would have been created above
+        # for Modes.STUDENT_LEGACY, lti_data_room is still the full legacy room name
         redirect = self.create_from_room_name(
             lti_data_room=lti_data_room, course_id=course_id,
             mode=mode, user=user, lti_tool=lti_tool)
