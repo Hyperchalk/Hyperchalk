@@ -9,20 +9,22 @@
 
 {% block body %}
 <h1>{% trans "Privacy" %}</h1>
-<p>{% blocktrans %}
+<p>{% blocktrans trimmed %}
   As we value your privacy, it is of our deepest interest to tell you which data is collected in
   this application.
 {% endblocktrans %}</p>
 
 <h2>{% trans "Collected Data" %}</h2>
-<p>{% blocktrans %}
+<p>{% blocktrans trimmed %}
   This application tracks every cursor movement of the collaborators and every change to the elements
   on the board, as well as information on connections and disconnections to the board. All those data
   points carry timestamps. It also has a user database, where a user record is automatically created
   from the information supplied by your Learning Management System when you log in via LTI. This record
   contains your user name, your real name that is provided by the LMS, a user ID and the ID of the LMS
   that you used.
-
+{% endblocktrans %}</p>
+  
+<p>{% blocktrans trimmed %}
   However, we do not link you to the stored actions directly. Instead, we create a pseudonym for you
   on every board which is then stored in an association table. This table can be deleted at any time
   to restore your anonymity. We need this to assign your pseudonyms to your pre- and
