@@ -1,0 +1,21 @@
+{% extends 'ltiapi/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ block.super }} – {% trans "Choose a student" %}{% endblock title %}
+
+{% block body %}
+<h1>{% trans "Choose a student" %}</h1>
+<p>
+  {% blocktrans trimmed %}
+  You can only see students who already opened a board. 
+  To come back to this overview after you have visited a board, simply reload the page.
+  {% endblocktrans %}
+</p>
+<ul>
+  {% for pointer in room_pointers %}
+  <li><a href="{% url 'collab:room' pointer.room_id %}">
+    {{pointer.user.first_name}}
+  </a></li>
+  {% endfor %}
+</ul>
+{% endblock body %}

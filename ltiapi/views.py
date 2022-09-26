@@ -25,7 +25,7 @@ from draw.utils.auth import user_is_authorized
 from . import models as m
 from .utils import (get_course_context, get_course_id, get_custom_launch_data, get_launch_url,
                     get_lti_tool, get_room_name, get_user_from_launch_data, lti_registration_data,
-                    make_tool_config_from_openid_config_via_link)
+                    make_tool_config_from_openid_config_via_link, launched_by_superior)
 
 logger = logging.getLogger("draw.ltiapi")
 
@@ -285,6 +285,24 @@ def lti_launch(request: HttpRequest):
                 for room_pointer_id in custom_data.get('rooms').split(",")]
             return render(request, 'ltiapi/choose_group.html', {
                 'room_pointers': [pointer for pointer, created in room_pointers]
+            })
+
+        if launched_by_superior(message_launch_data) and mode in [Modes.STUDENT, Modes.STUDENT_LEGACY]:
+            lti_data_room = get_room_name(request, message_launch_data)
+            if mode == Modes.STUDENT:
+                room_pointers = CourseToRoomMapper.objects.filter(
+                    lti_data_room=lti_data_room,
+                    course_id=course_id,
+                    mode=mode
+                )
+            elif mode == Modes.STUDENT_LEGACY:
+                room_pointers = CourseToRoomMapper.objects.filter(
+                    lti_data_room__startswith=lti_data_room,
+                    course_id=course_id,
+                    mode=mode
+                )
+            return render(request, 'ltiapi/board_teacher_overview.html', {
+                'room_pointers': room_pointers
             })
 
         if mode in [Modes.CLASSROOM, Modes.STUDENT, Modes.STUDENT_LEGACY]:
