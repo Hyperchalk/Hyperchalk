@@ -162,5 +162,11 @@ if env.get("HC_EMAIL_HOST") or env.get("HC_EMAIL_BACKEND"):
 
 TIME_ZONE = env.get("HC_TIME_ZONE", 'CET')
 
+# Language settings
+# The language code is respected by django, as well as excalidraw
+# https://docs.djangoproject.com/en/4.1/ref/settings/#language-code
+
+LANGUAGE_CODE = env.get("HC_LANGUAGE_CODE", "en-US")
+
 # NOTE: IMPORTANT. DO NOT REMOVE.
 finalize_settings(locals())
