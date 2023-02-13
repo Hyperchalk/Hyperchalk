@@ -50,6 +50,24 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         'save_room', 'full_sync', 'files_added'}
     channel_layer_namespace = 'draw_room_'
 
+    def create_task(self, coro, *, name=None):
+        """
+        we store the task in a set so it does not get garbage collected. See the important note
+        in the docs: https://docs.python.org/3.11/library/asyncio-task.html#asyncio.create_task
+
+        The params are the same as for ``asyncio.create_task()``.
+
+        TODO: add context param in python 3.11
+        """
+        task = asyncio.create_task(coro, name=name)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+        return task
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._tasks: Set[asyncio.Task] = set()
+
     # region connection handling
     async def connect(self):
         # pylint: disable=attribute-defined-outside-init
@@ -96,7 +114,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         # datetime being at some point back in time. this happens if the client collected data while
         # the connection has not been established yet. therefore, it just doesn't matter if the room
         # entry record is stored as the first consumer event. it's just a nice data point to have.
-        asyncio.create_task(create_record(
+        self.create_task(create_record(
             room_name=self.room_name,
             event_type='collaborator_entered',
             user_pseudonym=self.user_room_id,
@@ -114,8 +132,8 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         if code != 3000:
             # it is not mandatory to wait for these. it just needs
             # to be done at some point in the near future.
-            asyncio.create_task(self.notify_collaborators_about_leaving())
-            asyncio.create_task(create_record(
+            self.create_task(self.notify_collaborators_about_leaving())
+            self.create_task(create_record(
                 room_name=self.room_name,
                 event_type='collaborator_left',
                 user_pseudonym=self.user_room_id,
@@ -166,8 +184,8 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
 
         collaborator_to_send['userRoomId'] = self.user_room_id
 
-        asyncio.create_task(bulk_create_records(records))
-        asyncio.create_task(self.send_event(eventtype, changes=[collaborator_to_send]))
+        self.create_task(bulk_create_records(records))
+        self.create_task(self.send_event(eventtype, changes=[collaborator_to_send]))
 
     async def full_sync(self, room_name, eventtype, elements, **kwargs):
         """
@@ -302,6 +320,16 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
     # pylint: disable=attribute-defined-outside-init
     allowed_eventtypes = {'start_replay', 'pause_replay', 'restart_replay'}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._tasks: Set[asyncio.Task] = set()
+
+    def create_task(self, coro, *, name=None):
+        task = asyncio.create_task(coro, name=name)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+        return task
+
     async def connect(self):
         self.user: CustomUser = self.scope.get('user')
         if not await user_is_staff(self.user):
@@ -368,7 +396,7 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
         logger.info('start replay mode for room %s', self.room_name)
         if not getattr(self, 'log_record_info', []):
             await self.init_replay()
-        self.replay_task = asyncio.create_task(self.send_then_wait())
+        self.replay_task = self.create_task(self.send_then_wait())
         await self.send_json({'eventtype': 'start_replay'})
 
     async def pause_replay(self, *args, **kwargs):
@@ -416,7 +444,7 @@ class ReplayConsumer(LoggingAsyncJsonWebsocketConsumer):
                 #     f'sleep for {sleep_time.total_seconds():.2f} seconds.         ',
                 #     end="\r", file=sys.stderr)
             await asyncio.sleep(sleep_time.total_seconds())
-            self.replay_task = asyncio.create_task(self.send_then_wait())
+            self.replay_task = self.create_task(self.send_then_wait())
         else:
             # print(file=sys.stderr)
             async with self.message_was_sent_condition:

@@ -44,7 +44,7 @@ msgstr "Registriert via"
 
 #: ltiapi/templates/ltiapi/board_teacher_overview.html
 msgid "Choose a student"
-msgstr "Wählen sie eine:n Schüler:in"
+msgstr "Wählen Sie eine:n Schüler:in"
 
 #: ltiapi/templates/ltiapi/board_teacher_overview.html
 msgid ""
