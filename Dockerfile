@@ -5,23 +5,24 @@ WORKDIR /srv
 RUN apt update \
     && apt upgrade -y \
     && apt clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && npm i -g -f pnpm
 
 RUN groupadd -r builder \
     && useradd --no-log-init -r -m -g builder builder \
     && chown builder:builder /srv
 
 COPY --chown=builder:builder \
-    ./client/package.json ./client/package-lock.json \
+    ./client/package.json ./client/pnpm-lock.yaml \
     ./
 
 USER builder
 
-RUN npm install --production
+RUN pnpm install --frozen-lockfile
 
 COPY ./client/ ./
 
-RUN npm run build
+RUN pnpm run build
 
 # ------------------------------------------------------------------------------------------------ #
 
@@ -32,7 +33,7 @@ WORKDIR /opt
 RUN apt update \
     && apt upgrade -y \
     && apt install -y --no-install-recommends \
-        gcc libc-dev libmariadb-dev libpq-dev \
+    gcc libc-dev libmariadb-dev libpq-dev \
     && apt autoremove -y && apt autoclean && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
