@@ -64,3 +64,45 @@ svg.gauge .dial {
   height: 40px;
   width: 40px;
 }
+
+.visually-hidden {
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.topright {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  height: max-content !important;
+  width: max-content !important;
+}
+
+.topright__toggle {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.topright__icon {
+  cursor: pointer;
+  display: inline-block;
+  height: 1.5rem;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  width: 1.5rem;
+}
+
+.topright__icon:hover {
+  opacity: 1;
+}
+
+.topright__toggle-input:not(:checked) ~ * {
+  display: none;
+}

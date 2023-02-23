@@ -14,6 +14,7 @@ import { saveLibrary, useLoadLibraries } from "./persistance/library"
 import "./style.css"
 import { useCommunicatorExcalidrawRef, useConnectionState } from "./communication/communicator"
 import ReplayControls from "./components/ReplayControls"
+import TopRightUI from "./components/TopRightUI"
 import { dispatchLtiFrameMessage } from "./lti"
 import { EventKey } from "./events"
 
@@ -117,7 +118,7 @@ function IndexPage() {
         langCode={config.LANGUAGE_CODE}
         onLibraryChange={saveLibrary}
         libraryReturnUrl={config.LIBRARY_RETURN_URL}
-        renderTopRightUI={() => <div></div>}
+        renderTopRightUI={TopRightUI}
       />
       {config.IS_REPLAY_MODE && (
         <ReplayControls communicator={communicator as ReplayCommunicator} />

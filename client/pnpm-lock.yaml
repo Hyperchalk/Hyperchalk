@@ -8,6 +8,7 @@ specifiers:
   '@types/reconnectingwebsocket': ^1.0.7
   esbuild: ^0.14.54
   lodash: ^4.17.21
+  qrcode-generator: ^1.4.4
   react: ^17.0.2
   react-dom: ^17.0.2
   reconnectingwebsocket: ^1.0.0
@@ -18,6 +19,7 @@ dependencies:
   '@excalidraw/excalidraw': 0.11.0_sfoxds7t5ydpegc3knd667wn6m
   esbuild: 0.14.54
   lodash: 4.17.21
+  qrcode-generator: 1.4.4
   react: 17.0.2
   react-dom: 17.0.2_react@17.0.2
   reconnectingwebsocket: 1.0.0
@@ -318,6 +320,10 @@ packages:
   /object-assign/4.1.1:
     resolution: {integrity: sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM=}
     engines: {node: '>=0.10.0'}
+    dev: false
+
+  /qrcode-generator/1.4.4:
+    resolution: {integrity: sha512-HM7yY8O2ilqhmULxGMpcHSF1EhJJ9yBj8gvDEuZ6M+KGJ0YY2hKpnXvRD+hZPLrDVck3ExIGhmPtSdcjC+guuw==}
     dev: false
 
   /react-dom/17.0.2_react@17.0.2:

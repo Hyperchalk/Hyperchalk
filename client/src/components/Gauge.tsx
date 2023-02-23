@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import SvgGauge, { GaugeOptions, GaugeInstance } from "svg-gauge"
+import React from "react"
 
 /**
  * Gauge component based on svg-gauge.

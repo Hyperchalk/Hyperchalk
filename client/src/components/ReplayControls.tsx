@@ -2,6 +2,7 @@ import { GaugeOptions } from "svg-gauge"
 import { ReplayCommunicator } from "../communication"
 import { useControlState, useReplayProgress } from "../communication/replay"
 import Gauge from "./Gauge"
+import React from "react"
 
 const color = (val: number) => "green"
 
