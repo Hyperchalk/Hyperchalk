@@ -28,6 +28,11 @@ ALLOW_ANONYMOUS_VISITS = env.get("HC_ALLOW_ANONYMOUS_VISITS") == "true"
 # These rooms are accessible without any authentication or authorization. List of room names.
 PUBLIC_ROOMS = env.get("HC_PUBLIC_ROOMS", "").split(",")
 
+# Set if tracking is enabled or disabled by default. Defaults to True.
+# Tracking can be enabled or disabled individually for every room. Old rooms
+# from before when this setting was available will have tracking enabled.
+ENABLE_TRACKING_BY_DEFAULT = env.get("HC_ENABLE_TRACKING_BY_DEFAULT") != "false"
+
 # Should NEVER be true in production! Set to True for debug messages if you encounter an error.
 DEBUG = env.get("HC_DEBUG") == "true"
 

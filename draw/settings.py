@@ -209,6 +209,9 @@ ALLOW_AUTOMATIC_ROOM_CREATION = False
 # If set to false, users will need to be logged in.
 ALLOW_ANONYMOUS_VISITS = False
 
+# This sets the default value for complete pointer and element tracking (Log Records)
+ENABLE_TRACKING_BY_DEFAULT = True
+
 # how often the clients are going to broadcast updates on change (milliseconds)
 BROADCAST_RESOLUTION_THROTTLE_MSEC = 100
 

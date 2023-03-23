@@ -27,7 +27,7 @@ bulk_create_records = database_sync_to_async(m.ExcalidrawLogRecord.objects.bulk_
 upsert_room = database_sync_to_async(m.ExcalidrawRoom.objects.update_or_create)
 get_or_create_room = database_sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
 auth_room = database_sync_to_async(
-    m.ExcalidrawRoom.objects.only("room_name", "room_consumer").get_or_create)
+    m.ExcalidrawRoom.objects.only("room_name", "room_consumer", "tracking_enabled").get_or_create)
 stored_pseudonym_for_user_in_room = database_sync_to_async(
     m.Pseudonym.stored_pseudonym_for_user_in_room)
 
@@ -75,6 +75,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         self.user: CustomUser = self.scope['user']
         self.room_name = self.kwargs['room_name']
         room, _ = await auth_room(room_name=self.room_name)
+        self.tracking_enabled = room.tracking_enabled
 
         authenticated, authorized = await gather(
             user_is_authenticated(self.user),
@@ -108,18 +109,19 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         connect = await super().connect()
 
-        # the record can be created some time around here. we don't need to wait for that. but this
-        # should only be stored if the connection was successful. it would be nice if this entry
-        # would be the first one. however, collabotaror changes may be stored with the created_at
-        # datetime being at some point back in time. this happens if the client collected data while
-        # the connection has not been established yet. therefore, it just doesn't matter if the room
-        # entry record is stored as the first consumer event. it's just a nice data point to have.
-        self.create_task(create_record(
-            room_name=self.room_name,
-            event_type='collaborator_entered',
-            user_pseudonym=self.user_room_id,
-            _content=b'null',
-            _compressed=False))
+        if self.tracking_enabled:
+            # the record can be created some time around here. we don't need to wait for that. but this
+            # should only be stored if the connection was successful. it would be nice if this entry
+            # would be the first one. however, collabotaror changes may be stored with the created_at
+            # datetime being at some point back in time. this happens if the client collected data while
+            # the connection has not been established yet. therefore, it just doesn't matter if the room
+            # entry record is stored as the first consumer event. it's just a nice data point to have.
+            self.create_task(create_record(
+                room_name=self.room_name,
+                event_type='collaborator_entered',
+                user_pseudonym=self.user_room_id,
+                _content=b'null',
+                _compressed=False))
 
         return connect
 
@@ -133,12 +135,13 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             # it is not mandatory to wait for these. it just needs
             # to be done at some point in the near future.
             self.create_task(self.notify_collaborators_about_leaving())
-            self.create_task(create_record(
-                room_name=self.room_name,
-                event_type='collaborator_left',
-                user_pseudonym=self.user_room_id,
-                _content=b'null',
-                _compressed=False))
+            if self.tracking_enabled:
+                self.create_task(create_record(
+                    room_name=self.room_name,
+                    event_type='collaborator_left',
+                    user_pseudonym=self.user_room_id,
+                    _content=b'null',
+                    _compressed=False))
         return disconnect
 
     async def notify_collaborators_about_leaving(self):
@@ -157,34 +160,36 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         """
         # logger.debug("called collaborator_change")
         collaborator_to_send = deepcopy(changes[-1])
-        records = []
 
-        # the reference datetime is calculated on the server so that we
-        # don't have to rely on the client to send the correct datetime.
-        # only the time delta of the client actions need to be correct.
-        client_reference_dt = collaborator_to_send.get('time', None)
-        client_reference_dt = parse_datetime(client_reference_dt) if client_reference_dt else now()
-        now_dt = now()
+        if self.tracking_enabled:
+            # the reference datetime is calculated on the server so that we
+            # don't have to rely on the client to send the correct datetime.
+            # only the time delta of the client actions need to be correct.
+            client_reference_dt = collaborator_to_send.get('time', None)
+            client_reference_dt = parse_datetime(client_reference_dt) if client_reference_dt else now()
+            now_dt = now()
 
-        for change in changes:
-            del change['username']
+            records = []
 
-            # time recalculation happens here.
-            client_dt = change.pop('time', None)
-            client_dt = parse_datetime(client_dt) if client_dt else now()
-            delta = client_reference_dt - client_dt
+            for change in changes:
+                del change['username']
 
-            record = m.ExcalidrawLogRecord(
-                room_name=room_name,
-                event_type=eventtype,
-                user_pseudonym=self.user_room_id,
-                created_at=now_dt - delta)
-            record.content = change
-            records.append(record)
+                # time recalculation happens here.
+                client_dt = change.pop('time', None)
+                client_dt = parse_datetime(client_dt) if client_dt else now()
+                delta = client_reference_dt - client_dt
+
+                record = m.ExcalidrawLogRecord(
+                    room_name=room_name,
+                    event_type=eventtype,
+                    user_pseudonym=self.user_room_id,
+                    created_at=now_dt - delta)
+                record.content = change
+                records.append(record)
+
+            self.create_task(bulk_create_records(records))
 
         collaborator_to_send['userRoomId'] = self.user_room_id
-
-        self.create_task(bulk_create_records(records))
         self.create_task(self.send_event(eventtype, changes=[collaborator_to_send]))
 
     async def full_sync(self, room_name, eventtype, elements, **kwargs):
@@ -197,15 +202,18 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         """
         Forwards all full syncs and single edits to clients and logs them to the data base.
         """
-        record = m.ExcalidrawLogRecord(
-            room_name=room_name,
-            event_type=eventtype,
-            user_pseudonym=self.user_room_id
-        )
-        record.content = elements
-        await gather(
-            self.send_event(eventtype, elements=elements, **kwargs),
-            database_sync_to_async(record.save)())
+        if self.tracking_enabled:
+            record = m.ExcalidrawLogRecord(
+                room_name=room_name,
+                event_type=eventtype,
+                user_pseudonym=self.user_room_id
+            )
+            record.content = elements
+            await gather(
+                self.send_event(eventtype, elements=elements, **kwargs),
+                database_sync_to_async(record.save)())
+        else:
+            await self.send_event(eventtype, elements=elements, **kwargs)
 
     async def files_added(self, room_name, eventtype, fileids: List[str], **kwargs):
         """

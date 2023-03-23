@@ -44,6 +44,7 @@ class ExcalidrawRoomAdmin(admin.ModelAdmin):
     fields = [
         "room_name",
         "room_created_by",
+        "tracking_enabled",
         ("created_at", "last_update"),
         ("room_consumer", "room_course_id"),
         "room_link",

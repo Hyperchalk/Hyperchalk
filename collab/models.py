@@ -5,6 +5,7 @@ from sqlite3 import IntegrityError
 from typing import Optional, TypeVar
 from urllib.request import urlopen
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import MinLengthValidator
@@ -12,9 +13,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
-from draw.utils import (JSONType, bytes_to_data_uri, compression_ratio, dump_content, load_content,
-                        make_room_name, pick, uncompressed_json_size, user_id_for_room,
-                        validate_room_name)
+from draw.utils import (JSONType, bytes_to_data_uri, compression_ratio, dump_content, load_content, make_room_name,
+                        pick, uncompressed_json_size, user_id_for_room, validate_room_name)
 from ltiapi.models import CustomUser
 from ltiapi.utils import get_legacy_user_room_name
 
@@ -104,6 +104,7 @@ class ExcalidrawRoom(models.Model):
     room_created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     room_consumer = models.ForeignKey(LtiTool, on_delete=models.SET_NULL, null=True, blank=True)
     room_course_id = models.CharField(max_length=255, null=True, blank=True)
+    tracking_enabled = models.BooleanField(_("track users' actions"), default=settings.ENABLE_TRACKING_BY_DEFAULT)
     _elements = models.BinaryField(blank=True, default=EMPTY_JSON_LIST_ZLIB_COMPRESSED)
 
     @property
@@ -359,9 +360,7 @@ class CourseToRoomMapper(models.Model):
         max_length=12, verbose_name=_("board mode"),
         choices=BoardMode.choices, default=BoardMode.CLASSROOM)
     course_id = models.CharField(max_length=255, null=True, blank=True)
-    user = models.ForeignKey(
-        CustomUser, on_delete=models.SET_NULL,
-        null=True, verbose_name=_("user"))
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, blank=True, null=True, verbose_name=_("user"))
 
     objects = CourseToRoomMapperManager()
 

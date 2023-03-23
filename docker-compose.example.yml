@@ -64,6 +64,11 @@ services:
       # comma-seperated list of room names, like this: "asdf,qwer,..."
       HC_PUBLIC_ROOMS: ""
 
+      # Set if tracking is enabled or disabled by default. Defaults to "true".
+      # Tracking can be enabled or disabled individually for every room. Old rooms
+      # from before when this setting was available will have tracking enabled.
+      HC_ENABLE_TRACKING_BY_DEFAULT: "true"
+
       # Should NEVER be true in production! Set to "true" for debug messages if you encounter an error.
       HC_DEBUG: "false"
 

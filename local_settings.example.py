@@ -26,6 +26,11 @@ from draw.utils import deepmerge
 # These rooms are accessible without any authentication or authorization. List of room names.
 # PUBLIC_ROOMS = []
 
+# Set if tracking is enabled or disabled by default. Defaults to True.
+# Tracking can be enabled or disabled individually for every room. Old rooms
+# from before when this setting was available will have tracking enabled.
+# ENABLE_TRACKING_BY_DEFAULT = True
+
 # TODO: uncomment this if you are going to use SQLite. Otherwise you can delete it.
 # DATA_DIR = BASE_DIR / 'data'
 
