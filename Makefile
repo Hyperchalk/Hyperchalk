@@ -76,4 +76,4 @@ admin:
 		-v $(ROOT_DIR):/srv \
 		ghcr.io/hyperchalk/hyperchalk\:latest \
 		ltiapp devscripts/create_admin.sh
-.PHONY: amdin
+.PHONY: admin

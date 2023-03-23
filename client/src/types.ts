@@ -5,10 +5,7 @@ export type BroadcastedExcalidrawElement = ExcalidrawElement & {
   parent?: string
 }
 
-export type ReconciliationAppState = Pick<
-  AppState,
-  "editingElement" | "resizingElement" | "draggingElement"
->
+export type ReconciliationAppState = Pick<AppState, "editingElement" | "resizingElement" | "draggingElement">
 
 export interface Pointer {
   x: number
@@ -37,6 +34,7 @@ export interface ConfigProps {
   MAX_RETRY_WAIT_MSEC: number
   ROOM_NAME: string
   SAVE_ROOM_MAX_WAIT_MSEC: number
+  SHOW_QR_CODE: boolean
   SOCKET_URL: string
   UPLOAD_RETRY_TIMEOUT_MSEC: number
   USER_COLOR?: UserColor

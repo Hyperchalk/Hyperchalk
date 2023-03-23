@@ -35,8 +35,7 @@ console.log(
 // moodle makes the frame very small. I don't know if other LMS do this as well. When the
 // LTI Message Handler plugin is installed, this will resize the frame to an appropriate
 // size. See https://moodle.org/plugins/ltisource_message_handler
-const adjustFrameHeight = () =>
-  dispatchLtiFrameMessage("lti.frameResize", { height: "calc(100vh - 75px)" })
+const adjustFrameHeight = () => dispatchLtiFrameMessage("lti.frameResize", { height: "calc(100vh - 75px)" })
 adjustFrameHeight()
 window.addEventListener("resize", adjustFrameHeight)
 
@@ -52,6 +51,7 @@ const defaultConfig: ConfigProps = {
   MAX_RETRY_WAIT_MSEC: 300_000,
   ROOM_NAME: "_default",
   SAVE_ROOM_MAX_WAIT_MSEC: 15_000,
+  SHOW_QR_CODE: true,
   SOCKET_URL: "",
   UPLOAD_RETRY_TIMEOUT_MSEC: 1_000,
   USER_NAME: "",
@@ -60,9 +60,7 @@ const defaultConfig: ConfigProps = {
 const config: ConfigProps = { ...defaultConfig, ...getJsonScript("excalidraw-config") }
 const msg: Record<string, string> = getJsonScript("custom-messages")
 
-const initialData = config.IS_REPLAY_MODE
-  ? getInitialReplayData()
-  : getInitialData(config.ROOM_NAME)
+const initialData = config.IS_REPLAY_MODE ? getInitialReplayData() : getInitialData(config.ROOM_NAME)
 
 const ws = new ReconnectingWebSocket(config.SOCKET_URL)
 let communicator = config.IS_REPLAY_MODE
@@ -79,16 +77,11 @@ function IndexPage() {
     window.draw = draw
   }, [draw])
 
-  const saveStateToLocalStorage = config.IS_REPLAY_MODE
-    ? useCallback(noop, [])
-    : useSaveState(draw, config.ROOM_NAME)
+  const saveStateToLocalStorage = config.IS_REPLAY_MODE ? useCallback(noop, []) : useSaveState(draw, config.ROOM_NAME)
 
   const saveToServerImmediately = config.IS_REPLAY_MODE
     ? useCallback(noop, [])
-    : useCallback(
-        () => (communicator as CollaborationCommunicator).saveRoomImmediately(),
-        [communicator]
-      )
+    : useCallback(() => (communicator as CollaborationCommunicator).saveRoomImmediately(), [communicator])
 
   const loadEnqueuedLibraries = useLoadLibraries(draw)
 
@@ -118,11 +111,9 @@ function IndexPage() {
         langCode={config.LANGUAGE_CODE}
         onLibraryChange={saveLibrary}
         libraryReturnUrl={config.LIBRARY_RETURN_URL}
-        renderTopRightUI={TopRightUI}
+        renderTopRightUI={TopRightUI(config)}
       />
-      {config.IS_REPLAY_MODE && (
-        <ReplayControls communicator={communicator as ReplayCommunicator} />
-      )}
+      {config.IS_REPLAY_MODE && <ReplayControls communicator={communicator as ReplayCommunicator} />}
     </div>
   ) : (
     <p style={{ margin: "1rem" }}>{msg.NOT_LOGGED_IN}</p>

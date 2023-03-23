@@ -14,32 +14,18 @@ export default function ReplayControls({ communicator }: { communicator: ReplayC
   return (
     <div className="replay-controls">
       {controlState == "play" ? (
-        <button
-          className="replay-controls__button"
-          onClick={(e) => sendControlState("pause_replay")}
-        >
+        <button className="replay-controls__button" onClick={(e) => sendControlState("pause_replay")}>
           ⏸
         </button>
       ) : (
-        <button
-          className="replay-controls__button"
-          onClick={(e) => sendControlState("start_replay")}
-        >
+        <button className="replay-controls__button" onClick={(e) => sendControlState("start_replay")}>
           ▶️
         </button>
       )}
-      <button
-        className="replay-controls__button"
-        onClick={(e) => sendControlState("restart_replay")}
-      >
+      <button className="replay-controls__button" onClick={(e) => sendControlState("restart_replay")}>
         ⏮
       </button>
-      <Gauge
-        className="replay-controls__progress"
-        maxValue={duration}
-        options={options}
-        value={current}
-      />
+      <Gauge className="replay-controls__progress" maxValue={duration} options={options} value={current} />
     </div>
   )
 }

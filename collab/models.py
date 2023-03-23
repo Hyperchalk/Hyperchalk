@@ -352,7 +352,7 @@ class CourseToRoomMapper(models.Model):
         STUDENT_LEGACY = "single",    _("Single Student Assignment (legacy)")
 
     room = models.OneToOneField(
-        ExcalidrawRoom, primary_key=True,
+        ExcalidrawRoom, primary_key=True, related_name="course",
         on_delete=models.CASCADE, verbose_name=_("room name"))
     lti_data_room = models.CharField(max_length=24, validators=[validate_room_name])
     mode = models.CharField(

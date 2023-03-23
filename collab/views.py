@@ -38,6 +38,11 @@ def get_file_dicts(room_obj: m.ExcalidrawRoom):
     return {f.element_file_id: f.to_excalidraw_file_schema().dict() for f in room_obj.files.all()}
 
 
+@database_sync_to_async
+def course_exists(room_obj: m.ExcalidrawRoom):
+    return hasattr(room_obj, 'course')
+
+
 def custom_messages():
     return {
         'NOT_LOGGED_IN': _("You need to be logged in."),
@@ -69,6 +74,11 @@ async def room(request: HttpRequest, room_name: str):
     except Unauthenticated:
         return redirect(reverse_with_query('admin:login', query_kwargs={'next': request.path}))
 
+    is_lti_room, is_staff, file_dicts = await asyncio.gather(
+        course_exists(room_obj),
+        user_is_staff(request.user),
+        get_file_dicts(room_obj))
+
     return render(request, 'collab/index.html', {
         'excalidraw_config': {
             'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
@@ -79,13 +89,14 @@ async def room(request: HttpRequest, room_name: str):
             'LIBRARY_RETURN_URL': absolute_reverse(request, 'collab:add-library'),
             'ROOM_NAME': room_name,
             'SAVE_ROOM_MAX_WAIT_MSEC': settings.SAVE_ROOM_MAX_WAIT_MSEC,
+            'SHOW_QR_CODE': not is_lti_room,
             'SOCKET_URL': reverse_ws_url(request, "collaborate", room_name),
             'USER_NAME': username,
-            'USER_IS_STAFF': await user_is_staff(request.user),
+            'USER_IS_STAFF': is_staff,
         },
         'custom_messages': custom_messages(),
         'initial_elements': room_obj.elements,
-        'files': await get_file_dicts(room_obj)
+        'files': file_dicts
     })
 
 
