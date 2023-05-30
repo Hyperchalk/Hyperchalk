@@ -7,7 +7,7 @@ test -d /srv/data && chown -R ltiapp:ltiapp /srv/data
 test -d /srv/static_copy && chown -R ltiapp:ltiapp /srv/static_copy
 
 if [[ "$1" == "manage" ]]; then
-	# management commands for "docker run --rm buvo-tool manage ..."
+	# management commands for "docker run --rm hyperchalk manage ..."
   shift
   exec gosu ltiapp:ltiapp python3 manage.py $@
 else

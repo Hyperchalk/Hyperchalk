@@ -104,8 +104,6 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
             if self.user.id is not None \
             else user_id_for_room(uuid.uuid4(), self.room_name)
 
-        self.known_deleted_items = dict()
-
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         connect = await super().connect()
 
@@ -237,7 +235,7 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
 
     async def save_room(self, room_name, elements, **kwargs):
         """
-        Saves the room if all submitted elements have a newser version than the saved version.
+        Saves the room if all submitted elements have a newer or equal version than the saved version.
 
         If a submitted element happens to have an older version number than an already stored
         version of the element, nothing will be done. It is assumed, taht the clients submit
@@ -249,33 +247,30 @@ class CollaborationConsumer(LoggingAsyncJsonWebsocketConsumer):
         Deleted elements will not be saved.
         """
         old_room, created = await get_or_create_room(room_name=room_name)
-        old_room_versions = {e['id']: e['version'] for e in old_room.elements}
+        old_versions = {e['id']: e['version'] for e in old_room.elements}
 
         differences_detected = False
-        elements_to_store = []
 
         if not created:
             for e in elements:
-                old_version = old_room_versions.get(e['id'], -1)
-                if e.get('isDeleted', False):
-                    # known deleted items get precedence over the element version from the db
-                    old_version = self.known_deleted_items.get(e['id'], old_version)
+                old_version = old_versions.get(e['id'], -1)
                 if old_version > e['version']:
                     # stop when an old version is newer. the reconciliation algo for merging the
                     # elements is executed on the client side. clients should send a new save_room
                     # event after merging the state, updating all elements to their newset versions.
+                    # deleted items have to be stored so the reconciliation algo can detect them
+                    # and delete them on the client side. if the server would delete them here,
+                    # the client would not know that the element was deleted and would not be able
+                    # to delete it on the client side.
                     return
-                if e.get('isDeleted', False):
-                    self.known_deleted_items[e['id']] = e['version']
-                else:
-                    # only store non-deleted elements
-                    elements_to_store.append(e)
                 differences_detected = differences_detected or old_version < e['version']
+        else:
+            differences_detected = True
 
         if differences_detected:
             known_file_ids = set(e['fileId'] for e in elements if 'fileId' in e)
 
-            elements_to_store, _ = dump_content(elements_to_store, force_compression=True)
+            elements_to_store, _ = dump_content(elements, force_compression=True)
             room_tuple, _ = await gather(
                 upsert_room(room_name=room_name, defaults={'_elements': elements_to_store}),
                 self.maybe_request_missing_files(room_name, known_file_ids))
