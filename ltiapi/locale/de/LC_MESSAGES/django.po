@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-26 13:54+0200\n"
+"POT-Creation-Date: 2023-06-13 14:32+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -92,15 +92,11 @@ msgstr "Anzahl der Gruppen:"
 msgid "Create Assignment"
 msgstr "Aufgabe anlegen"
 
-#: ltiapi/templates/ltiapi/privacy.html
-msgid "Privacy Notes"
-msgstr "Datenschutzhinweise"
-
-#: ltiapi/templates/ltiapi/privacy.html
+#: ltiapi/templates/ltiapi/privacy-statement.html
 msgid "Privacy"
 msgstr "Datenschutz"
 
-#: ltiapi/templates/ltiapi/privacy.html
+#: ltiapi/templates/ltiapi/privacy-statement.html
 msgid ""
 "As we value your privacy, it is of our deepest interest to tell you which "
 "data is collected in this application."
@@ -108,11 +104,11 @@ msgstr ""
 "Deine Privatsphäre ist uns sehr wichtig. Darum ist es in unserem Interesse, "
 "dir mitzuteilen, welche Daten wir in dieser Anwendung sammeln."
 
-#: ltiapi/templates/ltiapi/privacy.html
+#: ltiapi/templates/ltiapi/privacy-statement.html
 msgid "Collected Data"
 msgstr "Gesammelte Daten"
 
-#: ltiapi/templates/ltiapi/privacy.html
+#: ltiapi/templates/ltiapi/privacy-statement.html
 msgid ""
 "This application tracks every cursor movement of the collaborators and every "
 "change to the elements on the board, as well as information on connections "
@@ -132,7 +128,7 @@ msgstr ""
 "echten Namen, der vom LMS bereitgestellt wird, eine Benutzer-ID und die ID "
 "des LMS das Sie benutzt haben."
 
-#: ltiapi/templates/ltiapi/privacy.html
+#: ltiapi/templates/ltiapi/privacy-statement.html
 msgid ""
 "However, we do not link you to the stored actions directly. Instead, we "
 "create a pseudonym for you on every board which is then stored in an "
@@ -154,6 +150,10 @@ msgstr ""
 "einzelnen Person pro Board zurückgeführt werden können, Sie aber nicht mehr "
 "boardübergreifend verfolgt werden können, wenn Ihr Benutzerdatensatz "
 "ebenfalls aus der Datenbank gelöscht wird."
+
+#: ltiapi/templates/ltiapi/privacy.html
+msgid "Privacy Notes"
+msgstr "Datenschutzhinweise"
 
 #: ltiapi/templates/ltiapi/register_consumer_result.html
 msgid "The application registration succeeded."
