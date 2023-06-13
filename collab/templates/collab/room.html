@@ -11,6 +11,29 @@
 </head>
 
 <body>
+  {% if show_privacy_notice %}
+  <dialog id="privacy-statement">
+    {% include "ltiapi/privacy-statement.html" %}
+    <form method="dialog" id="privacy-statement-form">
+      <button>Accept</button>
+      <button type="button" id="privacy-statement-decline">Decline and Close Hyperchalk</button>
+    </form>
+  </dialog>
+  <script>
+    /** @type {HTMLDialogElement} */
+    if (!localStorage.getItem("readPrivacyStatement")) {
+      document.getElementById("privacy-statement").showModal()
+    }
+
+    document
+      .getElementById("privacy-statement-form")
+      .addEventListener("submit", () => localStorage.setItem("readPrivacyStatement", "true"))
+
+    document
+      .getElementById("privacy-statement-decline")
+      .addEventListener("click", window.close)
+  </script>
+  {% endif %}
   <div id="app"></div>
   {% csrf_token %}
   <script>

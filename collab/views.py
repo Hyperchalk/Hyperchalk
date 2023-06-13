@@ -79,7 +79,7 @@ async def room(request: HttpRequest, room_name: str):
         user_is_staff(request.user),
         get_file_dicts(room_obj))
 
-    return render(request, 'collab/index.html', {
+    return render(request, 'collab/room.html', {
         'excalidraw_config': {
             'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
                 'room_name': room_name, 'file_id': 'FILE_ID'}),
@@ -96,14 +96,16 @@ async def room(request: HttpRequest, room_name: str):
         },
         'custom_messages': custom_messages(),
         'initial_elements': room_obj.elements,
-        'files': file_dicts
+        'files': file_dicts,
+        'room': room_obj,
+        'show_privacy_notice': not is_lti_room and room_obj.tracking_enabled
     })
 
 
 @require_staff_user()
 async def replay(request: HttpRequest, room_name: str, **kwargs):
     room_obj = await async_get_object_or_404(m.ExcalidrawRoom, room_name=room_name)
-    return render(request, 'collab/index.html', {
+    return render(request, 'collab/room.html', {
         'excalidraw_config': {
             'FILE_URL_TEMPLATE': absolute_reverse(request, 'api-1:put_file', kwargs={
                 'room_name': room_name, 'file_id': '{file_id}'}),
