@@ -20,6 +20,9 @@ from draw.utils import deepmerge
 # without specifying a room in the URL. (default is false.)
 # ALLOW_AUTOMATIC_ROOM_CREATION = True
 
+# Allow users to create custom room when they visit the index page (default is false.)
+# SHOW_CREATE_ROOM_PAGE = False
+
 # If set to false (default), users will need to be logged in.
 # ALLOW_ANONYMOUS_VISITS = True
 

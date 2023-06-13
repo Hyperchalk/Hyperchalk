@@ -57,6 +57,9 @@ services:
       # without specifying a room in the URL. (default is false.)
       HC_ALLOW_AUTOMATIC_ROOM_CREATION: "false"
 
+      # Allow users to create custom room when they visit the index page (default is false.)
+      HC_SHOW_CREATE_ROOM_PAGE: "false"
+
       # If set to false (default), users will need to be logged in.
       HC_ALLOW_ANONYMOUS_VISITS: "false"
 
