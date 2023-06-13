@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-13 14:32+0200\n"
+"POT-Creation-Date: 2023-06-13 15:23+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -156,6 +156,10 @@ msgstr "leer lassen für einen zufälligen Namen"
 #: collab/templates/collab/index.html
 msgid "Create room"
 msgstr "Raum erstellen"
+
+#: collab/templates/collab/index.html
+msgid "Imprint"
+msgstr "Impressum"
 
 #: collab/utils.py collab/views.py
 msgid "You need to be logged in."

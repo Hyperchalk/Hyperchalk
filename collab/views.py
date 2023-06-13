@@ -55,7 +55,9 @@ async def index(request: HttpRequest, *args, **kwargs):
     if settings.SHOW_CREATE_ROOM_PAGE:
         # show the room creation page on GET
         if request.method == 'GET':
-            return render(request, 'collab/index.html')
+            return render(request, 'collab/index.html', {
+                'imprint_url': settings.IMPRINT_URL,
+            })
 
         # on POST, redirect to the room, after checking that it doesn't exist yet
         if (room_name := request.POST.get('roomname')):
@@ -63,6 +65,7 @@ async def index(request: HttpRequest, *args, **kwargs):
                 validate_room_name(room_name)
             except ValidationError:
                 return render(request, 'collab/index.html', {
+                    'imprint_url': settings.IMPRINT_URL,
                     'error_message': _(
                         '“%s” is not a valid room name. The room name must have between 10 and 24 characters. '
                         'The following characters are allowed: a-z, A-Z, 0-9, -, _'
@@ -71,12 +74,13 @@ async def index(request: HttpRequest, *args, **kwargs):
             __, created = await get_or_create_room(room_name=room_name)
             if created:
                 return redirect(absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name}))
-
-            return render(request, 'collab/index.html', {
-                'error_message': _('The room name “%(room_name)s” is already taken.') % {'room_name': room_name}})
+            else:
+                return render(request, 'collab/index.html', {
+                    'imprint_url': settings.IMPRINT_URL,
+                    'error_message': _('The room name “%(room_name)s” is already taken.') % {'room_name': room_name}})
 
     # create a random room name if none is given
-    if settings.ALLOW_AUTOMATIC_ROOM_CREATION:
+    elif settings.ALLOW_AUTOMATIC_ROOM_CREATION:
         if settings.ALLOW_ANONYMOUS_VISITS or await user_is_authenticated(request.user):
             room_name = make_room_name(24)
             __, created = await get_or_create_room(room_name=room_name)
@@ -85,10 +89,12 @@ async def index(request: HttpRequest, *args, **kwargs):
                 return redirect(absolute_reverse(request, 'collab:index'))
             room_uri = reverse('collab:room', kwargs={'room_name': room_name})
             return redirect(request.build_absolute_uri(room_uri), permanent=False)
-        return redirect(
-            reverse_with_query('admin:login', query_kwargs={'next': f'/{make_room_name(24)}/'}))
+        else:
+            return redirect(
+                reverse_with_query('admin:login', query_kwargs={'next': f'/{make_room_name(24)}/'}))
 
-    return HttpResponseBadRequest(_('Automatic room creation is disabled here.'))
+    else:
+        return HttpResponseBadRequest(_('Automatic room creation is disabled here.'))
 
 
 async def room(request: HttpRequest, room_name: str):

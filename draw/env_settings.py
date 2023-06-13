@@ -25,6 +25,10 @@ ALLOW_AUTOMATIC_ROOM_CREATION = env.get("HC_ALLOW_AUTOMATIC_ROOM_CREATION") == "
 # Allow users to create custom room when they visit the index page (default is false.)
 SHOW_CREATE_ROOM_PAGE = env.get("HC_SHOW_CREATE_ROOM_PAGE") == "true"
 
+# Link to an imprint page. If set, a link to this page will be
+# displayed at the bottom of the index page. (default is None)
+IMPRINT_URL = env.get("HC_IMPRINT_URL", None)
+
 # If set to false (default), users will need to be logged in.
 ALLOW_ANONYMOUS_VISITS = env.get("HC_ALLOW_ANONYMOUS_VISITS") == "true"
 

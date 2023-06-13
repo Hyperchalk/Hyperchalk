@@ -23,6 +23,11 @@
         margin: 0.5rem;
       }
 
+      a,
+      a.link {
+        color: white;
+      }
+
       .fields {
         align-items: center;
         display: flex;
@@ -84,5 +89,7 @@
       </p>
       {% endif %}
     </form>
+    <p><a href="{{imprint_url}}">{% trans "Imprint" %}</a></p>
+    {% if imprint_url %} {% endif %}
   </body>
 </html>

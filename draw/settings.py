@@ -206,6 +206,8 @@ LTI_CONFIG = {
 # Create custom room when user visits the index page
 SHOW_CREATE_ROOM_PAGE = False
 
+IMPRINT_URL = None
+
 # Allow the creation of rooms when the user visits the index page without a room query (?room=...)
 ALLOW_AUTOMATIC_ROOM_CREATION = False
 

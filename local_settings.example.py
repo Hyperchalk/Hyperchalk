@@ -23,6 +23,10 @@ from draw.utils import deepmerge
 # Allow users to create custom room when they visit the index page (default is false.)
 # SHOW_CREATE_ROOM_PAGE = False
 
+# Link to an imprint page. If set, a link to this page will be
+# displayed at the bottom of the index page. (default is None)
+IMPRINT_URL = None
+
 # If set to false (default), users will need to be logged in.
 # ALLOW_ANONYMOUS_VISITS = True
 
