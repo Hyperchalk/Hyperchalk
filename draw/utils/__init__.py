@@ -221,7 +221,7 @@ def user_id_for_room(uid: uuid.UUID, room_name: str):
 def make_room_name(length):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
-room_name_re = re.compile(r'[a-zA-Z0-9_-]{24}')
+room_name_re = re.compile(r'[a-zA-Z0-9_-]{12,24}')
 
 def validate_room_name(room_name: str):
     if not room_name_re.fullmatch(room_name):

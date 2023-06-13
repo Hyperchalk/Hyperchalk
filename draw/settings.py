@@ -203,6 +203,9 @@ LTI_CONFIG = {
     'vendor_contact_email': 'gombert@dipf.de',
 }
 
+# Create custom room when user visits the index page
+SHOW_CREATE_ROOM_PAGE = False
+
 # Allow the creation of rooms when the user visits the index page without a room query (?room=...)
 ALLOW_AUTOMATIC_ROOM_CREATION = False
 

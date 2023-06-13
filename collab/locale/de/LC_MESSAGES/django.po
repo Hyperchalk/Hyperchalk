@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-26 13:26+0200\n"
+"POT-Creation-Date: 2023-06-13 14:32+0200\n"
 "PO-Revision-Date: 2022-03-02 13:03+0100\n"
 "Last-Translator: Lukas Menzel <praktikum_alice@dipf.de>\n"
 "Language-Team: EduTec <praktikum_alice@dipf.de>\n"
@@ -87,6 +87,10 @@ msgid "this is generated from draw.utils.user_id_for_room"
 msgstr "wird von draw.utils.user_id_for_room generiert"
 
 #: collab/models.py
+msgid "track users' actions"
+msgstr "Nutzer:innen-Aktionen verfolgen"
+
+#: collab/models.py collab/templates/collab/index.html
 msgid "room name"
 msgstr "Raumname"
 
@@ -145,6 +149,14 @@ msgstr ""
 "Die importierte Bibliothek wird Deiner Bibliothek hinzugefügt, wenn Du zum "
 "Whiteboard zurückkehrst. Du kannst diesen Tab nun schließen."
 
+#: collab/templates/collab/index.html
+msgid "leave empty for a random name"
+msgstr "leer lassen für einen zufälligen Namen"
+
+#: collab/templates/collab/index.html
+msgid "Create room"
+msgstr "Raum erstellen"
+
 #: collab/utils.py collab/views.py
 msgid "You need to be logged in."
 msgstr "Du musst angemeldet sein."
@@ -162,5 +174,23 @@ msgid "The file you've added is too large."
 msgstr "Die hochgeladene Datei ist zu groß."
 
 #: collab/views.py
+#, python-format
+msgid ""
+"“%s” is not a valid room name. The room name must have between 12 and 24 "
+"characters. The following characters are allowed: a-z, A-Z, 0-9, -, _"
+msgstr ""
+"„%s“ ist kein gültiger Raumname. Der Raumname muss zwischen 12 und 24 "
+"Zeichen lang sein. Folgende Zeichen sind erlaubt: a-z, A-Z, 0-9, -, _"
+
+#: collab/views.py
+#, python-format
+msgid "The room name “%(room_name)s” is already taken."
+msgstr "Der Raumname „%(room_name)s“ ist bereits vergeben."
+
+#: collab/views.py
 msgid "Automatic room creation is disabled here."
 msgstr "Die automatische Raum-Erstellung ist deaktiviert."
+
+#, python-format
+#~ msgid "The room “%s” already exists."
+#~ msgstr "Der Raum „%s“ existiert bereits."

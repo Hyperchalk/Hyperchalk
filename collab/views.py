@@ -5,6 +5,7 @@ from urllib.parse import urlunsplit
 
 from channels.db import database_sync_to_async
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -51,23 +52,50 @@ def custom_messages():
 
 
 async def index(request: HttpRequest, *args, **kwargs):
-    # See issue #8
+    if settings.SHOW_CREATE_ROOM_PAGE:
+        # show the room creation page on GET
+        if request.method == 'GET':
+            return render(request, 'collab/index.html')
+
+        # on POST, redirect to the room, after checking that it doesn't exist yet
+        if (room_name := request.POST.get('roomname')):
+            try:
+                validate_room_name(room_name)
+            except ValidationError:
+                return render(request, 'collab/index.html', {
+                    'error_message': _(
+                        '“%s” is not a valid room name. The room name must have between 12 and 24 characters. '
+                        'The following characters are allowed: a-z, A-Z, 0-9, -, _'
+                    ) % room_name })
+
+            __, created = await get_or_create_room(room_name=room_name)
+            if created:
+                return redirect(absolute_reverse(request, 'collab:room', kwargs={'room_name': room_name}))
+
+            return render(request, 'collab/index.html', {
+                'error_message': _('The room name “%(room_name)s” is already taken.') % {'room_name': room_name}})
+
+    # create a random room name if none is given
     if settings.ALLOW_AUTOMATIC_ROOM_CREATION:
         if settings.ALLOW_ANONYMOUS_VISITS or await user_is_authenticated(request.user):
-            room_uri = reverse('collab:room', kwargs={'room_name': make_room_name(24)})
+            room_name = make_room_name(24)
+            __, created = await get_or_create_room(room_name=room_name)
+            if not created:
+                # retry in the unlikely case that the room name is already taken
+                return redirect(absolute_reverse(request, 'collab:index'))
+            room_uri = reverse('collab:room', kwargs={'room_name': room_name})
             return redirect(request.build_absolute_uri(room_uri), permanent=False)
         return redirect(
             reverse_with_query('admin:login', query_kwargs={'next': f'/{make_room_name(24)}/'}))
+
     return HttpResponseBadRequest(_('Automatic room creation is disabled here.'))
 
 
 async def room(request: HttpRequest, room_name: str):
-    # FIXME: forbidden automatic room creation can be circumvented if someone makes up a valid id
     validate_room_name(room_name)
-    room_tpl, username = await asyncio.gather(
-        get_or_create_room(room_name=room_name),
+    room_obj, username = await asyncio.gather(
+        async_get_object_or_404(m.ExcalidrawRoom, room_name=room_name),
         get_username(request.user))
-    room_obj, __ = room_tpl
 
     try:
         await room_access_check(request, room_obj)
