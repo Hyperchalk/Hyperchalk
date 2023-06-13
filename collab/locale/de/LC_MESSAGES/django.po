@@ -176,10 +176,10 @@ msgstr "Die hochgeladene Datei ist zu groß."
 #: collab/views.py
 #, python-format
 msgid ""
-"“%s” is not a valid room name. The room name must have between 12 and 24 "
+"“%s” is not a valid room name. The room name must have between 10 and 24 "
 "characters. The following characters are allowed: a-z, A-Z, 0-9, -, _"
 msgstr ""
-"„%s“ ist kein gültiger Raumname. Der Raumname muss zwischen 12 und 24 "
+"„%s“ ist kein gültiger Raumname. Der Raumname muss zwischen 10 und 24 "
 "Zeichen lang sein. Folgende Zeichen sind erlaubt: a-z, A-Z, 0-9, -, _"
 
 #: collab/views.py

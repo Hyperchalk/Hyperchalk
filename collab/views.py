@@ -64,7 +64,7 @@ async def index(request: HttpRequest, *args, **kwargs):
             except ValidationError:
                 return render(request, 'collab/index.html', {
                     'error_message': _(
-                        '“%s” is not a valid room name. The room name must have between 12 and 24 characters. '
+                        '“%s” is not a valid room name. The room name must have between 10 and 24 characters. '
                         'The following characters are allowed: a-z, A-Z, 0-9, -, _'
                     ) % room_name })
 
