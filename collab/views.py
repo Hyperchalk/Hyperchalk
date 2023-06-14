@@ -80,7 +80,7 @@ async def index(request: HttpRequest, *args, **kwargs):
                     'error_message': _('The room name “%(room_name)s” is already taken.') % {'room_name': room_name}})
 
     # create a random room name if none is given
-    elif settings.ALLOW_AUTOMATIC_ROOM_CREATION:
+    if settings.ALLOW_AUTOMATIC_ROOM_CREATION:
         if settings.ALLOW_ANONYMOUS_VISITS or await user_is_authenticated(request.user):
             room_name = make_room_name(24)
             __, created = await get_or_create_room(room_name=room_name)
