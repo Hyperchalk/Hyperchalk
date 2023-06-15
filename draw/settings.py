@@ -196,7 +196,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 LTI_CONFIG = {
     'title': 'Hyperchalk',
-    'description': 'The Excalidraw drawing board app as an LTI module.',
+    'description': 'Make drawing assignments for your students. Supports single and group work.',
     'vendor_name': 'EduTec@DIPF',
     'vendor_url': 'https://www.edutec.science/',
     'vendor_contact_name': 'Sebastian Gombert',
