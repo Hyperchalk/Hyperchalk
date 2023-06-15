@@ -12,11 +12,13 @@ import zlib
 from enum import Enum
 from hashlib import sha256
 from pprint import pformat
-from typing import (Any, Callable, Collection, Dict, Generic, Hashable, Iterable, List, Optional,
-                    Protocol, Sequence, Tuple, TypeVar, Union, cast)
+from typing import (Any, Callable, Collection, Dict, Generic, Hashable, Iterable, List, Optional, Protocol, Sequence,
+                    Tuple, TypeVar, Union, cast)
 
+from asgiref.sync import sync_to_async
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import log
 from django.utils.functional import lazy
@@ -185,6 +187,8 @@ def reverse_with_query(
         return f"{url}?{urlencode(query_kwargs)}"
 
     return url
+
+async_get_object_or_404 = sync_to_async(get_object_or_404)
 
 JSONType = Optional[Union[dict, list, str, int, float]]
 

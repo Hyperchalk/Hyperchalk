@@ -11,11 +11,11 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from draw.utils import absolute_reverse, make_room_name, reverse_with_query, validate_room_name
-from draw.utils.auth import require_staff_user, user_is_authenticated, Unauthenticated, user_is_staff
+from draw.utils import absolute_reverse, async_get_object_or_404, make_room_name, reverse_with_query, validate_room_name
+from draw.utils.auth import Unauthenticated, require_staff_user, user_is_authenticated, user_is_staff
 
 from . import models as m
-from .utils import room_access_check, async_get_object_or_404, get_or_create_room
+from .utils import get_or_create_room, room_access_check
 
 logger = logging.getLogger('draw.collab')
 

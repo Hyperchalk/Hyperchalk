@@ -7,7 +7,6 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 
 from draw.utils.auth import (Unauthenticated, Unauthorized, create_html_response_forbidden,
@@ -19,8 +18,6 @@ from . import models as m
 logger = logging.getLogger('draw.collab')
 
 get_or_create_room = sync_to_async(m.ExcalidrawRoom.objects.get_or_create)
-
-async_get_object_or_404 = sync_to_async(get_object_or_404)
 
 room_name = sync_to_async(lambda r: r.room_name)
 

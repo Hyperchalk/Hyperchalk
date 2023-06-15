@@ -5,12 +5,12 @@ from django.db.utils import IntegrityError
 from django.http import HttpRequest
 from ninja import Router
 
+from draw.utils import async_get_object_or_404
 from draw.utils.auth import require_staff_user
 
 from . import models as m
 from .types import ExcalidrawBinaryFile
-from .utils import (async_get_object_or_404, get_or_create_room, get_room_record_ids,
-                    require_room_access, room_access_check)
+from .utils import get_or_create_room, get_room_record_ids, require_room_access, room_access_check
 
 collab_router = Router(tags=['collab'])
 
