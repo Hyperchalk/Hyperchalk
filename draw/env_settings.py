@@ -39,6 +39,7 @@ PUBLIC_ROOMS = env.get("HC_PUBLIC_ROOMS", "").split(",")
 # Tracking can be enabled or disabled individually for every room. Old rooms
 # from before when this setting was available will have tracking enabled.
 ENABLE_TRACKING_BY_DEFAULT = env.get("HC_ENABLE_TRACKING_BY_DEFAULT") != "false"
+ENABLE_TRACKING_BY_DEFAULT_FOR_LTI = env.get("HC_ENABLE_TRACKING_BY_DEFAULT_FOR_LTI") != "false"
 
 # Should NEVER be true in production! Set to True for debug messages if you encounter an error.
 DEBUG = env.get("HC_DEBUG") == "true"

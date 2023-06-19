@@ -216,6 +216,7 @@ ALLOW_ANONYMOUS_VISITS = False
 
 # This sets the default value for complete pointer and element tracking (Log Records)
 ENABLE_TRACKING_BY_DEFAULT = True
+ENABLE_TRACKING_BY_DEFAULT_FOR_LTI = True
 
 # how often the clients are going to broadcast updates on change (milliseconds)
 BROADCAST_RESOLUTION_THROTTLE_MSEC = 100

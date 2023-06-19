@@ -286,7 +286,8 @@ class CourseToRoomMapperManager(models.Manager):
                 room_name=new_room_name,
                 room_created_by=user,
                 room_consumer=lti_tool,
-                room_course_id=course_id)
+                room_course_id=course_id,
+                tracking_enabled=settings.ENABLE_TRACKING_BY_DEFAULT_FOR_LTI)
             new_room.save()
 
         redirect = self.model(
