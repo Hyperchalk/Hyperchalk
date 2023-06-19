@@ -101,7 +101,7 @@ class ExcalidrawRoom(models.Model):
     room_name = models.CharField(
         primary_key=True, max_length=24,
         validators=[validate_room_name])
-    room_created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
+    room_created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
     room_consumer = models.ForeignKey(LtiTool, on_delete=models.SET_NULL, null=True, blank=True)
     room_course_id = models.CharField(max_length=255, null=True, blank=True)
     tracking_enabled = models.BooleanField(_("track users' actions"), default=settings.ENABLE_TRACKING_BY_DEFAULT)
